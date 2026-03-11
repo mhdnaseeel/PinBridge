@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">PinBridge</string>
+    <string name="title_pairing">Pair Device</string>
+</resources>
