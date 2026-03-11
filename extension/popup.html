@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>PinBridge</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      width: 300px;
+      margin: 0;
+      padding: 16px;
+      background-color: #f8f9fa;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .title {
+      font-size: 18px;
+      font-weight: bold;
+      color: #3f51b5;
+    }
+    .status {
+      font-size: 12px;
+      padding: 4px 8px;
+      border-radius: 12px;
+    }
+    .status-paired {
+      background-color: #e8f5e9;
+      color: #2e7d32;
+    }
+    .status-unpaired {
+      background-color: #ffebee;
+      color: #c62828;
+    }
+    .otp-container {
+      background-color: white;
+      border-radius: 8px;
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+    .otp-value {
+      font-size: 32px;
+      font-weight: bold;
+      letter-spacing: 4px;
+      color: #333;
+      margin: 10px 0;
+    }
+    .otp-label {
+      font-size: 12px;
+      color: #666;
+      text-transform: uppercase;
+    }
+    .otp-time {
+      font-size: 11px;
+      color: #999;
+    }
+    .actions {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    button {
+      padding: 10px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: background-color 0.2s;
+    }
+    .btn-primary {
+      background-color: #3f51b5;
+      color: white;
+    }
+    .btn-primary:hover {
+      background-color: #303f9f;
+    }
+    .btn-secondary {
+      background-color: #e0e0e0;
+      color: #333;
+    }
+    .btn-secondary:hover {
+      background-color: #bdbdbd;
+    }
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="title">PinBridge</div>
+    <div id="statusBadge" class="status status-unpaired">Disconnected</div>
+  </div>
+
+  <div id="otpView" class="hidden">
+    <div class="otp-container">
+      <div class="otp-label">Latest Code</div>
+      <div id="otpValue" class="otp-value">------</div>
+      <div id="otpTime" class="otp-time">Waiting for OTP...</div>
+    </div>
+    <div class="actions">
+      <button id="copyBtn" class="btn-primary">Copy Code</button>
+      <button id="signOutBtn" class="btn-secondary">Unpair Device</button>
+    </div>
+  </div>
+
+  <div id="unpairedView">
+    <p style="font-size: 14px; color: #666; text-align: center; margin-bottom: 20px;">
+      Your browser is not paired with an Android device.
+    </p>
+    <div class="actions">
+      <button id="pairBtn" class="btn-primary">Pair with Phone</button>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
