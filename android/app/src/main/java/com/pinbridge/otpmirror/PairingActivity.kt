@@ -54,13 +54,23 @@ class PairingActivity : AppCompatActivity() {
         binding.pairingInfo.text = "Device ID: $deviceId"
 
         // Register pairing in Firestore
+        val auth = FirebaseAuth.getInstance()
         val db = FirebaseFirestore.getInstance()
-        db.collection(Constants.COLL_PAIRINGS).document(deviceId).set(
-            mapOf(
-                "secret" to secret,
-                "createdAt" to com.google.firebase.Timestamp.now()
+        
+        fun savePairing() {
+            db.collection(Constants.COLL_PAIRINGS).document(deviceId).set(
+                mapOf(
+                    "secret" to secret,
+                    "createdAt" to com.google.firebase.Timestamp.now()
+                )
             )
-        )
+        }
+
+        if (auth.currentUser == null) {
+            auth.signInAnonymously().addOnSuccessListener { savePairing() }
+        } else {
+            savePairing()
+        }
 
         // Generate QR Code
         val qrData = "{\"deviceId\":\"$deviceId\",\"secret\":\"$secret\"}"

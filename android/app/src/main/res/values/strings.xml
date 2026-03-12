@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">PinBridge</string>
     <string name="title_pairing">Pair Device</string>
+    <string name="pairing_qr_description">Scan this QR code in the PinBridge Chrome extension to pair your device.</string>
 </resources>

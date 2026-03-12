@@ -33,7 +33,16 @@ class UploadOtpWorker(
         
         val encrypted = CryptoUtil.encrypt(otp, secretBytes)
 
-        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return Result.retry()
+        val auth = FirebaseAuth.getInstance()
+        if (auth.currentUser == null) {
+            try {
+                auth.signInAnonymously().await()
+            } catch (e: Exception) {
+                return Result.retry()
+            }
+        }
+        
+        val uid = auth.currentUser?.uid ?: return Result.retry()
         val db = FirebaseFirestore.getInstance()
         
         return try {

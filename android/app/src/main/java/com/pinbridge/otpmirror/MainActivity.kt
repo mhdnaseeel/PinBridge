@@ -2,52 +2,73 @@ package com.pinbridge.otpmirror
 
 import android.content.Intent
 import android.os.Bundle
-import androidx.appcompat.app.AppCompatActivity
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKeys
 import com.google.firebase.auth.FirebaseAuth
-import com.pinbridge.otpmirror.databinding.ActivityMainBinding
 
-class MainActivity : AppCompatActivity() {
-
-    private lateinit var binding: ActivityMainBinding
+class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityMainBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-
-        updateUi()
-
-        binding.btnPair.setOnClickListener {
-            startActivity(Intent(this, PairingActivity::class.java))
+        setContent {
+            PinBridgeTheme {
+                MainScreen()
+            }
         }
     }
 
-    override fun onResume() {
-        super.onResume()
-        updateUi()
-    }
+    @Composable
+    fun MainScreen() {
+        var statusText by remember { mutableStateOf("Checking status...") }
+        var buttonText by remember { mutableStateOf("Start Pairing") }
+        
+        LaunchedEffect(Unit) {
+            val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
+            val sharedPrefs = EncryptedSharedPreferences.create(
+                Constants.PREFS_NAME,
+                masterKeyAlias,
+                this@MainActivity,
+                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            )
 
-    private fun updateUi() {
-        val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
-        val sharedPrefs = EncryptedSharedPreferences.create(
-            Constants.PREFS_NAME,
-            masterKeyAlias,
-            this,
-            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-        )
+            val user = FirebaseAuth.getInstance().currentUser
+            if (user != null) {
+                statusText = "Status: Authenticated (${user.uid})"
+                buttonText = "View Pairing QR"
+            } else {
+                statusText = "Status: Not Authenticated"
+                buttonText = "Start Pairing"
+            }
+        }
 
-        val isPaired = sharedPrefs.getBoolean(Constants.KEY_IS_PAIRED, false)
-        val user = FirebaseAuth.getInstance().currentUser
-
-        if (user != null) {
-            binding.statusText.text = "Status: Authenticated (${user.uid})"
-            binding.btnPair.text = "View Pairing QR"
-        } else {
-            binding.statusText.text = "Status: Not Authenticated"
-            binding.btnPair.text = "Start Pairing"
+        Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+            Column(
+                modifier = Modifier.fillMaxSize().padding(16.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(text = statusText, style = MaterialTheme.typography.bodyLarge)
+                Spacer(modifier = Modifier.height(24.dp))
+                Button(onClick = {
+                    startActivity(Intent(this@MainActivity, PairingActivity::class.java))
+                }) {
+                    Text(text = buttonText)
+                }
+            }
         }
     }
+}
+
+@Composable
+fun PinBridgeTheme(content: @Composable () -> Unit) {
+    MaterialTheme(content = content)
 }
