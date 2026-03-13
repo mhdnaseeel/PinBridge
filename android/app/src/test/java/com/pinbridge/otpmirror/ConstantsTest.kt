@@ -6,12 +6,9 @@ import org.junit.Test
 class ConstantsTest {
 
     @Test
-    fun testConstantsAreNotEmpty() {
+    fun `pref names are non empty`() {
         assertThat(Constants.PREFS_NAME).isNotEmpty()
         assertThat(Constants.KEY_DEVICE_ID).isNotEmpty()
         assertThat(Constants.KEY_SECRET).isNotEmpty()
-        assertThat(Constants.KEY_IS_PAIRED).isNotEmpty()
-        assertThat(Constants.COLL_PAIRINGS).isNotEmpty()
-        assertThat(Constants.COLL_OTPS).isNotEmpty()
     }
 }

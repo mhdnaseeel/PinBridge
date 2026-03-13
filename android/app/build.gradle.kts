@@ -72,14 +72,14 @@ dependencies {
     implementation("com.google.zxing:core:3.5.3")
     implementation("com.journeyapps:zxing-android-embedded:4.3.0")
 
-    // ----- Unit-test deps -----
+    // ----- Unit-test dependencies -----
     testImplementation("junit:junit:4.13.2")
     testImplementation("com.google.truth:truth:1.1.5")
     testImplementation("org.mockito:mockito-core:5.5.0")
     testImplementation("androidx.test:core:1.5.0")
     testImplementation("androidx.work:work-testing:2.9.0")
 
-    // ----- Android-instrumentation deps -----
+    // ----- Android-instrumentation (UI) dependencies -----
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.6.0")
     androidTestImplementation("androidx.test.uiautomator:uiautomator:2.3.0")
@@ -87,12 +87,17 @@ dependencies {
     androidTestImplementation("androidx.compose.ui:ui-test-manifest:1.6.6")
 }
 
+/**
+ * Custom task that starts the Firebase emulators (functions, firestore, auth)
+ * before any instrumentation test runs. The task blocks until the emulators are ready.
+ */
 tasks.register<Exec>("runEmulators") {
     group = "verification"
-    description = "Starts Firebase emulators (functions, firestore, auth) before tests."
+    description = "Starts Firebase emulators (functions, firestore, auth) before Android tests."
     commandLine("firebase", "emulators:start", "--only", "functions,firestore,auth")
 }
 
+// Make Android instrumentation tests depend on the emulator task
 tasks.named("connectedAndroidTest") {
     dependsOn("runEmulators")
 }

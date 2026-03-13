@@ -1,83 +1,173 @@
 # PinBridge – Automated Test Plan
 
-## 1️⃣ Start the Firebase Emulators
+> This document describes how to run **all** automated tests for the PinBridge Android implementation,
+> including unit tests, UI tests, WorkManager integration tests, a full end‑to‑end E2E test, and a
+> Node‑script sanity check for the Cloud Function `/pair`.
+
+## 📦 Prerequisites
+
+| Requirement | How to satisfy |
+|-------------|-----------------|
+| **Java 17** | Install JDK 17 (`java -version`). |
+| **Android SDK** | Android Studio Flamingo or command‑line SDK (`sdkmanager`). |
+| **Gradle 8.x** | Bundled with the project (`./gradlew`). |
+| **Firebase CLI** | `npm i -g firebase-tools` and run `firebase login`. |
+| **Node 18+** | Used for the Cloud Function test script. |
+| **Android emulator** (API 30 or higher) | Required for UI and E2E tests (ADB SMS injection). |
+| **Firebase project** (Spark tier) | Create a project in the Firebase console; note the project ID (`{{FIREBASE_PROJECT_ID}}`). |
+
+## 1️⃣ Start the Firebase emulators
+
 ```bash
+cd {{REPO_ROOT}}
 firebase emulators:start --only functions,firestore,auth
 ```
-- Functions → http://localhost:5001  
-- Firestore → http://localhost:8080  
-- Auth → http://localhost:9099  
 
-Leave this terminal running; the Gradle `runEmulators` task will attach to it when you run the Android tests.
+- Functions → `http://localhost:5001`
+- Firestore → `http://localhost:8080`
+- Auth → `http://localhost:9099`
+- UI console (optional) → `http://localhost:4000`
 
-## 2️⃣ Unit Tests (pure JVM)
+Leave this terminal running. The Gradle task `runEmulators` will attach to it when you run Android tests.
+
+---
+
+## 2️⃣ Unit tests (pure JVM)
+
 ```bash
+cd {{REPO_ROOT}}/android
 ./gradlew test
 ```
-*Expect:* All JUnit tests (`CryptoUtilTest`, `ConstantsTest`) PASS.
 
-## 3️⃣ Instrumentation / UI Tests
+**Expected:**  
+`CryptoUtilTest` and `ConstantsTest` pass (✔).  
+If any fail, check the `CryptoUtil` implementation.
+
+---
+
+## 3️⃣ UI / Instrumentation tests
+
 ```bash
 ./gradlew connectedAndroidTest
 ```
-*What runs:*  
-- `MainActivityTest` – verifies the “Show Pairing QR” button and QR display.  
-- `PairingActivityTest` – decodes the QR and checks JSON fields.  
 
-*Result:* PASS = UI renders QR, QR contains valid `deviceId` and `secret`.
+**What runs:**
 
-## 4️⃣ WorkManager / Firestore Integration Test
-```bash
-./gradlew test --tests "com.pinbridge.otpmirror.UploadOtpWorkerTest"
-```
-*What it does:*  
-- Uses the Firestore emulator (host 10.0.2.2:8080).  
-- Checks that after the worker finishes a document `otps/test‑uid` exists with correctly encrypted data that can be decrypted back to the original OTP.
+| Test | What it verifies |
+|------|-------------------|
+| `MainActivityTest` | “Show Pairing QR” button exists, launches `PairingActivity`, QR ImageView is displayed. |
+| `PairingActivityTest` | QR can be decoded, JSON contains a valid UUID `deviceId` and a 256‑bit Base64 `secret`. |
+| `UploadOtpWorkerTest` | Worker encrypts OTP, writes to Firestore emulator, decryption succeeds. |
+| `E2ETest` | Full flow: pair → custom token → SMS injection → Firestore verification. |
 
-## 5️⃣ End‑to‑End Flow (E2E)
+**Result:** All tests should finish with `OK` and **no failures**.  
+If any UI test fails, ensure the emulator screen is unlocked and the IDs in the layouts match those used in the tests.
+
+---
+
+## 4️⃣ WorkManager integration test (part of UI tests)
+
+`UploadOtpWorkerTest` is executed together with `connectedAndroidTest`.  
+It:
+
+1. Writes a known secret/deviceId to `EncryptedSharedPreferences`.
+2. Starts the `UploadOtpWorker`.
+3. Checks that a Firestore document exists under `otps/<deviceId>`.
+4. Decrypts the stored `otp` and asserts equality with the original OTP.
+
+All steps must pass.
+
+---
+
+## 5️⃣ End‑to‑End (E2E) test
+
 ```bash
 ./gradlew connectedAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.pinbridge.otpmirror.E2ETest
 ```
-*Execution steps:*  
-1. Launches the app → extracts QR → POSTs to the local `/pair` function.  
-2. Signs in with the returned custom token.  
-3. Sends a fake SMS (via `adb -e emu sms send …`).  
-4. Waits for the WorkManager to upload.  
-5. Queries the Firestore emulator and verifies decrypted OTP = `123456`.
 
-*Result:* PASS = whole pipeline works end‑to‑end.
+**Prerequisites for this test:**
 
-## 6️⃣ Cloud Function Direct Test
+- **Emulators must be running** (step 1).  
+- **AVD must be an emulator**, not a physical device, because the test uses `adb -e emu sms send …`.  
+- **Replace `{{FIREBASE_PROJECT_ID}}`** in `E2ETest.kt` with your actual Firebase project ID before running.
+
+**What the test does:**
+
+1. Launches `PairingActivity`, extracts the QR JSON, posts it to the local `/pair` function, receives a custom JWT.  
+2. Signs in to Firebase Auth with that token (against the Auth emulator).  
+3. Sends a fake SMS containing `123456` to the emulator.  
+4. Waits for `OtpReceiver → WorkManager → Firestore` to process the message.  
+5. Reads the OTP document from the Firestore emulator, decrypts it, and asserts the OTP equals `123456`.
+
+**Expected outcome:** Test finishes with `OK`.  
+If it times out, increase the `Thread.sleep` delay (currently 8 seconds) or verify the emulator can reach the emulators via `10.0.2.2`.
+
+---
+
+## 6️⃣ Cloud Function sanity check (`pair.test.js`)
+
 ```bash
-cd functions
+cd {{REPO_ROOT}}/functions
 node tests/pair.test.js
 ```
-*Result:* Should print a ✅ and a custom JWT token.
+
+**What it checks:**  
+
+- The Functions emulator is running (step 1).  
+- Posting a random payload returns a JSON object containing a `customToken`.  
+
+**Expected output** (example):
+
+```
+✅ Pairing succeeded – received custom token:
+eyJhbGciOiJSUzI1NiIsInR5cCI6...
+```
+
+If the script exits with `❌` messages, verify that the Functions emulator is running and that `{{FIREBASE_PROJECT_ID}}` is correctly replaced.
 
 ---
 
-### Expected Outcomes Summary
+## 7️⃣ Summary of commands
 
-| Test suite                     | Expected result |
-|--------------------------------|-----------------|
-| `./gradlew test` (unit)       | All tests PASS |
-| `./gradlew connectedAndroidTest` (UI) | All UI & QR tests PASS |
-| `UploadOtpWorkerTest` (integration) | Document created, decrypts correctly |
-| `E2ETest` (full flow)        | OTP `123456` appears in Firestore and decrypts correctly |
-| `pair.test.js` (Node)          | Returns a JWT custom token |
+```bash
+# 1️⃣ Emulators
+firebase emulators:start --only functions,firestore,auth
+
+# 2️⃣ Unit tests
+cd android && ./gradlew test
+
+# 3️⃣ UI & integration tests
+cd android && ./gradlew connectedAndroidTest
+
+# 4️⃣ End‑to‑End only
+cd android && ./gradlew connectedAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.pinbridge.otpmirror.E2ETest
+
+# 5️⃣ Cloud Function sanity check
+cd functions && node tests/pair.test.js
+```
+
+All commands should complete with a **green** success indicator.  
 
 ---
 
-### Helpful Commands for Manual Checks
+## 📌 What to do if something fails
 
-* **Inject a test SMS into the emulator**:
-  ```bash
-  adb -e emu sms send +15551234567 "Your PinBridge verification code is 123456"
-  ```
+| Failed test | Quick diagnosis |
+|------------|-----------------|
+| `CryptoUtilTest` | Verify `CryptoUtil.encrypt/decrypt` – make sure you are using the same secret bytes for both calls. |
+| `MainActivityTest` / `PairingActivityTest` | Ensure the layout IDs (`btnPair`, `ivQr`) match those used in the test code. |
+| `UploadOtpWorkerTest` | Check that the Firebase Emulators are reachable (`10.0.2.2`). Confirm Auth emulator is running on port 9099 and Firestore on 8080. |
+| `E2ETest` | 1️⃣ Verify the emulator is **started with** `-e` (so `adb -e` works). 2️⃣ Confirm the `/pair` function URL uses the correct project ID. 3️⃣ Increase the `Thread.sleep` if the OTP upload takes longer. |
+| `pair.test.js` | Make sure the Functions emulator is running (`firebase emulators:start --only functions`). Replace the placeholder project ID. |
 
-* **Inspect Firestore emulator data**:
-  ```bash
-  curl http://localhost:8080/emulator/v1/projects/{{FIREBASE_PROJECT_ID}}/databases/(default)/documents/otps
-  ```
+---
 
-* **View emulator UI** at `http://localhost:4000`.
+## ✅ Final checklist
+
+- **All test source files added** (unit, UI, integration, E2E).  
+- **Gradle module updated** with test dependencies and `runEmulators` task.  
+- **firebase.json** contains emulator configuration.  
+- **Node script** (`pair.test.js`) validates the Cloud Function.  
+- **TEST_PLAN.md** explains how to run everything.  
+
+Once you run the commands above and every test reports **PASS**, the PinBridge Android implementation is verified to meet the specification. 🎉
