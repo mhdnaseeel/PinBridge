@@ -16,8 +16,18 @@ import com.google.firebase.auth.FirebaseAuth
 
 class MainActivity : ComponentActivity() {
 
+    private lateinit var smsPermissionHelper: SmsPermissionHelper
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        smsPermissionHelper = SmsPermissionHelper(this) { granted ->
+            if (!granted) {
+                // Handle denial (e.g. show a toast)
+            }
+        }
+        smsPermissionHelper.requestPermissions()
+
         setContent {
             PinBridgeTheme {
                 MainScreen()
@@ -62,6 +72,12 @@ class MainActivity : ComponentActivity() {
                     startActivity(Intent(this@MainActivity, PairingScannerActivity::class.java))
                 }) {
                     Text(text = buttonText)
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+                TextButton(onClick = {
+                    startActivity(Intent(this@MainActivity, ManualCodeEntryActivity::class.java))
+                }) {
+                    Text(text = "Enter Code Manually")
                 }
             }
         }

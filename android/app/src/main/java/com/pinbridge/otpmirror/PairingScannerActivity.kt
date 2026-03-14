@@ -36,6 +36,10 @@ class PairingScannerActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_pairing_scanner)
 
+        findViewById<Button>(R.id.btnCancelScanner).setOnClickListener {
+            finish()
+        }
+
         findViewById<Button>(R.id.btnEnterManual).setOnClickListener {
             startActivity(Intent(this, ManualCodeEntryActivity::class.java))
             finish()

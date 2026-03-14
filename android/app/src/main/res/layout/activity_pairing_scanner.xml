@@ -34,5 +34,15 @@
             android:layout_gravity="center_horizontal"
             android:layout_marginTop="16dp"
             android:text="Enter Code Manually" />
+
+        <Button
+            android:id="@+id/btnCancelScanner"
+            style="?attr/borderlessButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="8dp"
+            android:textColor="#FFFFFF"
+            android:text="Cancel" />
     </LinearLayout>
 </FrameLayout>
