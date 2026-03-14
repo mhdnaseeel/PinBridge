@@ -22,12 +22,14 @@ object CryptoUtil {
         val keySpec = SecretKeySpec(secretKey, "AES")
         
         cipher.init(Cipher.ENCRYPT_MODE, keySpec, gcmSpec)
-        val cipherText = cipher.doFinal(plaintext.toByteArray(Charsets.UTF_8))
+        val cipherText = cipher.doFinal(plaintext.toByteArray())
         
         return EncryptedData(
             Base64.encodeToString(cipherText, Base64.NO_WRAP),
             Base64.encodeToString(iv, Base64.NO_WRAP)
         )
+    }
+
     fun decrypt(encrypted: EncryptedData, secretKey: ByteArray): String {
         val cipher = Cipher.getInstance(ALGORITHM)
         val iv = Base64.decode(encrypted.iv, Base64.NO_WRAP)
@@ -39,6 +41,6 @@ object CryptoUtil {
         cipher.init(Cipher.DECRYPT_MODE, keySpec, gcmSpec)
         val plaintext = cipher.doFinal(cipherText)
         
-        return String(plaintext, Charsets.UTF_8)
+        return plaintext.toString(Charsets.UTF_8)
     }
 }

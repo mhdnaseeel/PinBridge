@@ -1,0 +1,58 @@
+[
+    {
+        "merged": "com.pinbridge.otpmirror.app-debug-78:/mipmap-mdpi_ic_launcher.png.flat",
+        "source": "com.pinbridge.otpmirror.app-main-80:/mipmap-mdpi/ic_launcher.png"
+    },
+    {
+        "merged": "com.pinbridge.otpmirror.app-debug-78:/layout_activity_manual_code_entry.xml.flat",
+        "source": "com.pinbridge.otpmirror.app-main-80:/layout/activity_manual_code_entry.xml"
+    },
+    {
+        "merged": "com.pinbridge.otpmirror.app-debug-78:/mipmap-xhdpi_ic_launcher_round.png.flat",
+        "source": "com.pinbridge.otpmirror.app-main-80:/mipmap-xhdpi/ic_launcher_round.png"
+    },
+    {
+        "merged": "com.pinbridge.otpmirror.app-debug-78:/mipmap-xxhdpi_ic_launcher.png.flat",
+        "source": "com.pinbridge.otpmirror.app-main-80:/mipmap-xxhdpi/ic_launcher.png"
+    },
+    {
+        "merged": "com.pinbridge.otpmirror.app-debug-78:/mipmap-mdpi_ic_launcher_round.png.flat",
+        "source": "com.pinbridge.otpmirror.app-main-80:/mipmap-mdpi/ic_launcher_round.png"
+    },
+    {
+        "merged": "com.pinbridge.otpmirror.app-debug-78:/mipmap-hdpi_ic_launcher.png.flat",
+        "source": "com.pinbridge.otpmirror.app-main-80:/mipmap-hdpi/ic_launcher.png"
+    },
+    {
+        "merged": "com.pinbridge.otpmirror.app-debug-78:/mipmap-xxhdpi_ic_launcher_round.png.flat",
+        "source": "com.pinbridge.otpmirror.app-main-80:/mipmap-xxhdpi/ic_launcher_round.png"
+    },
+    {
+        "merged": "com.pinbridge.otpmirror.app-debug-78:/mipmap-xxxhdpi_ic_launcher_round.png.flat",
+        "source": "com.pinbridge.otpmirror.app-main-80:/mipmap-xxxhdpi/ic_launcher_round.png"
+    },
+    {
+        "merged": "com.pinbridge.otpmirror.app-debug-78:/layout_activity_pairing.xml.flat",
+        "source": "com.pinbridge.otpmirror.app-main-80:/layout/activity_pairing.xml"
+    },
+    {
+        "merged": "com.pinbridge.otpmirror.app-debug-78:/layout_activity_main.xml.flat",
+        "source": "com.pinbridge.otpmirror.app-main-80:/layout/activity_main.xml"
+    },
+    {
+        "merged": "com.pinbridge.otpmirror.app-debug-78:/mipmap-xhdpi_ic_launcher.png.flat",
+        "source": "com.pinbridge.otpmirror.app-main-80:/mipmap-xhdpi/ic_launcher.png"
+    },
+    {
+        "merged": "com.pinbridge.otpmirror.app-debug-78:/mipmap-xxxhdpi_ic_launcher.png.flat",
+        "source": "com.pinbridge.otpmirror.app-main-80:/mipmap-xxxhdpi/ic_launcher.png"
+    },
+    {
+        "merged": "com.pinbridge.otpmirror.app-debug-78:/layout_activity_pairing_scanner.xml.flat",
+        "source": "com.pinbridge.otpmirror.app-main-80:/layout/activity_pairing_scanner.xml"
+    },
+    {
+        "merged": "com.pinbridge.otpmirror.app-debug-78:/mipmap-hdpi_ic_launcher_round.png.flat",
+        "source": "com.pinbridge.otpmirror.app-main-80:/mipmap-hdpi/ic_launcher_round.png"
+    }
+]

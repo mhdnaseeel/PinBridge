@@ -4,7 +4,10 @@ import android.content.Context
 import android.util.Log
 import android.widget.Toast
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.functions.FirebaseFunctions
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.Timestamp
+import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKeys
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -22,24 +25,14 @@ object PairingHelper {
 
     suspend fun callPairFunction(context: Context, deviceId: String, secret: String) {
         try {
-            val payload = mapOf("deviceId" to deviceId, "secret" to secret)
-            val functions = FirebaseFunctions.getInstance()
-            // Cloud Functions emulator endpoint – the host is reachable from the device via 10.0.2.2
-            // For production, comment out useEmulator
-            functions.useEmulator("10.0.2.2", 5001)
-
-            val result = functions
-                .getHttpsCallable("pair")
-                .call(payload)
-                .await()
-
-            val token = (result.data as Map<*, *>)["customToken"] as? String
-                ?: throw IllegalStateException("customToken missing")
-
-            // Sign in with the custom token
-            FirebaseAuth.getInstance().signInWithCustomToken(token).await()
-
-            Log.i(TAG, "Paired successfully – UID = ${FirebaseAuth.getInstance().currentUser?.uid}")
+            // With Spark Plan / Functionless, we rely on Anonymous Auth
+            val auth = FirebaseAuth.getInstance()
+            if (auth.currentUser == null) {
+                auth.signInAnonymously().await()
+            }
+            // Logic: The QR code already contains the deviceId and secret. 
+            // We just need to be authenticated to read/write the 'otps' collection later.
+            Log.i(TAG, "Paired via QR successfully – DeviceID = $deviceId")
         } catch (e: Exception) {
             Log.e(TAG, "Pairing failed", e)
             throw e
@@ -63,23 +56,32 @@ object PairingHelper {
 
     /**
      * Fallback: Pair using only the 6‑digit code.
-     * This requires the backend to have a temporary mapping of code -> {deviceId, secret}.
+     * We query Firestore 'pairings' collection for a document with this code.
      */
     fun callPairFunctionAsyncWithCode(context: Context, code: String, onComplete: () -> Unit = {}) {
         CoroutineScope(Dispatchers.Main).launch {
             try {
-                val functions = FirebaseFunctions.getInstance()
-                functions.useEmulator("10.0.2.2", 5001)
+                val db = FirebaseFirestore.getInstance()
+                val auth = FirebaseAuth.getInstance()
+                
+                if (auth.currentUser == null) {
+                    auth.signInAnonymously().await()
+                }
 
-                val result = functions
-                    .getHttpsCallable("pairWithCode")
-                    .call(mapOf("code" to code))
+                // Query for the pairing code
+                val query = db.collection(Constants.COLL_PAIRINGS)
+                    .whereEqualTo("pairingCode", code)
+                    .limit(1)
+                    .get()
                     .await()
 
-                val data = result.data as Map<*, *>
-                val token = data["customToken"] as String
-                val deviceId = data["deviceId"] as String
-                val secret = data["secret"] as String
+                if (query.isEmpty) {
+                    throw Exception("Invalid code or pairing session expired.")
+                }
+
+                val doc = query.documents[0]
+                val deviceId = doc.id
+                val secret = doc.getString("secret") ?: throw Exception("Secret missing from pairing session.")
 
                 // Store credentials locally
                 val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
@@ -95,11 +97,10 @@ object PairingHelper {
                     .putString(Constants.KEY_SECRET, secret)
                     .apply()
 
-                FirebaseAuth.getInstance().signInWithCustomToken(token).await()
-                
                 Toast.makeText(context, "Paired successfully with code", Toast.LENGTH_LONG).show()
                 onComplete()
             } catch (ex: Exception) {
+                Log.e(TAG, "Code mapping failed", ex)
                 Toast.makeText(context, "Code pairing failed: ${ex.localizedMessage}", Toast.LENGTH_LONG).show()
             }
         }

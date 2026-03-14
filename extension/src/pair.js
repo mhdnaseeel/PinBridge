@@ -1,4 +1,19 @@
 import jsQR from "jsqr";
+import { initializeApp } from "firebase/app";
+import { getAuth, signInAnonymously } from "firebase/auth";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBwBr0MOdVKCwuvoK3oOU6tg5LcS7uqZOE",
+  authDomain: "pinbridge-61dd4.firebaseapp.com",
+  projectId: "pinbridge-61dd4",
+  storageBucket: "pinbridge-61dd4.firebasestorage.app",
+  messagingSenderId: "475556984962",
+  appId: "1:475556984962:web:87e42b8f4e3b0ce9a89c9b",
+  measurementId: "G-LEDS6BH99B"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
 
 const video = document.getElementById('video');
 const canvasElement = document.getElementById('canvas');
@@ -39,16 +54,12 @@ async function handlePairing(qrData) {
   try {
     const data = JSON.parse(qrData);
     if (!data.deviceId || !data.secret) throw new Error("Invalid QR data");
-    const functionUrl = 'https://us-central1-pinbridge-61dd4.cloudfunctions.net/pair';
-    const response = await fetch(functionUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ deviceId: data.deviceId, secret: data.secret })
-    });
-    if (!response.ok) throw new Error(await response.text() || 'Pairing failed');
-    const {token} = await response.json();
+    
+    // Ensure we are signed in anonymously
+    await signInAnonymously(auth);
+
     await chrome.storage.session.set({ secret: data.secret });
-    chrome.runtime.sendMessage({ type: 'pair', token: token }, (res) => {
+    chrome.runtime.sendMessage({ type: 'pair', deviceId: data.deviceId }, (res) => {
       if (res.status === 'paired') {
         status.textContent = "Successfully paired!";
         status.style.color = "green";

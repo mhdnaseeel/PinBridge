@@ -2,14 +2,14 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Pairing documents – only callable via Cloud Functions (admin)
+    // Pairing and OTP documents - Secured by application-level AES encryption
+    // Logic: Both sides login anonymously. The deviceId is the document key.
     match /pairings/{deviceId} {
-      allow read, write: if false; // never client‑side
+      allow read, write: if request.auth != null;
     }
 
-    // OTP document – only the authenticated UID that equals deviceId can read/write
     match /otps/{deviceId} {
-      allow read, write: if request.auth != null && request.auth.uid == deviceId;
+      allow read, write: if request.auth != null;
     }
   }
 }

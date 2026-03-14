@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getAuth, signInWithCustomToken, signOut, onAuthStateChanged } from "firebase/auth";
+import { getAuth, signInAnonymously, signOut, onAuthStateChanged } from "firebase/auth";
 import { getFirestore, collection, doc, onSnapshot } from "firebase/firestore";
 
 const firebaseConfig = {
@@ -20,9 +20,10 @@ let unsubscribe = null;
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.type === 'pair') {
-    signInWithCustomToken(auth, msg.token)
-      .then(userCred => {
-        startOtpListener(userCred.user.uid);
+    signInAnonymously(auth)
+      .then(() => {
+        chrome.storage.local.set({ pairedDeviceId: msg.deviceId });
+        startOtpListener(msg.deviceId);
         sendResponse({status: 'paired'});
       })
       .catch(err => {
@@ -30,10 +31,13 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       });
     return true;
   } else if (msg.type === 'getStatus') {
-    const user = auth.currentUser;
-    sendResponse({status: user ? 'paired' : 'unpaired', uid: user?.uid});
+    chrome.storage.local.get(['pairedDeviceId'], ({pairedDeviceId}) => {
+       sendResponse({status: pairedDeviceId ? 'paired' : 'unpaired', deviceId: pairedDeviceId});
+    });
+    return true;
   } else if (msg.type === 'signOut') {
     signOut(auth).then(() => {
+      chrome.storage.local.remove(['pairedDeviceId']);
       if (unsubscribe) unsubscribe();
       sendResponse({status: 'ok'});
     });
@@ -41,9 +45,10 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   }
 });
 
-function startOtpListener(uid) {
+function startOtpListener(deviceId) {
+  if (!deviceId) return;
   if (unsubscribe) unsubscribe();
-  const docRef = doc(db, 'otps', uid);
+  const docRef = doc(db, 'otps', deviceId);
   unsubscribe = onSnapshot(docRef, snap => {
     const data = snap.data();
     if (!data) return;
@@ -79,7 +84,11 @@ function startOtpListener(uid) {
 }
 
 onAuthStateChanged(auth, user => {
-  if (user) startOtpListener(user.uid);
+  if (user) {
+    chrome.storage.local.get(['pairedDeviceId'], ({pairedDeviceId}) => {
+      if (pairedDeviceId) startOtpListener(pairedDeviceId);
+    });
+  }
 });
 
 // Assuming decrypt.js is also modularized or we include it here

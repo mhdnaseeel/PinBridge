@@ -28,6 +28,7 @@ class UploadOtpWorker(
             EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
         )
 
+        val deviceId = sharedPrefs.getString(Constants.KEY_DEVICE_ID, null) ?: return Result.failure()
         val secret = sharedPrefs.getString(Constants.KEY_SECRET, null) ?: return Result.failure()
         val secretBytes = Base64.decode(secret, Base64.NO_WRAP)
         
@@ -42,11 +43,10 @@ class UploadOtpWorker(
             }
         }
         
-        val uid = auth.currentUser?.uid ?: return Result.retry()
         val db = FirebaseFirestore.getInstance()
         
         return try {
-            db.collection(Constants.COLL_OTPS).document(uid).set(
+            db.collection(Constants.COLL_OTPS).document(deviceId).set(
                 mapOf(
                     "otp" to encrypted.cipher,
                     "iv"  to encrypted.iv,

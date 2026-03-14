@@ -1,5 +1,6 @@
 import { initializeApp } from "firebase/app";
-import { getFunctions, httpsCallable } from "firebase/functions";
+import { getAuth, signInAnonymously } from "firebase/auth";
+import { getFirestore, doc, setDoc, serverTimestamp } from "firebase/firestore";
 import QRCode from 'qrcode';
 
 const firebaseConfig = {
@@ -13,9 +14,20 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-const functions = getFunctions(app);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
 (async () => {
+  // Ensure we are signed in anonymously
+  try {
+    await signInAnonymously(auth);
+    console.log('[PinBridge] Signed in anonymously');
+  } catch (e) {
+    console.error('[PinBridge] Auth failed:', e);
+    alert('Failed to authenticate. Please check your internet connection.');
+    return;
+  }
+
   const deviceId = crypto.randomUUID();
   const secretBytes = new Uint8Array(32);
   crypto.getRandomValues(secretBytes);
@@ -26,18 +38,17 @@ const functions = getFunctions(app);
 
   console.log('[PinBridge] Generating pairing session:', { deviceId, pairingCode });
 
-  // 1. Initialize via Cloud Function instead of direct Firestore write
+  // 1. Initialize via direct Firestore write (Functionless Spark Plan)
   try {
-    const startPairing = httpsCallable(functions, 'startPairing');
-    await startPairing({
-      deviceId,
+    await setDoc(doc(db, 'pairings', deviceId), {
       secret: secretB64,
-      pairingCode: pairingCode
+      pairingCode: pairingCode,
+      createdAt: serverTimestamp()
     });
-    console.log('[PinBridge] Pairing session initialized via Cloud Function');
+    console.log('[PinBridge] Pairing session initialized in Firestore');
   } catch (e) {
     console.error('[PinBridge] Failed to initialize pairing session:', e);
-    alert('Failed to initialize pairing session. Please try again or check Firebase Functions deployment.');
+    alert(`Failed to initialize pairing session: ${e.message}\n\nPlease check your Firebase project setup.`);
     return;
   }
 
