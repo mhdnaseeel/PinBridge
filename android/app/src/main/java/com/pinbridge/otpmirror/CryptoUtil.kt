@@ -41,6 +41,6 @@ object CryptoUtil {
         cipher.init(Cipher.DECRYPT_MODE, keySpec, gcmSpec)
         val plaintext = cipher.doFinal(cipherText)
         
-        return plaintext.toString(Charsets.UTF_8)
+        return String(plaintext, Charsets.UTF_8)
     }
 }

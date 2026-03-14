@@ -46,11 +46,10 @@ class PairingActivity : AppCompatActivity() {
             SecureRandom().nextBytes(secretBytes)
             secret = Base64.encodeToString(secretBytes, Base64.NO_WRAP)
 
-            sharedPrefs.edit().apply {
-                putString(Constants.KEY_DEVICE_ID, deviceId)
-                putString(Constants.KEY_SECRET, secret)
-                apply()
-            }
+            sharedPrefs.edit()
+                .putString(Constants.KEY_DEVICE_ID, deviceId)
+                .putString(Constants.KEY_SECRET, secret)
+                .apply()
         }
 
         binding.pairingInfo.text = "Device ID: $deviceId"

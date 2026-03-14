@@ -4,7 +4,7 @@
             "outputFile": "com.pinbridge.otpmirror.app-mergeDebugResources-76:/values-v16/values-v16.xml",
             "map": [
                 {
-                    "source": "/Users/muhammednaseel/.gradle/caches/9.0.0/transforms/aa93543b9a28b55a2b62353a0eace7c9/transformed/appcompat-1.6.1/res/values-v16/values-v16.xml",
+                    "source": "/Users/muhammednaseel/.gradle/caches/9.0.0/transforms/0bc578dc888c95bea84c267574362358/transformed/appcompat-1.6.1/res/values-v16/values-v16.xml",
                     "from": {
                         "startLines": "2",
                         "startColumns": "4",
@@ -23,7 +23,7 @@
                     }
                 },
                 {
-                    "source": "/Users/muhammednaseel/.gradle/caches/9.0.0/transforms/94c7e35df889cad60477a4e11e65cf74/transformed/core-1.12.0/res/values-v16/values-v16.xml",
+                    "source": "/Users/muhammednaseel/.gradle/caches/9.0.0/transforms/3c97dbdb8fb68383b6c0121fddcaa447/transformed/core-1.12.0/res/values-v16/values-v16.xml",
                     "from": {
                         "startLines": "2",
                         "startColumns": "4",
