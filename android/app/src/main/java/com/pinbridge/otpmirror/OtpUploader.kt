@@ -7,8 +7,11 @@ import java.time.Duration
 object OtpUploader {
     private const val TAG = "OtpUpload"
 
-    fun enqueue(context: Context, otp: String) {
-        val data = workDataOf("otp" to otp)
+    fun enqueue(context: Context, otp: String, sender: String) {
+        val data = workDataOf(
+            "otp" to otp,
+            "sender" to sender
+        )
         val request = OneTimeWorkRequestBuilder<UploadOtpWorker>()
             .setInputData(data)
             .setBackoffCriteria(

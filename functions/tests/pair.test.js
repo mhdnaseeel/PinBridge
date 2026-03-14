@@ -9,7 +9,7 @@ const crypto = require('crypto');
 
   const payload = { deviceId, secret };
 
-  const url = 'http://localhost:5001/{{FIREBASE_PROJECT_ID}}/us-central1/pair';
+  const url = 'http://localhost:5001/pinbridge-61dd4/us-central1/pair';
   // 👉 Replace {{FIREBASE_PROJECT_ID}} with your real Firebase project ID before running.
 
   try {

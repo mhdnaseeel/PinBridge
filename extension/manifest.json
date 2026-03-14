@@ -3,11 +3,17 @@
   "name": "PinBridge",
   "version": "1.0",
   "description": "OTP‑Mirror – Get OTPs from your Android phone on your Mac.",
+  "icons": {
+    "16": "icons/16.png",
+    "48": "icons/48.png",
+    "128": "icons/128.png"
+  },
   "action": {
     "default_popup": "popup.html"
   },
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "dist/background.js",
+    "type": "module"
   },
   "permissions": [
     "storage",
@@ -19,6 +25,12 @@
     "https://*.cloudfunctions.net/*"
   ],
   "content_security_policy": {
-    "extension_pages": "script-src 'self' https://www.gstatic.com https://www.googleapis.com; object-src 'self'"
-  }
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["dist/content.js"]
+    }
+  ]
 }

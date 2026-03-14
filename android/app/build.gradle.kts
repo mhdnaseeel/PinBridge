@@ -61,9 +61,11 @@ dependencies {
     implementation("androidx.work:work-runtime-ktx:2.9.0")
     
     // Firebase
-    implementation(platform("com.google.firebase:firebase-bom:32.8.0"))
+    implementation(platform("com.google.firebase:firebase-bom:34.10.0"))
+    implementation("com.google.firebase:firebase-analytics")
     implementation("com.google.firebase:firebase-auth-ktx")
     implementation("com.google.firebase:firebase-firestore-ktx")
+    implementation("com.google.firebase:firebase-functions-ktx")
     
     // Encryption
     implementation("androidx.security:security-crypto:1.1.0-alpha06")

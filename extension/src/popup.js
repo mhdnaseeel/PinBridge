@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   pairBtn.onclick = () => {
-    window.open('pair.html');
+    window.open('pairing.html');
   };
 
   copyBtn.onclick = () => {

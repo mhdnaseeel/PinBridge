@@ -59,7 +59,7 @@ class MainActivity : ComponentActivity() {
                 Text(text = statusText, style = MaterialTheme.typography.bodyLarge)
                 Spacer(modifier = Modifier.height(24.dp))
                 Button(onClick = {
-                    startActivity(Intent(this@MainActivity, PairingActivity::class.java))
+                    startActivity(Intent(this@MainActivity, PairingScannerActivity::class.java))
                 }) {
                     Text(text = buttonText)
                 }

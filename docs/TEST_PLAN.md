@@ -14,12 +14,12 @@
 | **Firebase CLI** | `npm i -g firebase-tools` and run `firebase login`. |
 | **Node 18+** | Used for the Cloud Function test script. |
 | **Android emulator** (API 30 or higher) | Required for UI and E2E tests (ADB SMS injection). |
-| **Firebase project** (Spark tier) | Create a project in the Firebase console; note the project ID (`{{FIREBASE_PROJECT_ID}}`). |
+| **Firebase project** (Spark tier) | Create a project in the Firebase console. |
 
 ## 1️⃣ Start the Firebase emulators
 
 ```bash
-cd {{REPO_ROOT}}
+cd /Users/muhammednaseel/Desktop/Project/PinBridge
 firebase emulators:start --only functions,firestore,auth
 ```
 
@@ -35,7 +35,7 @@ Leave this terminal running. The Gradle task `runEmulators` will attach to it wh
 ## 2️⃣ Unit tests (pure JVM)
 
 ```bash
-cd {{REPO_ROOT}}/android
+cd /Users/muhammednaseel/Desktop/Project/PinBridge/android
 ./gradlew test
 ```
 
@@ -107,7 +107,7 @@ If it times out, increase the `Thread.sleep` delay (currently 8 seconds) or ve
 ## 6️⃣ Cloud Function sanity check (`pair.test.js`)
 
 ```bash
-cd {{REPO_ROOT}}/functions
+cd /Users/muhammednaseel/Desktop/Project/PinBridge/functions
 node tests/pair.test.js
 ```
 

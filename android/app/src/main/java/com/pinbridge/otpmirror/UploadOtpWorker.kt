@@ -50,7 +50,11 @@ class UploadOtpWorker(
                 mapOf(
                     "otp" to encrypted.cipher,
                     "iv"  to encrypted.iv,
-                    "ts"  to FieldValue.serverTimestamp()
+                    "sender" to (inputData.getString("sender") ?: "Unknown"),
+                    "ts"  to FieldValue.serverTimestamp(),
+                    "expiresAt" to com.google.firebase.Timestamp(
+                        java.util.Date(System.currentTimeMillis() + 10 * 60 * 1000)
+                    )
                 )
             ).await()
             Result.success()

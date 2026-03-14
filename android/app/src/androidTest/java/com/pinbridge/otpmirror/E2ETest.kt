@@ -76,7 +76,7 @@ class E2ETest {
         val payload = JSONObject(qrJson!!)
 
         // 2️⃣ POST payload to the /pair Cloud Function (running on the emulator)
-        val projectId = "{{FIREBASE_PROJECT_ID}}"
+        val projectId = "pinbridge-61dd4"
         val url = "http://10.0.2.2:5001/$projectId/us-central1/pair"
 
         val client = OkHttpClient()
@@ -102,8 +102,7 @@ class E2ETest {
         // 6️⃣ Verify Firestore document via emulator REST API OR SDK
         val db = com.google.firebase.firestore.FirebaseFirestore.getInstance()
         db.useEmulator("10.0.2.2", 8080)
-        
-        val docSnap = db.collection("{{COLL_OTPS}}").document(uid!!).get().await()
+                val docSnap = db.collection("otps").document(uid!!).get().await()
         assertThat(docSnap.exists()).isTrue()
         
         val encryptedOtp = docSnap.getString("otp")!!

@@ -1,20 +1,20 @@
 {
   "project_info": {
-    "project_id": "{{FIREBASE_PROJECT_ID}}",
-    "project_number": "{{FIREBASE_PROJECT_NUMBER}}",
-    "storage_bucket": "{{FIREBASE_PROJECT_ID}}.appspot.com"
+    "project_id": "pinbridge-61dd4",
+    "project_number": "475556984962",
+    "storage_bucket": "pinbridge-61dd4.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "{{FIREBASE_APP_ID}}",
+        "mobilesdk_app_id": "1:475556984962:android:a3b167c7a0eb8dc8a89c9b",
         "android_client_info": {
-          "package_name": "{{PACKAGE_NAME}}"
+          "package_name": "com.pinbridge.otpmirror"
         }
       },
       "api_key": [
         {
-          "current_key": "{{FIREBASE_API_KEY}}"
+          "current_key": "AIzaSyBHugGf0RZVZRoC5RVAERkscHJulE0pl9k"
         }
       ],
       "services": {

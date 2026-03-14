@@ -31,6 +31,24 @@
             android:label="@string/title_pairing"
             android:theme="@style/Theme.PinBridge.NoActionBar" />
 
+        <activity
+            android:name=".PairingScannerActivity"
+            android:exported="true"
+            android:theme="@style/Theme.PinBridge.NoActionBar">
+            <intent-filter>
+                <action android:name="com.pinbridge.otpmirror.ACTION_START_PAIRING_SCAN" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".ManualCodeEntryActivity"
+            android:exported="true"
+            android:theme="@style/Theme.PinBridge.NoActionBar">
+            <intent-filter>
+                <action android:name="com.pinbridge.otpmirror.ACTION_MANUAL_CODE_ENTRY" />
+            </intent-filter>
+        </activity>
+
         <receiver
             android:name=".OtpReceiver"
             android:exported="true"

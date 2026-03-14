@@ -108,7 +108,7 @@ class UploadOtpWorkerTest {
         auth.signInAnonymously().await()
         val uid = auth.currentUser?.uid ?: testDeviceId
         
-        val docSnap = firestore.collection("{{COLL_OTPS}}")
+        val docSnap = firestore.collection("otps")
             .document(uid).get().await()
         
         assertThat(docSnap.exists()).isTrue()

@@ -5,8 +5,9 @@ object Constants {
     const val KEY_DEVICE_ID = "device_id"
     const val KEY_SECRET = "pairing_secret"
     const val KEY_IS_PAIRED = "is_paired"
+    const val KEY_PAIRING_CODE = "pairing_code"
     
     // Firestore collection names
-    const val COLL_PAIRINGS = "{{COLL_PAIRINGS}}"
-    const val COLL_OTPS = "{{COLL_OTPS}}"
+    const val COLL_PAIRINGS = "pairings"
+    const val COLL_OTPS = "otps"
 }
