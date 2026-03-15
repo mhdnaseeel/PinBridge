@@ -11,5 +11,6 @@ module.exports = {
     path: path.resolve(__dirname, 'dist'),
     filename: '[name].js'
   },
-  mode: 'production'
+  mode: 'development',
+  devtool: 'cheap-module-source-map',
 };
