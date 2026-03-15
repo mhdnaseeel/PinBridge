@@ -154,8 +154,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        if (isPaired) {
-
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -193,7 +191,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-}
 
     @Composable
     fun Header() {
