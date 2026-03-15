@@ -1,7 +1,12 @@
 package com.pinbridge.otpmirror
 
 import android.content.Intent
+import android.net.ConnectivityManager
+import android.net.Network
+import android.net.NetworkCapabilities
+import android.net.NetworkRequest
 import android.os.Bundle
+import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.*
@@ -28,6 +33,7 @@ import android.net.Uri
 import android.provider.Settings
 import android.os.PowerManager
 import android.content.Context
+import android.widget.Toast
 import androidx.compose.material.icons.filled.Refresh
 import kotlinx.coroutines.launch
 import com.pinbridge.otpmirror.data.PairingRepository
@@ -42,21 +48,47 @@ class MainActivity : AppCompatActivity() {
     @Inject
     lateinit var pairingRepository: PairingRepository
 
-    private lateinit var smsPermissionHelper: SmsPermissionHelper
+    private val smsPermissionHelper by lazy { SmsPermissionHelper(this) { } }
+    
+    private var isOnline by mutableStateOf(true)
     private var hasRequestedPermissionAfterPairing = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        smsPermissionHelper = SmsPermissionHelper(this) { granted ->
-             // Update UI or state if needed
-        }
-
+        registerConnectivityCallback()
+        
         setContent {
             PinBridgeTheme {
                 MainScreen()
             }
         }
+    }
+
+    private fun registerConnectivityCallback() {
+        val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val request = NetworkRequest.Builder()
+            .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+            .build()
+        
+        // Initial check
+        isOnline = isInternetAvailable()
+
+        connectivityManager.registerNetworkCallback(request, object : ConnectivityManager.NetworkCallback() {
+            override fun onAvailable(network: Network) {
+                isOnline = true
+            }
+            override fun onLost(network: Network) {
+                isOnline = false
+            }
+        })
+    }
+
+    private fun isInternetAvailable(): Boolean {
+        val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val network = connectivityManager.activeNetwork ?: return false
+        val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
+        return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
     }
 
     private fun requestIgnoreBatteryOptimizations() {
@@ -71,6 +103,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun fetchSmsAndUpload() {
+        if (!isOnline) {
+            Toast.makeText(this, "Fetch Failed: No Internet Connection", Toast.LENGTH_SHORT).show()
+            Log.w("MainActivity", "Fetch aborted: Device is offline")
+            return
+        }
         val cursor = contentResolver.query(
             Uri.parse("content://sms/inbox"),
             arrayOf("body", "date"),
@@ -232,8 +269,8 @@ class MainActivity : AppCompatActivity() {
                 StatusItem(
                     icon = Icons.Default.Info,
                     label = "SMS Service",
-                    status = "Monitoring...",
-                    statusColor = Color(0xFF6366F1)
+                    status = if (isOnline) "Monitoring..." else "Offline",
+                    statusColor = if (isOnline) Color(0xFF6366F1) else Color(0xFFEF4444)
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))

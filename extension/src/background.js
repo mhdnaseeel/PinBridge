@@ -26,26 +26,33 @@ let lastKnownHeartbeat = 0;
 let checkInterval = null;
 
 async function checkOnlineStatus() {
-  if (!lastKnownHeartbeat) return;
-  
-  // 5 minutes threshold to account for clock drift and WorkManager delays
-  const isOnline = (Date.now() - lastKnownHeartbeat) < 300000;
-  
-  const currentStatus = await chrome.storage.session.get(['isOnline']);
-  if (currentStatus.isOnline !== isOnline) {
-    chrome.storage.session.set({ isOnline });
-    safeSendMessage({ type: 'statusUpdate', online: isOnline });
-    console.log(`[PinBridge] Device status changed to: ${isOnline ? 'Online' : 'Offline'}`);
+  try {
+    if (!lastKnownHeartbeat) return;
+    
+    // 5 minutes threshold to account for clock drift and WorkManager delays
+    const isOnline = (Date.now() - lastKnownHeartbeat) < 300000;
+    
+    const currentStatus = await chrome.storage.session.get(['isOnline']);
+    if (currentStatus.isOnline !== isOnline) {
+      await chrome.storage.session.set({ isOnline });
+      safeSendMessage({ type: 'statusUpdate', online: isOnline });
+      console.log(`[PinBridge] Device status changed to: ${isOnline ? 'Online' : 'Offline'}`);
+    }
+  } catch (err) {
+    console.error('[PinBridge] Online status check failed:', err);
   }
 }
 
 function safeSendMessage(message) {
-  chrome.runtime.sendMessage(message).catch(err => {
-    // Ignore "Could not establish connection" errors as they just mean the popup/sidepanel is closed
-    if (err.message !== 'Could not establish connection. Receiving end does not exist.') {
-      console.warn('[PinBridge] SendMessage error:', err);
-    }
-  });
+  try {
+    chrome.runtime.sendMessage(message).catch(err => {
+      if (!err.message.includes('Could not establish connection')) {
+        console.warn('[PinBridge] Runtime message error:', err);
+      }
+    });
+  } catch (e) {
+    // Catch immediate sync errors
+  }
 }
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
@@ -153,7 +160,9 @@ function startOtpListener(deviceId) {
         
         chrome.tabs.query({}, (tabs) => {
           tabs.forEach(tab => {
-            chrome.tabs.sendMessage(tab.id, {type: 'newOtp', otp: decrypted});
+            chrome.tabs.sendMessage(tab.id, {type: 'newOtp', otp: decrypted}).catch(() => {
+              // Expected for tabs where PinBridge isn't active
+            });
           });
         });
       } catch (e) {

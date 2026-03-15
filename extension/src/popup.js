@@ -11,6 +11,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     const connectionIndicator = document.getElementById('connectionIndicator');
     const statusDot = document.getElementById('statusDot');
     const statusText = document.getElementById('statusText');
+    const offlineBanner = document.getElementById('offlineBanner');
+
+    function updateBrowserStatus() {
+        if (navigator.onLine) {
+            offlineBanner.classList.remove('active');
+        } else {
+            offlineBanner.classList.add('active');
+        }
+    }
+
+    window.addEventListener('online', updateBrowserStatus);
+    window.addEventListener('offline', updateBrowserStatus);
+    updateBrowserStatus();
 
     // Check status
     chrome.runtime.sendMessage({ type: 'getStatus' }, (response) => {
@@ -91,21 +104,44 @@ document.addEventListener('DOMContentLoaded', async () => {
         }, 2000);
     };
 
-    manualFetchBtn.onclick = () => {
-        manualFetchBtn.disabled = true;
-        const originalText = manualFetchBtn.innerHTML;
-        manualFetchBtn.innerHTML = 'Fetching...';
-        
-        chrome.runtime.sendMessage({ type: 'manualFetch' }, (response) => {
+    manualFetchBtn.addEventListener('click', () => {
+        if (!navigator.onLine) {
+            const originalText = manualFetchBtn.innerText;
+            manualFetchBtn.innerText = 'Failed: No Internet';
+            manualFetchBtn.style.background = '#ef4444';
             setTimeout(() => {
-                manualFetchBtn.disabled = false;
-                manualFetchBtn.innerHTML = originalText;
-                if (response && response.otp) {
+                manualFetchBtn.innerText = originalText;
+                manualFetchBtn.style.background = '#10b981';
+            }, 3000);
+            return;
+        }
+
+        manualFetchBtn.disabled = true;
+        const originalText = manualFetchBtn.innerText;
+        manualFetchBtn.innerText = 'Fetching...';
+
+        chrome.runtime.sendMessage({ type: 'manualFetch' }, (response) => {
+            manualFetchBtn.disabled = false;
+            if (response && response.status === 'ok') {
+                manualFetchBtn.innerText = 'Success!';
+                manualFetchBtn.style.background = '#6366f1';
+                if (response.otp) {
                     updateOtpDisplay({ otp: response.otp, ts: Date.now() });
                 }
-            }, 1000);
+                setTimeout(() => {
+                    manualFetchBtn.innerText = originalText;
+                    manualFetchBtn.style.background = '#10b981';
+                }, 2000);
+            } else {
+                manualFetchBtn.innerText = 'Failed';
+                manualFetchBtn.style.background = '#ef4444';
+                setTimeout(() => {
+                    manualFetchBtn.innerText = originalText;
+                    manualFetchBtn.style.background = '#10b981';
+                }, 3000);
+            }
         });
-    };
+    });
 
     signOutBtn.onclick = () => {
         if (confirm('Are you sure you want to unpair this device?')) {

@@ -220,6 +220,23 @@
       color: var(--text-main);
     }
 
+    .offline-banner {
+      background: #ef4444;
+      color: white;
+      text-align: center;
+      padding: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: none;
+    }
+    
+    .offline-banner.active {
+      display: block;
+    }
+
     .empty-state {
       padding: 20px 0;
     }
@@ -262,6 +279,9 @@
   </style>
 </head>
 <body>
+  <div id="offlineBanner" class="offline-banner">
+    ⚠️ Browser is Offline
+  </div>
   <div class="main-container">
     <div class="header">
       <div class="logo-area">
