@@ -26,10 +26,7 @@
             </intent-filter>
         </activity>
 
-        <activity
-            android:name=".PairingActivity"
-            android:label="@string/title_pairing"
-            android:theme="@style/Theme.PinBridge.NoActionBar" />
+
 
         <activity
             android:name=".PairingScannerActivity"

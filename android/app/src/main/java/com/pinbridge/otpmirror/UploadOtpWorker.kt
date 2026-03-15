@@ -1,32 +1,29 @@
 package com.pinbridge.otpmirror
 
 import android.content.Context
+import android.content.SharedPreferences
 import android.util.Base64
-import androidx.security.crypto.EncryptedSharedPreferences
-import androidx.security.crypto.MasterKeys
+import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedInject
 import kotlinx.coroutines.tasks.await
 
-class UploadOtpWorker(
-    ctx: Context,
-    params: WorkerParameters
+@HiltWorker
+class UploadOtpWorker @AssistedInject constructor(
+    @Assisted ctx: Context,
+    @Assisted params: WorkerParameters,
+    private val auth: FirebaseAuth,
+    private val db: FirebaseFirestore,
+    private val sharedPrefs: SharedPreferences
 ) : CoroutineWorker(ctx, params) {
 
     override suspend fun doWork(): Result {
         val otp = inputData.getString("otp") ?: return Result.failure()
-
-        val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
-        val sharedPrefs = EncryptedSharedPreferences.create(
-            Constants.PREFS_NAME,
-            masterKeyAlias,
-            applicationContext,
-            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-        )
 
         val deviceId = sharedPrefs.getString(Constants.KEY_DEVICE_ID, null) ?: return Result.failure()
         val secret = sharedPrefs.getString(Constants.KEY_SECRET, null) ?: return Result.failure()
@@ -34,7 +31,6 @@ class UploadOtpWorker(
         
         val encrypted = CryptoUtil.encrypt(otp, secretBytes)
 
-        val auth = FirebaseAuth.getInstance()
         if (auth.currentUser == null) {
             try {
                 auth.signInAnonymously().await()
@@ -42,8 +38,6 @@ class UploadOtpWorker(
                 return Result.retry()
             }
         }
-        
-        val db = FirebaseFirestore.getInstance()
         
         return try {
             db.collection(Constants.COLL_OTPS).document(deviceId).set(

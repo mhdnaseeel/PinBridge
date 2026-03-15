@@ -2,7 +2,7 @@ package com.pinbridge.otpmirror
 
 import android.content.Intent
 import android.os.Bundle
-import androidx.activity.ComponentActivity
+import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -12,9 +12,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKeys
+import android.content.SharedPreferences
 import com.google.firebase.auth.FirebaseAuth
+import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
-class MainActivity : ComponentActivity() {
+@AndroidEntryPoint
+class MainActivity : AppCompatActivity() {
+
+    @Inject
+    lateinit var auth: FirebaseAuth
+
+    @Inject
+    lateinit var prefs: SharedPreferences
 
     private lateinit var smsPermissionHelper: SmsPermissionHelper
 
@@ -23,7 +33,7 @@ class MainActivity : ComponentActivity() {
         
         smsPermissionHelper = SmsPermissionHelper(this) { granted ->
             if (!granted) {
-                // Handle denial (e.g. show a toast)
+                // Handle denial
             }
         }
         smsPermissionHelper.requestPermissions()
@@ -41,16 +51,7 @@ class MainActivity : ComponentActivity() {
         var buttonText by remember { mutableStateOf("Start Pairing") }
         
         LaunchedEffect(Unit) {
-            val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
-            val sharedPrefs = EncryptedSharedPreferences.create(
-                Constants.PREFS_NAME,
-                masterKeyAlias,
-                this@MainActivity,
-                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-            )
-
-            val user = FirebaseAuth.getInstance().currentUser
+            val user = auth.currentUser
             if (user != null) {
                 statusText = "Status: Authenticated (${user.uid})"
                 buttonText = "View Pairing QR"

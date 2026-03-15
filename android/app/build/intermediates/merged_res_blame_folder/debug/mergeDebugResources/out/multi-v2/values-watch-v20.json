@@ -1,10 +1,10 @@
 {
     "logs": [
         {
-            "outputFile": "com.pinbridge.otpmirror.app-mergeDebugResources-76:/values-watch-v20/values-watch-v20.xml",
+            "outputFile": "com.pinbridge.otpmirror.app-mergeDebugResources-81:/values-watch-v20/values-watch-v20.xml",
             "map": [
                 {
-                    "source": "/Users/muhammednaseel/.gradle/caches/9.0.0/transforms/0bc578dc888c95bea84c267574362358/transformed/appcompat-1.6.1/res/values-watch-v20/values-watch-v20.xml",
+                    "source": "/Users/muhammednaseel/.gradle/caches/transforms-4/3506eb61007f84248cc18f7acaa62cc6/transformed/appcompat-1.6.1/res/values-watch-v20/values-watch-v20.xml",
                     "from": {
                         "startLines": "2,5,8",
                         "startColumns": "4,4,4",
@@ -23,7 +23,7 @@
                     }
                 },
                 {
-                    "source": "/Users/muhammednaseel/.gradle/caches/9.0.0/transforms/5a45e738ba2f1cb5b9ee8c1742c3713e/transformed/play-services-auth-20.7.0/res/values-watch-v20/values.xml",
+                    "source": "/Users/muhammednaseel/.gradle/caches/transforms-4/a2141dba99373114600eb8a74ec0fbd1/transformed/play-services-auth-20.7.0/res/values-watch-v20/values.xml",
                     "from": {
                         "startLines": "4,5,6,7,8,9,10,11",
                         "startColumns": "0,0,0,0,0,0,0,0",

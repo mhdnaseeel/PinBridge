@@ -1,10 +1,10 @@
 {
     "logs": [
         {
-            "outputFile": "com.pinbridge.otpmirror.app-mergeDebugResources-76:/values-v22/values-v22.xml",
+            "outputFile": "com.pinbridge.otpmirror.app-mergeDebugResources-81:/values-v22/values-v22.xml",
             "map": [
                 {
-                    "source": "/Users/muhammednaseel/.gradle/caches/9.0.0/transforms/0bc578dc888c95bea84c267574362358/transformed/appcompat-1.6.1/res/values-v22/values-v22.xml",
+                    "source": "/Users/muhammednaseel/.gradle/caches/transforms-4/3506eb61007f84248cc18f7acaa62cc6/transformed/appcompat-1.6.1/res/values-v22/values-v22.xml",
                     "from": {
                         "startLines": "2,3,4,9",
                         "startColumns": "4,4,4,4",

@@ -1,20 +1,10 @@
 {
     "logs": [
         {
-            "outputFile": "com.pinbridge.otpmirror.app-mergeDebugResources-76:/values-sw600dp-v13/values-sw600dp-v13.xml",
+            "outputFile": "com.pinbridge.otpmirror.app-mergeDebugResources-81:/values-sw600dp-v13/values-sw600dp-v13.xml",
             "map": [
                 {
-                    "source": "/Users/muhammednaseel/.gradle/caches/9.0.0/transforms/0bc578dc888c95bea84c267574362358/transformed/appcompat-1.6.1/res/values-sw600dp-v13/values-sw600dp-v13.xml",
-                    "from": {
-                        "startLines": "2,3,4,5,6,7,8,9",
-                        "startColumns": "4,4,4,4,4,4,4,4",
-                        "startOffsets": "55,124,193,263,337,413,472,543",
-                        "endColumns": "68,68,69,73,75,58,70,67",
-                        "endOffsets": "119,188,258,332,408,467,538,606"
-                    }
-                },
-                {
-                    "source": "/Users/muhammednaseel/.gradle/caches/9.0.0/transforms/230e1f2bddabf61c91a721395d23d682/transformed/material-1.11.0/res/values-sw600dp-v13/values-sw600dp-v13.xml",
+                    "source": "/Users/muhammednaseel/.gradle/caches/transforms-4/8123f9069622a163bff7b60249fac250/transformed/material-1.11.0/res/values-sw600dp-v13/values-sw600dp-v13.xml",
                     "from": {
                         "startLines": "2,3,4,5,6,7,8,10,11,12,13,14",
                         "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4",
@@ -30,6 +20,16 @@
                         "endLines": "10,11,12,13,14,15,17,18,19,20,21,25",
                         "endColumns": "59,69,70,71,57,57,10,63,55,58,62,10",
                         "endOffsets": "666,736,807,879,937,995,1104,1168,1224,1283,1346,1518"
+                    }
+                },
+                {
+                    "source": "/Users/muhammednaseel/.gradle/caches/transforms-4/3506eb61007f84248cc18f7acaa62cc6/transformed/appcompat-1.6.1/res/values-sw600dp-v13/values-sw600dp-v13.xml",
+                    "from": {
+                        "startLines": "2,3,4,5,6,7,8,9",
+                        "startColumns": "4,4,4,4,4,4,4,4",
+                        "startOffsets": "55,124,193,263,337,413,472,543",
+                        "endColumns": "68,68,69,73,75,58,70,67",
+                        "endOffsets": "119,188,258,332,408,467,538,606"
                     }
                 }
             ]

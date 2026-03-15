@@ -1,20 +1,10 @@
 {
     "logs": [
         {
-            "outputFile": "com.pinbridge.otpmirror.app-mergeDebugResources-76:/values-v23/values-v23.xml",
+            "outputFile": "com.pinbridge.otpmirror.app-mergeDebugResources-81:/values-v23/values-v23.xml",
             "map": [
                 {
-                    "source": "/Users/muhammednaseel/.gradle/caches/9.0.0/transforms/989f2cee79c48251e44192203374f54f/transformed/work-runtime-2.9.0/res/values-v23/values-v23.xml",
-                    "from": {
-                        "startLines": "2,3",
-                        "startColumns": "4,4",
-                        "startOffsets": "55,121",
-                        "endColumns": "65,62",
-                        "endOffsets": "116,179"
-                    }
-                },
-                {
-                    "source": "/Users/muhammednaseel/.gradle/caches/9.0.0/transforms/230e1f2bddabf61c91a721395d23d682/transformed/material-1.11.0/res/values-v23/values-v23.xml",
+                    "source": "/Users/muhammednaseel/.gradle/caches/transforms-4/8123f9069622a163bff7b60249fac250/transformed/material-1.11.0/res/values-v23/values-v23.xml",
                     "from": {
                         "startLines": "2,5,9,13,16,19,22,25,28,32",
                         "startColumns": "4,4,4,4,4,4,4,4,4,4",
@@ -33,7 +23,7 @@
                     }
                 },
                 {
-                    "source": "/Users/muhammednaseel/.gradle/caches/9.0.0/transforms/e5d983396a016af4192d15224ee35c0a/transformed/cardview-1.0.0/res/values-v23/values-v23.xml",
+                    "source": "/Users/muhammednaseel/.gradle/caches/transforms-4/b9aa120016eeb264d092ff751c235f7d/transformed/cardview-1.0.0/res/values-v23/values-v23.xml",
                     "from": {
                         "startLines": "2",
                         "startColumns": "4",
@@ -52,7 +42,7 @@
                     }
                 },
                 {
-                    "source": "/Users/muhammednaseel/.gradle/caches/9.0.0/transforms/0bc578dc888c95bea84c267574362358/transformed/appcompat-1.6.1/res/values-v23/values-v23.xml",
+                    "source": "/Users/muhammednaseel/.gradle/caches/transforms-4/3506eb61007f84248cc18f7acaa62cc6/transformed/appcompat-1.6.1/res/values-v23/values-v23.xml",
                     "from": {
                         "startLines": "2,3,4,5,6,20,34,35,36,39,43,44,45,46",
                         "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4",
@@ -68,6 +58,16 @@
                         "endLines": "4,5,6,7,21,35,36,37,40,44,45,46,47,51",
                         "endColumns": "134,134,74,86,12,12,118,126,12,12,114,106,112,12",
                         "endOffsets": "314,449,524,611,1349,2099,2218,2345,2567,2791,2906,3013,3126,3356"
+                    }
+                },
+                {
+                    "source": "/Users/muhammednaseel/.gradle/caches/transforms-4/cd87cd96f0d399b624afaf6bcf48f780/transformed/work-runtime-2.9.0/res/values-v23/values-v23.xml",
+                    "from": {
+                        "startLines": "2,3",
+                        "startColumns": "4,4",
+                        "startOffsets": "55,121",
+                        "endColumns": "65,62",
+                        "endOffsets": "116,179"
                     }
                 }
             ]

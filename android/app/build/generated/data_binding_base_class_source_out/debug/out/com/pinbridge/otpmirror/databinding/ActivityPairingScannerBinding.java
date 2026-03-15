@@ -2,7 +2,6 @@
 package com.pinbridge.otpmirror.databinding;
 
 import android.view.LayoutInflater;
-import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -10,6 +9,7 @@ import android.widget.FrameLayout;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.camera.view.PreviewView;
 import androidx.viewbinding.ViewBinding;
 import androidx.viewbinding.ViewBindings;
 import com.pinbridge.otpmirror.R;
@@ -22,10 +22,13 @@ public final class ActivityPairingScannerBinding implements ViewBinding {
   private final FrameLayout rootView;
 
   @NonNull
+  public final Button btnCancelScanner;
+
+  @NonNull
   public final Button btnEnterManual;
 
   @NonNull
-  public final SurfaceView cameraPreview;
+  public final PreviewView cameraPreview;
 
   @NonNull
   public final FrameLayout qrScannerRoot;
@@ -34,9 +37,11 @@ public final class ActivityPairingScannerBinding implements ViewBinding {
   public final TextView tvOverlay;
 
   private ActivityPairingScannerBinding(@NonNull FrameLayout rootView,
-      @NonNull Button btnEnterManual, @NonNull SurfaceView cameraPreview,
-      @NonNull FrameLayout qrScannerRoot, @NonNull TextView tvOverlay) {
+      @NonNull Button btnCancelScanner, @NonNull Button btnEnterManual,
+      @NonNull PreviewView cameraPreview, @NonNull FrameLayout qrScannerRoot,
+      @NonNull TextView tvOverlay) {
     this.rootView = rootView;
+    this.btnCancelScanner = btnCancelScanner;
     this.btnEnterManual = btnEnterManual;
     this.cameraPreview = cameraPreview;
     this.qrScannerRoot = qrScannerRoot;
@@ -70,6 +75,12 @@ public final class ActivityPairingScannerBinding implements ViewBinding {
     // This is done to optimize the compiled bytecode for size and performance.
     int id;
     missingId: {
+      id = R.id.btnCancelScanner;
+      Button btnCancelScanner = ViewBindings.findChildViewById(rootView, id);
+      if (btnCancelScanner == null) {
+        break missingId;
+      }
+
       id = R.id.btnEnterManual;
       Button btnEnterManual = ViewBindings.findChildViewById(rootView, id);
       if (btnEnterManual == null) {
@@ -77,7 +88,7 @@ public final class ActivityPairingScannerBinding implements ViewBinding {
       }
 
       id = R.id.cameraPreview;
-      SurfaceView cameraPreview = ViewBindings.findChildViewById(rootView, id);
+      PreviewView cameraPreview = ViewBindings.findChildViewById(rootView, id);
       if (cameraPreview == null) {
         break missingId;
       }
@@ -90,8 +101,8 @@ public final class ActivityPairingScannerBinding implements ViewBinding {
         break missingId;
       }
 
-      return new ActivityPairingScannerBinding((FrameLayout) rootView, btnEnterManual,
-          cameraPreview, qrScannerRoot, tvOverlay);
+      return new ActivityPairingScannerBinding((FrameLayout) rootView, btnCancelScanner,
+          btnEnterManual, cameraPreview, qrScannerRoot, tvOverlay);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

@@ -1,10 +1,10 @@
 {
     "logs": [
         {
-            "outputFile": "com.pinbridge.otpmirror.app-mergeDebugResources-76:/values-v16/values-v16.xml",
+            "outputFile": "com.pinbridge.otpmirror.app-mergeDebugResources-81:/values-v16/values-v16.xml",
             "map": [
                 {
-                    "source": "/Users/muhammednaseel/.gradle/caches/9.0.0/transforms/0bc578dc888c95bea84c267574362358/transformed/appcompat-1.6.1/res/values-v16/values-v16.xml",
+                    "source": "/Users/muhammednaseel/.gradle/caches/transforms-4/3506eb61007f84248cc18f7acaa62cc6/transformed/appcompat-1.6.1/res/values-v16/values-v16.xml",
                     "from": {
                         "startLines": "2",
                         "startColumns": "4",
@@ -23,7 +23,7 @@
                     }
                 },
                 {
-                    "source": "/Users/muhammednaseel/.gradle/caches/9.0.0/transforms/3c97dbdb8fb68383b6c0121fddcaa447/transformed/core-1.12.0/res/values-v16/values-v16.xml",
+                    "source": "/Users/muhammednaseel/.gradle/caches/transforms-4/a9dc197cf0da9664eae1d3f2565f1481/transformed/core-1.12.0/res/values-v16/values-v16.xml",
                     "from": {
                         "startLines": "2",
                         "startColumns": "4",

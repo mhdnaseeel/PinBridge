@@ -1,40 +1,50 @@
 package com.pinbridge.otpmirror
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.hardware.Camera
 import android.os.Bundle
-import android.view.SurfaceHolder
-import android.view.SurfaceView
+import android.util.Log
 import android.widget.Button
 import android.widget.Toast
-import androidx.activity.ComponentActivity
+import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.camera.core.*
+import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
-import androidx.security.crypto.EncryptedSharedPreferences
-import androidx.security.crypto.MasterKeys
-import com.google.zxing.BinaryBitmap
-import com.google.zxing.LuminanceSource
-import com.google.zxing.PlanarYUVLuminanceSource
-import com.google.zxing.common.HybridBinarizer
-import com.google.zxing.qrcode.QRCodeReader
+import androidx.lifecycle.lifecycleScope
+import com.pinbridge.otpmirror.data.PairingRepository
+import com.google.mlkit.vision.barcode.BarcodeScanning
+import com.google.mlkit.vision.common.InputImage
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 import org.json.JSONObject
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
+import javax.inject.Inject
 
-class PairingScannerActivity : ComponentActivity() {
+@AndroidEntryPoint
+class PairingScannerActivity : AppCompatActivity() {
+
+    @Inject
+    lateinit var pairingRepository: PairingRepository
 
     private val cameraPermission = Manifest.permission.CAMERA
     private var hasHandled = false
-    private var camera: Camera? = null
+    private lateinit var cameraExecutor: ExecutorService
 
     private val requestPermission =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-            if (granted) startCameraPreview() else showPermissionDenied()
+            if (granted) startCamera() else showPermissionDenied()
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_pairing_scanner)
+
+        cameraExecutor = Executors.newSingleThreadExecutor()
 
         findViewById<Button>(R.id.btnCancelScanner).setOnClickListener {
             finish()
@@ -46,94 +56,100 @@ class PairingScannerActivity : ComponentActivity() {
         }
 
         if (ContextCompat.checkSelfPermission(this, cameraPermission) == PackageManager.PERMISSION_GRANTED) {
-            startCameraPreview()
+            startCamera()
         } else {
             requestPermission.launch(cameraPermission)
         }
     }
 
-    private fun startCameraPreview() {
-        val preview = findViewById<SurfaceView>(R.id.cameraPreview)
-        val holder = preview.holder
+    private fun startCamera() {
+        val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
 
-        holder.addCallback(object : SurfaceHolder.Callback {
-            override fun surfaceCreated(surfaceHolder: SurfaceHolder) {
-                try {
-                    camera = Camera.open()
-                    camera?.setPreviewDisplay(surfaceHolder)
-                    camera?.setPreviewCallback { data, cam ->
-                        val parameters = cam.parameters
-                        val width = parameters.previewSize.width
-                        val height = parameters.previewSize.height
-                        processFrame(data, width, height)
-                    }
-                    camera?.startPreview()
-                } catch (e: Exception) {
-                    Toast.makeText(this@PairingScannerActivity, "Failed to open camera", Toast.LENGTH_SHORT).show()
+        cameraProviderFuture.addListener({
+            val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
+
+            val preview = Preview.Builder()
+                .build()
+                .also {
+                    it.setSurfaceProvider(findViewById<PreviewView>(R.id.cameraPreview).surfaceProvider)
                 }
+
+            val imageAnalyzer = ImageAnalysis.Builder()
+                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                .build()
+                .also {
+                    it.setAnalyzer(cameraExecutor) { imageProxy ->
+                        processImageProxy(imageProxy)
+                    }
+                }
+
+            val selector = CameraSelector.DEFAULT_BACK_CAMERA
+
+            try {
+                cameraProvider.unbindAll()
+                cameraProvider.bindToLifecycle(this, selector, preview, imageAnalyzer)
+            } catch (exc: Exception) {
+                Log.e("PairingScanner", "Use case binding failed", exc)
             }
 
-            override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {}
-
-            override fun surfaceDestroyed(holder: SurfaceHolder) {
-                releaseCamera()
-            }
-        })
+        }, ContextCompat.getMainExecutor(this))
     }
 
-    private fun processFrame(data: ByteArray, width: Int, height: Int) {
-        if (hasHandled) return
+    @SuppressLint("UnsafeOptInUsageError")
+    private fun processImageProxy(imageProxy: ImageProxy) {
+        val mediaImage = imageProxy.image
+        if (mediaImage != null && !hasHandled) {
+            val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
+            val scanner = BarcodeScanning.getClient()
 
-        val source: LuminanceSource = PlanarYUVLuminanceSource(
-            data, width, height, 0, 0, width, height, false
-        )
-        val bitmap = BinaryBitmap(HybridBinarizer(source))
-
-        try {
-            val result = QRCodeReader().decode(bitmap)
-            val json = result.text
-            val payload = JSONObject(json)
-
-            val deviceId = payload.getString("deviceId")
-            val secret = payload.getString("secret")
-            
-            // Note: The pairingCode is generated on Chrome and matched in ManualCodeEntryActivity.
-            // When scanning QR, we don't necessarily need it unless we want to store it for reference.
-            val pairingCode = payload.optString("pairingCode", "")
-
-            val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
-            val prefs = EncryptedSharedPreferences.create(
-                Constants.PREFS_NAME,
-                masterKeyAlias,
-                this,
-                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-            )
-            prefs.edit()
-                .putString(Constants.KEY_DEVICE_ID, deviceId)
-                .putString(Constants.KEY_SECRET, secret)
-                .putString(Constants.KEY_PAIRING_CODE, pairingCode)
-                .apply()
-
-            hasHandled = true
-            PairingHelper.callPairFunctionAsync(this, deviceId, secret) {
-                finish()
-            }
-        } catch (e: Exception) {
-            // No QR found or parse error
+            scanner.process(image)
+                .addOnSuccessListener { barcodes ->
+                    for (barcode in barcodes) {
+                        val rawValue = barcode.rawValue
+                        if (rawValue != null) {
+                            handleQrResult(rawValue)
+                            break
+                        }
+                    }
+                }
+                .addOnFailureListener {
+                    Log.e("PairingScanner", "Barcode scanning failed", it)
+                }
+                .addOnCompleteListener {
+                    imageProxy.close()
+                }
+        } else {
+            imageProxy.close()
         }
     }
 
-    private fun releaseCamera() {
-        camera?.stopPreview()
-        camera?.setPreviewCallback(null)
-        camera?.release()
-        camera = null
+    private fun handleQrResult(json: String) {
+        if (hasHandled) return
+        try {
+            val payload = JSONObject(json)
+            val deviceId = payload.getString("deviceId")
+            val secret = payload.getString("secret")
+            // pairingCode is optional in QR
+            
+            hasHandled = true
+            lifecycleScope.launch {
+                try {
+                    pairingRepository.pairWithQr(deviceId, secret)
+                    Toast.makeText(this@PairingScannerActivity, "Paired successfully", Toast.LENGTH_LONG).show()
+                    finish()
+                } catch (e: Exception) {
+                    hasHandled = false
+                    Toast.makeText(this@PairingScannerActivity, "Pairing failed: ${e.message}", Toast.LENGTH_LONG).show()
+                }
+            }
+        } catch (e: Exception) {
+            // Not a valid PinBridge QR or other error
+        }
     }
 
-    override fun onPause() {
-        super.onPause()
-        releaseCamera()
+    override fun onDestroy() {
+        super.onDestroy()
+        cameraExecutor.shutdown()
     }
 
     private fun showPermissionDenied() {
