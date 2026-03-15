@@ -106,18 +106,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     manualFetchBtn.addEventListener('click', () => {
         if (!navigator.onLine) {
-            const originalText = manualFetchBtn.innerText;
             manualFetchBtn.innerText = 'Failed: No Internet';
             manualFetchBtn.style.background = '#ef4444';
             setTimeout(() => {
-                manualFetchBtn.innerText = originalText;
+                manualFetchBtn.innerText = 'Fetch Latest';
                 manualFetchBtn.style.background = '#10b981';
             }, 3000);
             return;
         }
 
         manualFetchBtn.disabled = true;
-        const originalText = manualFetchBtn.innerText;
         manualFetchBtn.innerText = 'Fetching...';
 
         chrome.runtime.sendMessage({ type: 'manualFetch' }, (response) => {
@@ -129,14 +127,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                     updateOtpDisplay({ otp: response.otp, ts: Date.now() });
                 }
                 setTimeout(() => {
-                    manualFetchBtn.innerText = originalText;
+                    manualFetchBtn.innerText = 'Fetch Latest';
                     manualFetchBtn.style.background = '#10b981';
                 }, 2000);
             } else {
                 manualFetchBtn.innerText = 'Failed';
                 manualFetchBtn.style.background = '#ef4444';
                 setTimeout(() => {
-                    manualFetchBtn.innerText = originalText;
+                    manualFetchBtn.innerText = 'Fetch Latest';
                     manualFetchBtn.style.background = '#10b981';
                 }, 3000);
             }
@@ -145,9 +143,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     signOutBtn.onclick = () => {
         if (confirm('Are you sure you want to unpair this device?')) {
-            chrome.runtime.sendMessage({ type: 'signOut' }, () => {
-                showUnpaired();
-            });
+            chrome.runtime.sendMessage({ type: 'signOut' });
         }
     };
 
@@ -158,6 +154,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             updateOtpDisplay({ otp: msg.otp, ts: Date.now() });
         } else if (msg.type === 'statusUpdate') {
             updateConnectionStatus(msg.online);
+        } else if (msg.type === 'unpaired' || msg.type === 'signOut') {
+            showUnpaired();
+        } else if (msg.type === 'paired') {
+            showPaired();
         }
     });
 });

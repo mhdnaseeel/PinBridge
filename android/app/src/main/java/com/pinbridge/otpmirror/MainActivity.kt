@@ -40,6 +40,7 @@ import com.pinbridge.otpmirror.data.PairingRepository
 import com.pinbridge.otpmirror.OtpUploader
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
+import androidx.lifecycle.lifecycleScope
 import java.util.regex.Pattern
 
 @AndroidEntryPoint
@@ -77,9 +78,15 @@ class MainActivity : AppCompatActivity() {
         connectivityManager.registerNetworkCallback(request, object : ConnectivityManager.NetworkCallback() {
             override fun onAvailable(network: Network) {
                 isOnline = true
+                lifecycleScope.launch {
+                    pairingRepository.heartbeat()
+                }
             }
             override fun onLost(network: Network) {
                 isOnline = false
+                lifecycleScope.launch {
+                    pairingRepository.setOnlineStatus(false)
+                }
             }
         })
     }

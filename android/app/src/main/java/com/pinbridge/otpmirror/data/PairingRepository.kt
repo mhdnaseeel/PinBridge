@@ -18,6 +18,7 @@ interface PairingRepository {
     suspend fun pairWithCode(code: String)
     suspend fun unpair()
     suspend fun heartbeat()
+    suspend fun setOnlineStatus(online: Boolean)
     fun isPaired(): Boolean
 }
 
@@ -149,10 +150,24 @@ class PairingRepositoryImpl constructor(
         val deviceId = prefs.getString(Constants.KEY_DEVICE_ID, null) ?: return
         try {
             db.collection(Constants.COLL_PAIRINGS).document(deviceId)
-                .update("lastSeen", com.google.firebase.firestore.FieldValue.serverTimestamp())
+                .update(
+                    "lastSeen", com.google.firebase.firestore.FieldValue.serverTimestamp(),
+                    "isOnline", true
+                )
                 .await()
         } catch (e: Exception) {
             Log.e(TAG, "Heartbeat failed", e)
+        }
+    }
+
+    override suspend fun setOnlineStatus(online: Boolean) {
+        val deviceId = prefs.getString(Constants.KEY_DEVICE_ID, null) ?: return
+        try {
+            db.collection(Constants.COLL_PAIRINGS).document(deviceId)
+                .update("isOnline", online)
+                .await()
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to set online status", e)
         }
     }
 

@@ -27,10 +27,20 @@ let checkInterval = null;
 
 async function checkOnlineStatus() {
   try {
-    if (!lastKnownHeartbeat) return;
+    if (!lastKnownHeartbeat && !lastKnownDeviceId) return;
     
-    // 20 minutes threshold to account for Android's background PeriodicWorkManager (15 min min)
-    const isOnline = (Date.now() - lastKnownHeartbeat) < 1200000;
+    // Check for explicit isOnline field if available, otherwise fallback to heartbeat
+    const docRef = doc(db, 'pairings', lastKnownDeviceId);
+    const snap = await getDoc(docRef);
+    const data = snap.data();
+    
+    let isOnline = false;
+    if (data && typeof data.isOnline === 'boolean') {
+      isOnline = data.isOnline;
+    } else {
+      // 5 minutes threshold for fallback (more aggressive than 20)
+      isOnline = (Date.now() - lastKnownHeartbeat) < 300000;
+    }
     
     const currentStatus = await chrome.storage.session.get(['isOnline']);
     if (currentStatus.isOnline !== isOnline) {
@@ -83,27 +93,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     });
     return true;
   } else if (msg.type === 'signOut') {
-    chrome.storage.local.get(['pairedDeviceId'], async ({pairedDeviceId}) => {
-      try {
-        if (pairedDeviceId) {
-          console.log('[PinBridge] Unpairing device from Firestore:', pairedDeviceId);
-          // Delete from Firestore first
-          await Promise.all([
-            deleteDoc(doc(db, 'pairings', pairedDeviceId)),
-            deleteDoc(doc(db, 'otps', pairedDeviceId))
-          ]);
-          console.log('[PinBridge] Firestore records deleted');
-        }
-      } catch (err) {
-        console.error('[PinBridge] Firestore cleanup failed:', err);
-      } finally {
-        await signOut(auth);
-        chrome.storage.local.remove(['pairedDeviceId', 'secret', 'latestOtp']);
-        if (unsubscribe) unsubscribe();
-        console.log('[PinBridge] Signed out and cleaned up local storage');
-        sendResponse({status: 'ok'});
-      }
-    });
+    performSignOut().then(() => sendResponse({status: 'ok'}));
     return true;
   } else if (msg.type === 'manualFetch') {
     chrome.storage.local.get(['pairedDeviceId'], ({pairedDeviceId}) => {
@@ -141,6 +131,38 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   }
 });
 
+async function performSignOut() {
+  const { pairedDeviceId } = await chrome.storage.local.get(['pairedDeviceId']);
+  try {
+    if (pairedDeviceId) {
+      console.log('[PinBridge] Unpairing device from Firestore:', pairedDeviceId);
+      // Delete from Firestore first
+      await Promise.all([
+        deleteDoc(doc(db, 'pairings', pairedDeviceId)),
+        deleteDoc(doc(db, 'otps', pairedDeviceId))
+      ]).catch(e => console.warn('[PinBridge] Partial Firestore cleanup:', e));
+    }
+  } catch (err) {
+    console.error('[PinBridge] Firestore cleanup failed:', err);
+  } finally {
+    await signOut(auth).catch(() => {});
+    await chrome.storage.local.remove(['pairedDeviceId', 'secret', 'latestOtp']);
+    if (unsubscribe) {
+      unsubscribe();
+      unsubscribe = null;
+    }
+    if (checkInterval) {
+      clearInterval(checkInterval);
+      checkInterval = null;
+    }
+    lastKnownDeviceId = null;
+    lastKnownHeartbeat = 0;
+    console.log('[PinBridge] Signed out and cleaned up local storage');
+    safeSendMessage({ type: 'statusUpdate', online: false });
+    safeSendMessage({ type: 'unpaired' }); // Notify UI to reset
+  }
+}
+
 function startOtpListener(deviceId) {
   if (!deviceId) return;
   lastKnownDeviceId = deviceId;
@@ -158,7 +180,7 @@ function startOtpListener(deviceId) {
     // Remote Unpair Detection: If document is deleted or paired is false
     if (!data || data.paired === false) {
       console.log('[PinBridge] Pairing document removed or disabled remotely. Unpairing locally...');
-      chrome.runtime.sendMessage({ type: 'signOut' }); // Trigger internal sign-out logic
+      performSignOut(); 
       return;
     }
 
@@ -169,7 +191,7 @@ function startOtpListener(deviceId) {
     console.error('[PinBridge] Pairing snapshot error:', err);
     if (err.code === 'permission-denied') {
       console.warn('[PinBridge] Permission denied. Unpairing...');
-      chrome.runtime.sendMessage({ type: 'signOut' });
+      performSignOut();
     }
   });
 
@@ -210,7 +232,7 @@ function startOtpListener(deviceId) {
     console.error('[PinBridge] OTP snapshot error:', err);
     if (err.code === 'permission-denied') {
       console.warn('[PinBridge] Permission denied for OTPs. Unpairing...');
-      chrome.runtime.sendMessage({ type: 'signOut' });
+      performSignOut();
     }
   });
 }
