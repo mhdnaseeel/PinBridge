@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, signInAnonymously, signOut, onAuthStateChanged } from "firebase/auth";
-import { getFirestore, collection, doc, onSnapshot } from "firebase/firestore";
+import { initializeFirestore, collection, doc, onSnapshot } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBwBr0MOdVKCwuvoK3oOU6tg5LcS7uqZOE",
@@ -14,7 +14,9 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const db = getFirestore(app);
+const db = initializeFirestore(app, {
+  experimentalForceLongPolling: true
+});
 
 let unsubscribe = null;
 
@@ -23,6 +25,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     signInAnonymously(auth)
       .then(() => {
         chrome.storage.local.set({ pairedDeviceId: msg.deviceId });
+        chrome.storage.session.set({ secret: msg.secret });
         startOtpListener(msg.deviceId);
         sendResponse({status: 'paired'});
       })

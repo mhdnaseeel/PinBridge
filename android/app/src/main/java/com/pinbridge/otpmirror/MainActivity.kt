@@ -21,10 +21,7 @@ import javax.inject.Inject
 class MainActivity : AppCompatActivity() {
 
     @Inject
-    lateinit var auth: FirebaseAuth
-
-    @Inject
-    lateinit var prefs: SharedPreferences
+    lateinit var pairingRepository: com.pinbridge.otpmirror.data.PairingRepository
 
     private lateinit var smsPermissionHelper: SmsPermissionHelper
 
@@ -51,12 +48,11 @@ class MainActivity : AppCompatActivity() {
         var buttonText by remember { mutableStateOf("Start Pairing") }
         
         LaunchedEffect(Unit) {
-            val user = auth.currentUser
-            if (user != null) {
-                statusText = "Status: Authenticated (${user.uid})"
+            if (pairingRepository.isPaired()) {
+                statusText = "Status: Connected"
                 buttonText = "View Pairing QR"
             } else {
-                statusText = "Status: Not Authenticated"
+                statusText = "Status: Not Connected"
                 buttonText = "Start Pairing"
             }
         }

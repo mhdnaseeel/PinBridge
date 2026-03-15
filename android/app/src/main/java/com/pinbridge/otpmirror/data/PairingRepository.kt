@@ -12,6 +12,7 @@ import javax.inject.Singleton
 interface PairingRepository {
     suspend fun pairWithQr(deviceId: String, secret: String)
     suspend fun pairWithCode(code: String)
+    fun isPaired(): Boolean
 }
 
 class PairingRepositoryImpl constructor(
@@ -27,6 +28,11 @@ class PairingRepositoryImpl constructor(
             if (auth.currentUser == null) {
                 auth.signInAnonymously().await()
             }
+            // Mark as paired in Firestore
+            db.collection(Constants.COLL_PAIRINGS).document(deviceId)
+                .update("paired", true, "pairedAt", com.google.firebase.firestore.FieldValue.serverTimestamp())
+                .await()
+            
             saveCredentials(deviceId, secret)
             Log.i(TAG, "Paired via QR successfully – DeviceID = $deviceId")
         } catch (e: Exception) {
@@ -40,21 +46,26 @@ class PairingRepositoryImpl constructor(
             if (auth.currentUser == null) {
                 auth.signInAnonymously().await()
             }
-
+ 
             // Query for the pairing code
             val query = db.collection(Constants.COLL_PAIRINGS)
-                .whereEqualTo("pairingCode", code)
-                .limit(1)
-                .get()
-                .await()
-
+                 .whereEqualTo("pairingCode", code)
+                 .limit(1)
+                 .get()
+                 .await()
+ 
             if (query.isEmpty) {
                 throw Exception("Invalid code or pairing session expired.")
             }
-
+ 
             val doc = query.documents[0]
             val deviceId = doc.id
             val secret = doc.getString("secret") ?: throw Exception("Secret missing from pairing session.")
+ 
+            // Mark as paired in Firestore
+            db.collection(Constants.COLL_PAIRINGS).document(deviceId)
+                .update("paired", true, "pairedAt", com.google.firebase.firestore.FieldValue.serverTimestamp())
+                .await()
 
             saveCredentials(deviceId, secret)
             Log.i(TAG, "Paired via Code successfully – DeviceID = $deviceId")
@@ -64,10 +75,15 @@ class PairingRepositoryImpl constructor(
         }
     }
 
+    override fun isPaired(): Boolean {
+        return prefs.getBoolean(Constants.KEY_IS_PAIRED, false)
+    }
+
     private fun saveCredentials(deviceId: String, secret: String) {
         prefs.edit()
             .putString(Constants.KEY_DEVICE_ID, deviceId)
             .putString(Constants.KEY_SECRET, secret)
+            .putBoolean(Constants.KEY_IS_PAIRED, true)
             .apply()
     }
 }

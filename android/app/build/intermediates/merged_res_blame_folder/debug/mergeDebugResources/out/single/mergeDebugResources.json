@@ -1,55 +1,39 @@
 [
     {
+        "merged": "com.pinbridge.otpmirror.app-debug-83:/layout_activity_manual_code_entry.xml.flat",
+        "source": "com.pinbridge.otpmirror.app-main-85:/layout/activity_manual_code_entry.xml"
+    },
+    {
         "merged": "com.pinbridge.otpmirror.app-debug-83:/mipmap-xxhdpi_ic_launcher_round.png.flat",
         "source": "com.pinbridge.otpmirror.app-main-85:/mipmap-xxhdpi/ic_launcher_round.png"
     },
     {
-        "merged": "/Users/muhammednaseel/.gradle/daemon/8.7/com.pinbridge.otpmirror.app-debug-83:/layout_activity_pairing_scanner.xml.flat",
-        "source": "/Users/muhammednaseel/.gradle/daemon/8.7/com.pinbridge.otpmirror.app-main-85:/layout/activity_pairing_scanner.xml"
+        "merged": "com.pinbridge.otpmirror.app-debug-83:/layout_activity_main.xml.flat",
+        "source": "com.pinbridge.otpmirror.app-main-85:/layout/activity_main.xml"
     },
     {
-        "merged": "/Users/muhammednaseel/.gradle/daemon/8.7/com.pinbridge.otpmirror.app-debug-83:/mipmap-mdpi_ic_launcher.png.flat",
-        "source": "/Users/muhammednaseel/.gradle/daemon/8.7/com.pinbridge.otpmirror.app-main-85:/mipmap-mdpi/ic_launcher.png"
+        "merged": "com.pinbridge.otpmirror.app-debug-83:/mipmap-xhdpi_ic_launcher.png.flat",
+        "source": "com.pinbridge.otpmirror.app-main-85:/mipmap-xhdpi/ic_launcher.png"
     },
     {
-        "merged": "/Users/muhammednaseel/.gradle/daemon/8.7/com.pinbridge.otpmirror.app-debug-83:/mipmap-xxhdpi_ic_launcher.png.flat",
-        "source": "/Users/muhammednaseel/.gradle/daemon/8.7/com.pinbridge.otpmirror.app-main-85:/mipmap-xxhdpi/ic_launcher.png"
+        "merged": "com.pinbridge.otpmirror.app-debug-83:/mipmap-mdpi_ic_launcher.png.flat",
+        "source": "com.pinbridge.otpmirror.app-main-85:/mipmap-mdpi/ic_launcher.png"
     },
     {
-        "merged": "/Users/muhammednaseel/.gradle/daemon/8.7/com.pinbridge.otpmirror.app-debug-83:/layout_activity_manual_code_entry.xml.flat",
-        "source": "/Users/muhammednaseel/.gradle/daemon/8.7/com.pinbridge.otpmirror.app-main-85:/layout/activity_manual_code_entry.xml"
-    },
-    {
-        "merged": "/Users/muhammednaseel/.gradle/daemon/8.7/com.pinbridge.otpmirror.app-debug-83:/mipmap-hdpi_ic_launcher.png.flat",
-        "source": "/Users/muhammednaseel/.gradle/daemon/8.7/com.pinbridge.otpmirror.app-main-85:/mipmap-hdpi/ic_launcher.png"
-    },
-    {
-        "merged": "/Users/muhammednaseel/.gradle/daemon/8.7/com.pinbridge.otpmirror.app-debug-83:/mipmap-xxxhdpi_ic_launcher_round.png.flat",
-        "source": "/Users/muhammednaseel/.gradle/daemon/8.7/com.pinbridge.otpmirror.app-main-85:/mipmap-xxxhdpi/ic_launcher_round.png"
+        "merged": "com.pinbridge.otpmirror.app-debug-83:/mipmap-xxhdpi_ic_launcher.png.flat",
+        "source": "com.pinbridge.otpmirror.app-main-85:/mipmap-xxhdpi/ic_launcher.png"
     },
     {
         "merged": "com.pinbridge.otpmirror.app-debug-83:/mipmap-hdpi_ic_launcher_round.png.flat",
         "source": "com.pinbridge.otpmirror.app-main-85:/mipmap-hdpi/ic_launcher_round.png"
     },
     {
-        "merged": "/Users/muhammednaseel/.gradle/daemon/8.7/com.pinbridge.otpmirror.app-debug-83:/mipmap-xxxhdpi_ic_launcher.png.flat",
-        "source": "/Users/muhammednaseel/.gradle/daemon/8.7/com.pinbridge.otpmirror.app-main-85:/mipmap-xxxhdpi/ic_launcher.png"
+        "merged": "com.pinbridge.otpmirror.app-debug-83:/layout_activity_pairing_scanner.xml.flat",
+        "source": "com.pinbridge.otpmirror.app-main-85:/layout/activity_pairing_scanner.xml"
     },
     {
-        "merged": "/Users/muhammednaseel/.gradle/daemon/8.7/com.pinbridge.otpmirror.app-debug-83:/mipmap-mdpi_ic_launcher_round.png.flat",
-        "source": "/Users/muhammednaseel/.gradle/daemon/8.7/com.pinbridge.otpmirror.app-main-85:/mipmap-mdpi/ic_launcher_round.png"
-    },
-    {
-        "merged": "/Users/muhammednaseel/.gradle/daemon/8.7/com.pinbridge.otpmirror.app-debug-83:/layout_activity_main.xml.flat",
-        "source": "/Users/muhammednaseel/.gradle/daemon/8.7/com.pinbridge.otpmirror.app-main-85:/layout/activity_main.xml"
-    },
-    {
-        "merged": "/Users/muhammednaseel/.gradle/daemon/8.7/com.pinbridge.otpmirror.app-debug-83:/mipmap-xhdpi_ic_launcher_round.png.flat",
-        "source": "/Users/muhammednaseel/.gradle/daemon/8.7/com.pinbridge.otpmirror.app-main-85:/mipmap-xhdpi/ic_launcher_round.png"
-    },
-    {
-        "merged": "/Users/muhammednaseel/.gradle/daemon/8.7/com.pinbridge.otpmirror.app-debug-83:/mipmap-xhdpi_ic_launcher.png.flat",
-        "source": "/Users/muhammednaseel/.gradle/daemon/8.7/com.pinbridge.otpmirror.app-main-85:/mipmap-xhdpi/ic_launcher.png"
+        "merged": "com.pinbridge.otpmirror.app-debug-83:/mipmap-xxxhdpi_ic_launcher.png.flat",
+        "source": "com.pinbridge.otpmirror.app-main-85:/mipmap-xxxhdpi/ic_launcher.png"
     },
     {
         "merged": "com.pinbridge.otpmirror.app-debug-83:/mipmap-xhdpi_ic_launcher_round.png.flat",
@@ -60,15 +44,11 @@
         "source": "com.pinbridge.otpmirror.app-main-85:/mipmap-mdpi/ic_launcher_round.png"
     },
     {
-        "merged": "/Users/muhammednaseel/.gradle/daemon/8.7/com.pinbridge.otpmirror.app-debug-83:/mipmap-hdpi_ic_launcher_round.png.flat",
-        "source": "/Users/muhammednaseel/.gradle/daemon/8.7/com.pinbridge.otpmirror.app-main-85:/mipmap-hdpi/ic_launcher_round.png"
-    },
-    {
         "merged": "com.pinbridge.otpmirror.app-debug-83:/mipmap-xxxhdpi_ic_launcher_round.png.flat",
         "source": "com.pinbridge.otpmirror.app-main-85:/mipmap-xxxhdpi/ic_launcher_round.png"
     },
     {
-        "merged": "/Users/muhammednaseel/.gradle/daemon/8.7/com.pinbridge.otpmirror.app-debug-83:/mipmap-xxhdpi_ic_launcher_round.png.flat",
-        "source": "/Users/muhammednaseel/.gradle/daemon/8.7/com.pinbridge.otpmirror.app-main-85:/mipmap-xxhdpi/ic_launcher_round.png"
+        "merged": "com.pinbridge.otpmirror.app-debug-83:/mipmap-hdpi_ic_launcher.png.flat",
+        "source": "com.pinbridge.otpmirror.app-main-85:/mipmap-hdpi/ic_launcher.png"
     }
 ]

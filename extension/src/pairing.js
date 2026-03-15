@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, signInAnonymously } from "firebase/auth";
-import { getFirestore, doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { initializeFirestore, doc, setDoc, serverTimestamp, onSnapshot } from "firebase/firestore";
 import QRCode from 'qrcode';
 
 const firebaseConfig = {
@@ -15,7 +15,9 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const db = getFirestore(app);
+const db = initializeFirestore(app, {
+  experimentalForceLongPolling: true
+});
 
 (async () => {
   // Ensure we are signed in anonymously
@@ -76,5 +78,33 @@ const db = getFirestore(app);
     const originalText = btn.textContent;
     btn.textContent = 'Copied!';
     setTimeout(() => btn.textContent = originalText, 2000);
+  });
+
+  // 6. Listen for pairing completion
+  const unsub = onSnapshot(doc(db, 'pairings', deviceId), (snapshot) => {
+    const data = snapshot.data();
+    if (data && data.paired) {
+        console.log('[PinBridge] Pairing confirmed by device!');
+        unsub();
+        
+        // Notify background script to finalize pairing
+        chrome.runtime.sendMessage({
+            type: 'pair',
+            deviceId: deviceId,
+            secret: secretB64
+        }, (response) => {
+            if (response && response.status === 'paired') {
+                // Update UI to show success
+                const container = document.querySelector('.container');
+                container.innerHTML = `
+                    <h2 style="background: linear-gradient(to right, #10b981, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Successfully Paired!</h2>
+                    <p>Your Chrome extension is now securely connected to your mobile device.</p>
+                    <div style="font-size: 64px; margin: 32px 0;">✅</div>
+                    <button id="closeBtn">Close Window</button>
+                `;
+                document.getElementById('closeBtn').onclick = () => window.close();
+            }
+        });
+    }
   });
 })();
