@@ -10,12 +10,13 @@
     :root {
       --primary: #6366f1;
       --primary-hover: #4f46e5;
-      --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-      --glass-bg: rgba(255, 255, 255, 0.7);
-      --glass-border: rgba(255, 255, 255, 0.3);
-      --text-main: #1f2937;
-      --text-muted: #6b7280;
-      --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+      --bg-gradient: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+      --glass-bg: rgba(255, 255, 255, 0.8);
+      --glass-border: rgba(255, 255, 255, 0.4);
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+      --shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
     }
 
     body {
@@ -141,6 +142,11 @@
       margin: 12px 0;
       font-variant-numeric: tabular-nums;
       letter-spacing: 4px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    #otpContent {
+      display: inline-block;
       animation: fadeIn 0.5s ease-out;
     }
 
@@ -170,12 +176,13 @@
       font-size: 14px;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       display: inline-flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
       overflow: hidden;
+      transform: translateZ(0);
     }
 
     button::before {
@@ -300,7 +307,7 @@
     <div id="otpView" class="hidden">
       <div class="card">
         <div class="otp-label">Security Code</div>
-        <div id="otpValue" class="otp-display">------</div>
+        <div id="otpValue" class="otp-display"><span id="otpContent">------</span></div>
         <div id="otpTime" class="otp-meta">Waiting for signal...</div>
         
         <div class="action-group">

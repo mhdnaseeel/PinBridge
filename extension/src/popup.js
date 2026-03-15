@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const otpView = document.getElementById('otpView');
     const unpairedView = document.getElementById('unpairedView');
     const otpValue = document.getElementById('otpValue');
+    const otpContent = document.getElementById('otpContent');
     const otpTime = document.getElementById('otpTime');
     const copyBtn = document.getElementById('copyBtn');
     const pairBtn = document.getElementById('pairBtn');
@@ -29,10 +30,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     chrome.runtime.sendMessage({ type: 'getStatus' }, (response) => {
         if (response && response.status === 'paired') {
             showPaired();
-            // Fetch initial online status from session storage
-            chrome.storage.session.get(['isOnline'], ({isOnline}) => {
-                updateConnectionStatus(!!isOnline);
-            });
+            updateConnectionStatus(response.isOnline);
         } else {
             showUnpaired();
         }
@@ -76,18 +74,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     function updateOtpDisplay(otpData) {
         if (!otpData || !otpData.otp) return;
         
-        // Remove existing animation classes to re-trigger
-        otpValue.classList.remove('otp-display');
-        void otpValue.offsetWidth; // Force reflow
-        otpValue.classList.add('otp-display');
+        // Use a simpler CSS-only approach for standard updates
+        otpContent.textContent = otpData.otp;
         
-        otpValue.textContent = otpData.otp;
+        // Trigger subtle re-animation on the container
+        otpValue.style.animation = 'none';
+        void otpValue.offsetWidth;
+        otpValue.style.animation = 'fadeIn 0.5s ease-out';
+        
         const timeStr = new Date(otpData.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         otpTime.textContent = `Latest OTP received at ${timeStr}`;
     }
 
     pairBtn.onclick = () => {
-        window.open('pairing.html');
+        chrome.tabs.create({ url: 'pairing.html' });
     };
 
     copyBtn.onclick = () => {
