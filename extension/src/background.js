@@ -59,8 +59,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.type === 'pair') {
     signInAnonymously(auth)
       .then(() => {
-        chrome.storage.local.set({ pairedDeviceId: msg.deviceId });
-        chrome.storage.session.set({ secret: msg.secret });
+        chrome.storage.local.set({ pairedDeviceId: msg.deviceId, secret: msg.secret });
         startOtpListener(msg.deviceId);
         sendResponse({status: 'paired'});
       })
@@ -101,18 +100,31 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     chrome.storage.local.get(['pairedDeviceId'], ({pairedDeviceId}) => {
       if (pairedDeviceId) {
         getDoc(doc(db, 'otps', pairedDeviceId)).then(snap => {
-          const data = snap.data();
           if (data) {
              // Process existing data manually
-             chrome.storage.session.get(['secret'], async ({secret}) => {
+             chrome.storage.local.get(['secret'], async ({secret}) => {
                 if (secret) {
-                  const decrypted = await decryptOtp(data, secret);
-                  chrome.storage.local.set({latestOtp: {otp: decrypted, ts: Date.now()}});
-                  sendResponse({status: 'ok', otp: decrypted});
+                  try {
+                    const decrypted = await decryptOtp(data, secret);
+                    chrome.storage.local.set({latestOtp: {otp: decrypted, ts: Date.now()}});
+                    sendResponse({status: 'ok', otp: decrypted});
+                  } catch (err) {
+                    console.error('[PinBridge] Manual fetch decryption failed:', err);
+                    sendResponse({status: 'error', error: 'Decryption failed'});
+                  }
+                } else {
+                  sendResponse({status: 'error', error: 'No secret found'});
                 }
              });
+          } else {
+            sendResponse({status: 'error', error: 'No data found'});
           }
+        }).catch(err => {
+          console.error('[PinBridge] Manual fetch doc get failed:', err);
+          sendResponse({status: 'error', error: err.message});
         });
+      } else {
+        sendResponse({status: 'error', error: 'Not paired'});
       }
     });
     return true;
@@ -144,8 +156,11 @@ function startOtpListener(deviceId) {
   onSnapshot(otpDocRef, snap => {
     const data = snap.data();
     if (!data) return;
-    chrome.storage.session.get(['secret'], async ({secret}) => {
-      if (!secret) return;
+    chrome.storage.local.get(['secret'], async ({secret}) => {
+      if (!secret) {
+        console.warn('[PinBridge] No secret found for decryption');
+        return;
+      }
       try {
         const decrypted = await decryptOtp(data, secret);
         chrome.storage.local.set({latestOtp: {otp: decrypted, ts: Date.now()}});

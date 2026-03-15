@@ -54,10 +54,15 @@ const db = initializeFirestore(app, {
     return;
   }
 
-  // 2. Save in session storage for the background script
+  // 2. Save in local storage for persistence across restarts
+  chrome.storage.local.set({
+    pairedDeviceId: deviceId, // Keep this consistent with what background expects
+    secret: secretB64
+  });
+
+  // Also keep pairingCode in session if needed for the UI during pairing
   chrome.storage.session.set({
     deviceId,
-    secret: secretB64,
     pairingCode
   });
 
