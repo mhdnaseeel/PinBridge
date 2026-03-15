@@ -61,6 +61,10 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       .then(() => {
         chrome.storage.local.set({ pairedDeviceId: msg.deviceId, secret: msg.secret });
         startOtpListener(msg.deviceId);
+        
+        // Broadcast to all UI components (popup, side panel, other tabs)
+        safeSendMessage({ type: 'paired', deviceId: msg.deviceId });
+        
         sendResponse({status: 'paired'});
       })
       .catch(err => {
