@@ -4,7 +4,7 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.work.Configuration
 import androidx.work.testing.WorkManagerTestInitHelper
-import com.google.common.truth.Truth.assertThat
+import org.junit.Assert.*
 import com.google.firebase.FirebaseApp
 import com.google.firebase.FirebaseOptions
 import com.google.firebase.auth.FirebaseAuth
@@ -95,13 +95,13 @@ class UploadOtpWorkerTest {
             .build()
 
         // Build and run the worker synchronously
-        val worker = androidx.work.TestListenableWorkerBuilder<UploadOtpWorker>(
+        val worker = androidx.work.testing.TestListenableWorkerBuilder<UploadOtpWorker>(
             context = context,
             inputData = input
         ).build()
         
         val result = worker.doWork()
-        assertThat(result).isEqualTo(androidx.work.ListenableWorker.Result.success())
+        assertEquals(androidx.work.ListenableWorker.Result.success(), result)
 
         // Verify Firestore document exists (Note: UploadOtpWorker uses currentUser UID, which might be different if emulator seeds UID)
         // For testing stability, ensure user is signed in
@@ -111,11 +111,11 @@ class UploadOtpWorkerTest {
         val docSnap = firestore.collection("otps")
             .document(uid).get().await()
         
-        assertThat(docSnap.exists()).isTrue()
+        assertTrue(docSnap.exists())
         val data = docSnap.data!!
-        assertThat(data).containsKey("otp")
-        assertThat(data).containsKey("iv")
-        assertThat(data).containsKey("ts")
+        assertTrue(data.containsKey("otp"))
+        assertTrue(data.containsKey("iv"))
+        assertTrue(data.containsKey("ts"))
 
         // Decrypt and verify OTP
         val encrypted = CryptoUtil.EncryptedData(
@@ -123,6 +123,6 @@ class UploadOtpWorkerTest {
             iv = data["iv"] as String
         )
         val decrypted = CryptoUtil.decrypt(encrypted, testSecret)
-        assertThat(decrypted).isEqualTo(testOtp)
+        assertEquals(testOtp, decrypted)
     }
 }

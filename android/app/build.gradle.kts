@@ -112,6 +112,8 @@ dependencies {
     androidTestImplementation("androidx.test.uiautomator:uiautomator:2.3.0")
     androidTestImplementation("androidx.compose.ui:ui-test-junit4:1.6.6")
     androidTestImplementation("androidx.compose.ui:ui-test-manifest:1.6.6")
+    androidTestImplementation("com.google.truth:truth:1.1.5")
+    androidTestImplementation("androidx.work:work-testing:2.9.0")
 
     // Hilt
     implementation("com.google.dagger:hilt-android:2.59")
