@@ -4,7 +4,24 @@
             "outputFile": "com.pinbridge.otpmirror.app-mergeDebugResources-81:/values-en-rXC/values-en-rXC.xml",
             "map": [
                 {
-                    "source": "/Users/muhammednaseel/.gradle/caches/transforms-4/9a75a87ff713da76261d05b34756e34c/transformed/material3-release/res/values-en-rXC/values-en-rXC.xml",
+                    "source": "/Users/muhammednaseel/.gradle/caches/transforms-4/7e8e927bbac1af86d0176ab458a97a26/transformed/browser-1.4.0/res/values-en-rXC/values-en-rXC.xml",
+                    "from": {
+                        "startLines": "2,3,4,5",
+                        "startColumns": "4,4,4,4",
+                        "startOffsets": "55,255,454,665",
+                        "endColumns": "199,198,210,201",
+                        "endOffsets": "250,449,660,862"
+                    },
+                    "to": {
+                        "startLines": "40,44,45,46",
+                        "startColumns": "4,4,4,4",
+                        "startOffsets": "7762,8548,8747,8958",
+                        "endColumns": "199,198,210,201",
+                        "endOffsets": "7957,8742,8953,9155"
+                    }
+                },
+                {
+                    "source": "/Users/muhammednaseel/.gradle/caches/transforms-4/00dc3770149f88de014d0f1613046776/transformed/material3-release/res/values-en-rXC/values-en-rXC.xml",
                     "from": {
                         "startLines": "2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57",
                         "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
@@ -21,7 +38,7 @@
                     }
                 },
                 {
-                    "source": "/Users/muhammednaseel/.gradle/caches/transforms-4/23e05a295206968ee64ba53f131ff713/transformed/foundation-release/res/values-en-rXC/values-en-rXC.xml",
+                    "source": "/Users/muhammednaseel/.gradle/caches/transforms-4/b671325fc48fcfb7c15dec3b11c42bb7/transformed/foundation-release/res/values-en-rXC/values-en-rXC.xml",
                     "from": {
                         "startLines": "2,3",
                         "startColumns": "4,4",
@@ -38,41 +55,7 @@
                     }
                 },
                 {
-                    "source": "/Users/muhammednaseel/.gradle/caches/transforms-4/bdbc1561018832aaaefe74dae2cce24c/transformed/credentials-1.2.0-rc01/res/values-en-rXC/values-en-rXC.xml",
-                    "from": {
-                        "startLines": "2,3",
-                        "startColumns": "4,4",
-                        "startOffsets": "55,270",
-                        "endColumns": "214,215",
-                        "endOffsets": "265,481"
-                    },
-                    "to": {
-                        "startLines": "29,30",
-                        "startColumns": "4,4",
-                        "startOffsets": "5528,5743",
-                        "endColumns": "214,215",
-                        "endOffsets": "5738,5954"
-                    }
-                },
-                {
-                    "source": "/Users/muhammednaseel/.gradle/caches/transforms-4/a9dc197cf0da9664eae1d3f2565f1481/transformed/core-1.12.0/res/values-en-rXC/values-en-rXC.xml",
-                    "from": {
-                        "startLines": "2,3,4,5,6,7,8,9",
-                        "startColumns": "4,4,4,4,4,4,4,4",
-                        "startOffsets": "55,251,456,657,858,1065,1270,1482",
-                        "endColumns": "195,204,200,200,206,204,211,203",
-                        "endOffsets": "246,451,652,853,1060,1265,1477,1681"
-                    },
-                    "to": {
-                        "startLines": "31,32,33,34,35,36,37,113",
-                        "startColumns": "4,4,4,4,4,4,4,4",
-                        "startOffsets": "5959,6155,6360,6561,6762,6969,7174,22681",
-                        "endColumns": "195,204,200,200,206,204,211,203",
-                        "endOffsets": "6150,6355,6556,6757,6964,7169,7381,22880"
-                    }
-                },
-                {
-                    "source": "/Users/muhammednaseel/.gradle/caches/transforms-4/3506eb61007f84248cc18f7acaa62cc6/transformed/appcompat-1.6.1/res/values-en-rXC/values-en-rXC.xml",
+                    "source": "/Users/muhammednaseel/.gradle/caches/transforms-4/23e76774e54f5e1695990d8b9f0c7076/transformed/appcompat-1.6.1/res/values-en-rXC/values-en-rXC.xml",
                     "from": {
                         "startLines": "2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29",
                         "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
@@ -89,7 +72,7 @@
                     }
                 },
                 {
-                    "source": "/Users/muhammednaseel/.gradle/caches/transforms-4/7247f0175a1d01404c22f733c272f52e/transformed/ui-release/res/values-en-rXC/values-en-rXC.xml",
+                    "source": "/Users/muhammednaseel/.gradle/caches/transforms-4/dbd9ed7440f66a92e928c62af0c95e13/transformed/ui-release/res/values-en-rXC/values-en-rXC.xml",
                     "from": {
                         "startLines": "2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18",
                         "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
@@ -106,20 +89,37 @@
                     }
                 },
                 {
-                    "source": "/Users/muhammednaseel/.gradle/caches/transforms-4/8ad59ba643c5f03da8bc037f6a77735a/transformed/browser-1.4.0/res/values-en-rXC/values-en-rXC.xml",
+                    "source": "/Users/muhammednaseel/.gradle/caches/transforms-4/51b44e8057af63040b52db44f5b14999/transformed/core-1.12.0/res/values-en-rXC/values-en-rXC.xml",
                     "from": {
-                        "startLines": "2,3,4,5",
-                        "startColumns": "4,4,4,4",
-                        "startOffsets": "55,255,454,665",
-                        "endColumns": "199,198,210,201",
-                        "endOffsets": "250,449,660,862"
+                        "startLines": "2,3,4,5,6,7,8,9",
+                        "startColumns": "4,4,4,4,4,4,4,4",
+                        "startOffsets": "55,251,456,657,858,1065,1270,1482",
+                        "endColumns": "195,204,200,200,206,204,211,203",
+                        "endOffsets": "246,451,652,853,1060,1265,1477,1681"
                     },
                     "to": {
-                        "startLines": "40,44,45,46",
-                        "startColumns": "4,4,4,4",
-                        "startOffsets": "7762,8548,8747,8958",
-                        "endColumns": "199,198,210,201",
-                        "endOffsets": "7957,8742,8953,9155"
+                        "startLines": "31,32,33,34,35,36,37,113",
+                        "startColumns": "4,4,4,4,4,4,4,4",
+                        "startOffsets": "5959,6155,6360,6561,6762,6969,7174,22681",
+                        "endColumns": "195,204,200,200,206,204,211,203",
+                        "endOffsets": "6150,6355,6556,6757,6964,7169,7381,22880"
+                    }
+                },
+                {
+                    "source": "/Users/muhammednaseel/.gradle/caches/transforms-4/f88e26c4d52319b106b534a3f648efeb/transformed/credentials-1.2.0-rc01/res/values-en-rXC/values-en-rXC.xml",
+                    "from": {
+                        "startLines": "2,3",
+                        "startColumns": "4,4",
+                        "startOffsets": "55,270",
+                        "endColumns": "214,215",
+                        "endOffsets": "265,481"
+                    },
+                    "to": {
+                        "startLines": "29,30",
+                        "startColumns": "4,4",
+                        "startOffsets": "5528,5743",
+                        "endColumns": "214,215",
+                        "endOffsets": "5738,5954"
                     }
                 }
             ]

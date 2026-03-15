@@ -4,7 +4,17 @@
             "outputFile": "com.pinbridge.otpmirror.app-mergeDebugResources-81:/values-v16/values-v16.xml",
             "map": [
                 {
-                    "source": "/Users/muhammednaseel/.gradle/caches/transforms-4/3506eb61007f84248cc18f7acaa62cc6/transformed/appcompat-1.6.1/res/values-v16/values-v16.xml",
+                    "source": "/Users/muhammednaseel/.gradle/caches/transforms-4/51b44e8057af63040b52db44f5b14999/transformed/core-1.12.0/res/values-v16/values-v16.xml",
+                    "from": {
+                        "startLines": "2",
+                        "startColumns": "4",
+                        "startOffsets": "55",
+                        "endColumns": "65",
+                        "endOffsets": "116"
+                    }
+                },
+                {
+                    "source": "/Users/muhammednaseel/.gradle/caches/transforms-4/23e76774e54f5e1695990d8b9f0c7076/transformed/appcompat-1.6.1/res/values-v16/values-v16.xml",
                     "from": {
                         "startLines": "2",
                         "startColumns": "4",
@@ -20,16 +30,6 @@
                         "endLines": "6",
                         "endColumns": "12",
                         "endOffsets": "289"
-                    }
-                },
-                {
-                    "source": "/Users/muhammednaseel/.gradle/caches/transforms-4/a9dc197cf0da9664eae1d3f2565f1481/transformed/core-1.12.0/res/values-v16/values-v16.xml",
-                    "from": {
-                        "startLines": "2",
-                        "startColumns": "4",
-                        "startOffsets": "55",
-                        "endColumns": "65",
-                        "endOffsets": "116"
                     }
                 }
             ]
