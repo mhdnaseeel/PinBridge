@@ -94,5 +94,4 @@ class PairingRepositoryImpl constructor(
             .apply()
         _pairingStatus.value = true
     }
-    }
 }
