@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="gcm_defaultSenderId" translatable="false">475556984962</string>
-    <string name="google_api_key" translatable="false">AIzaSyBHugGf0RZVZRoC5RVAERkscHJulE0pl9k</string>
-    <string name="google_app_id" translatable="false">1:475556984962:android:a3b167c7a0eb8dc8a89c9b</string>
-    <string name="google_crash_reporting_api_key" translatable="false">AIzaSyBHugGf0RZVZRoC5RVAERkscHJulE0pl9k</string>
-    <string name="google_storage_bucket" translatable="false">pinbridge-61dd4.firebasestorage.app</string>
-    <string name="project_id" translatable="false">pinbridge-61dd4</string>
-</resources>
