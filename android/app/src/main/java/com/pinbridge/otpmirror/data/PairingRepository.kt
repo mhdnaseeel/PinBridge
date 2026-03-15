@@ -6,10 +6,14 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.pinbridge.otpmirror.Constants
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import javax.inject.Inject
 import javax.inject.Singleton
 
 interface PairingRepository {
+    val pairingStatus: StateFlow<Boolean>
     suspend fun pairWithQr(deviceId: String, secret: String)
     suspend fun pairWithCode(code: String)
     fun isPaired(): Boolean
@@ -22,6 +26,9 @@ class PairingRepositoryImpl constructor(
 ) : PairingRepository {
 
     private val TAG = "PairingRepository"
+    
+    private val _pairingStatus = MutableStateFlow(isPaired())
+    override val pairingStatus = _pairingStatus.asStateFlow()
 
     override suspend fun pairWithQr(deviceId: String, secret: String) {
         try {
@@ -85,5 +92,7 @@ class PairingRepositoryImpl constructor(
             .putString(Constants.KEY_SECRET, secret)
             .putBoolean(Constants.KEY_IS_PAIRED, true)
             .apply()
+        _pairingStatus.value = true
+    }
     }
 }

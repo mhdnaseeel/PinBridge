@@ -7,6 +7,7 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -44,18 +45,10 @@ class MainActivity : AppCompatActivity() {
 
     @Composable
     fun MainScreen() {
-        var statusText by remember { mutableStateOf("Checking status...") }
-        var buttonText by remember { mutableStateOf("Start Pairing") }
+        val isPaired by pairingRepository.pairingStatus.collectAsState()
         
-        LaunchedEffect(Unit) {
-            if (pairingRepository.isPaired()) {
-                statusText = "Status: Connected"
-                buttonText = "View Pairing QR"
-            } else {
-                statusText = "Status: Not Connected"
-                buttonText = "Start Pairing"
-            }
-        }
+        val statusText = if (isPaired) "Status: Connected" else "Status: Not Connected"
+        val buttonText = if (isPaired) "View Pairing QR" else "Start Pairing"
 
         Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
             Column(
