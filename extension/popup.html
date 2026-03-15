@@ -1,119 +1,256 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="UTF-8">
   <title>PinBridge</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      width: 300px;
-      margin: 0;
-      padding: 16px;
-      background-color: #f8f9fa;
+    :root {
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      --glass-bg: rgba(255, 255, 255, 0.7);
+      --glass-border: rgba(255, 255, 255, 0.3);
+      --text-main: #1f2937;
+      --text-muted: #6b7280;
+      --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
     }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      width: 320px;
+      margin: 0;
+      padding: 0;
+      background: var(--bg-gradient);
+      color: var(--text-main);
+      overflow: hidden;
+    }
+
+    .main-container {
+      padding: 20px;
+      min-height: 280px;
+      display: flex;
+      flex-direction: column;
+    }
+
     .header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 20px;
+      margin-bottom: 24px;
     }
-    .title {
-      font-size: 18px;
-      font-weight: bold;
-      color: #3f51b5;
-    }
-    .status {
-      font-size: 12px;
-      padding: 4px 8px;
-      border-radius: 12px;
-    }
-    .status-paired {
-      background-color: #e8f5e9;
-      color: #2e7d32;
-    }
-    .status-unpaired {
-      background-color: #ffebee;
-      color: #c62828;
-    }
-    .otp-container {
-      background-color: white;
-      border-radius: 8px;
-      padding: 20px;
-      text-align: center;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      margin-bottom: 20px;
-    }
-    .otp-value {
-      font-size: 32px;
-      font-weight: bold;
-      letter-spacing: 4px;
-      color: #333;
-      margin: 10px 0;
-    }
-    .otp-label {
-      font-size: 12px;
-      color: #666;
-      text-transform: uppercase;
-    }
-    .otp-time {
-      font-size: 11px;
-      color: #999;
-    }
-    .actions {
+
+    .logo-area {
       display: flex;
-      flex-direction: column;
+      align-items: center;
       gap: 10px;
     }
-    button {
-      padding: 10px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
+
+    .logo-text {
+      font-size: 20px;
+      font-weight: 700;
+      background: linear-gradient(to right, #6366f1, #a855f7);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -0.5px;
+    }
+
+    .status-badge {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      transition: all 0.3s ease;
+    }
+
+    .status-paired {
+      background: #dcfce7;
+      color: #15803d;
+      border: 1px solid #bbf7d0;
+    }
+
+    .status-unpaired {
+      background: #fee2e2;
+      color: #b91c1c;
+      border: 1px solid #fecaca;
+    }
+
+    .card {
+      background: var(--glass-bg);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: var(--shadow);
+      text-align: center;
+      transition: transform 0.3s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+    }
+
+    .otp-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 12px;
+    }
+
+    .otp-display {
+      font-size: 42px;
+      font-weight: 800;
+      color: var(--primary);
+      margin: 12px 0;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 4px;
+      animation: fadeIn 0.5s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .otp-meta {
+      font-size: 11px;
+      color: var(--text-muted);
       font-weight: 500;
-      transition: background-color 0.2s;
+      margin-bottom: 24px;
     }
-    .btn-primary {
-      background-color: #3f51b5;
+
+    .action-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    button {
+      padding: 12px;
+      border: none;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-main {
+      background: var(--primary);
       color: white;
+      box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.4);
     }
-    .btn-primary:hover {
-      background-color: #303f9f;
+
+    .btn-main:hover {
+      background: var(--primary-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.4);
     }
-    .btn-secondary {
-      background-color: #e0e0e0;
-      color: #333;
+
+    .btn-main:active {
+      transform: translateY(0);
     }
-    .btn-secondary:hover {
-      background-color: #bdbdbd;
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid transparent;
     }
+
+    .btn-ghost:hover {
+      background: rgba(0, 0, 0, 0.05);
+      color: var(--text-main);
+    }
+
+    .empty-state {
+      padding: 20px 0;
+    }
+
+    .empty-icon {
+      font-size: 40px;
+      margin-bottom: 16px;
+      display: block;
+    }
+
+    .empty-text {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.5;
+      margin-bottom: 24px;
+    }
+
     .hidden {
-      display: none;
+      display: none !important;
+    }
+
+    /* Tooltip simulation */
+    .btn-main::after {
+      content: 'Copied!';
+      position: absolute;
+      top: -30px;
+      background: #374151;
+      color: white;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+
+    .btn-main.copied::after {
+      opacity: 1;
     }
   </style>
 </head>
 <body>
-  <div class="header">
-    <div class="title">PinBridge</div>
-    <div id="statusBadge" class="status status-unpaired">Disconnected</div>
-  </div>
-
-  <div id="otpView" class="hidden">
-    <div class="otp-container">
-      <div class="otp-label">Latest Code</div>
-      <div id="otpValue" class="otp-value">------</div>
-      <div id="otpTime" class="otp-time">Waiting for OTP...</div>
+  <div class="main-container">
+    <div class="header">
+      <div class="logo-area">
+        <span class="logo-text">PinBridge</span>
+      </div>
+      <div id="statusBadge" class="status-badge status-unpaired">Disconnected</div>
     </div>
-    <div class="actions">
-      <button id="copyBtn" class="btn-primary">Copy Code</button>
-      <button id="signOutBtn" class="btn-secondary">Unpair Device</button>
-    </div>
-  </div>
 
-  <div id="unpairedView">
-    <p style="font-size: 14px; color: #666; text-align: center; margin-bottom: 20px;">
-      Your browser is not paired with an Android device.
-    </p>
-    <div class="actions">
-      <button id="pairBtn" class="btn-primary">Start Pairing (Show QR)</button>
+    <!-- Active OTP View -->
+    <div id="otpView" class="hidden">
+      <div class="card">
+        <div class="otp-label">Security Code</div>
+        <div id="otpValue" class="otp-display">------</div>
+        <div id="otpTime" class="otp-meta">Waiting for signal...</div>
+        
+        <div class="action-group">
+          <button id="copyBtn" class="btn-main">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+            Copy to Clipboard
+          </button>
+          <button id="signOutBtn" class="btn-ghost">Unpair Device</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Unpaired View -->
+    <div id="unpairedView">
+      <div class="card empty-state">
+        <span class="empty-icon">📱</span>
+        <div class="empty-text">
+          Pair your browser with the PinBridge Android app to start mirroring OTPs.
+        </div>
+        <button id="pairBtn" class="btn-main">
+          Pair New Device
+        </button>
+      </div>
     </div>
   </div>
 

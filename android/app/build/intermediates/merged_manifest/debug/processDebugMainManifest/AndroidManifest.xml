@@ -76,6 +76,22 @@
             </intent-filter>
         </receiver>
 
+        <!-- Disable default WorkManager initialization since we use on-demand initialization in PinBridgeApp -->
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="com.pinbridge.otpmirror.androidx-startup"
+            android:exported="false" >
+            <meta-data
+                android:name="androidx.emoji2.text.EmojiCompatInitializer"
+                android:value="androidx.startup" />
+            <meta-data
+                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
+                android:value="androidx.startup" />
+            <meta-data
+                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
+                android:value="androidx.startup" />
+        </provider>
+
         <service
             android:name="androidx.camera.core.impl.MetadataHolderService"
             android:enabled="false"
@@ -231,23 +247,6 @@
             android:directBootAware="true"
             android:exported="false"
             android:initOrder="100" />
-        <provider
-            android:name="androidx.startup.InitializationProvider"
-            android:authorities="com.pinbridge.otpmirror.androidx-startup"
-            android:exported="false" >
-            <meta-data
-                android:name="androidx.work.WorkManagerInitializer"
-                android:value="androidx.startup" />
-            <meta-data
-                android:name="androidx.emoji2.text.EmojiCompatInitializer"
-                android:value="androidx.startup" />
-            <meta-data
-                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
-                android:value="androidx.startup" />
-            <meta-data
-                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
-                android:value="androidx.startup" />
-        </provider>
 
         <service
             android:name="androidx.work.impl.background.systemalarm.SystemAlarmService"

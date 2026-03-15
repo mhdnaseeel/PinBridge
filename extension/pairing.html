@@ -3,77 +3,127 @@
 <head>
   <meta charset="UTF-8">
   <title>PinBridge – Pairing</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      text-align: center;
-      padding: 40px;
-      background-color: #f8f9fa;
-      color: #333;
+    :root {
+      --primary: #6366f1;
+      --bg: #f8fafc;
+      --text: #0f172a;
+      --text-muted: #64748b;
     }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+
     .container {
       background: white;
-      padding: 40px;
-      border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-      max-width: 400px;
-      margin: 0 auto;
+      padding: 48px;
+      border-radius: 24px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+      max-width: 440px;
+      width: 90%;
+      text-align: center;
     }
-    h2 { color: #3f51b5; margin-bottom: 24px; }
-    p { font-size: 14px; color: #666; margin-bottom: 24px; }
+
+    h2 {
+      font-size: 28px;
+      font-weight: 800;
+      margin: 0 0 12px;
+      background: linear-gradient(to right, #6366f1, #a855f7);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    p {
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin-bottom: 32px;
+    }
+
     #qrCanvas {
-      margin: 20px auto;
-      display: block;
-      border: 8px solid white;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-    }
-    .code-container {
-      background: #f1f3f9;
+      background: white;
       padding: 16px;
-      border-radius: 8px;
-      margin: 24px 0;
+      border-radius: 16px;
+      border: 1px solid #e2e8f0;
+      margin-bottom: 32px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
     }
-    #code {
-      font-size: 32px;
-      letter-spacing: 6px;
-      font-weight: bold;
-      color: #1a237e;
+
+    .code-box {
+      background: #f1f5f9;
+      padding: 24px;
+      border-radius: 16px;
+      margin-bottom: 32px;
+      border: 1px dashed #cbd5e1;
     }
+
     .label {
       font-size: 11px;
+      font-weight: 700;
       text-transform: uppercase;
-      color: #999;
+      letter-spacing: 1.5px;
+      color: var(--text-muted);
       margin-bottom: 8px;
     }
+
+    #code {
+      font-size: 36px;
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: 8px;
+      font-family: 'Courier New', monospace;
+    }
+
     button {
-      padding: 10px 20px;
-      background: #3f51b5;
+      width: 100%;
+      padding: 14px;
+      background: var(--primary);
       color: white;
       border: none;
-      border-radius: 4px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
       cursor: pointer;
-      font-weight: 500;
-      transition: background 0.2s;
+      transition: all 0.2s;
+      box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.3);
     }
-    button:hover { background: #303f9f; }
+
+    button:hover {
+      background: #4f46e5;
+      transform: translateY(-1px);
+      box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.3);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
   </style>
 </head>
 <body>
   <div class="container">
-    <h2>Device Pairing</h2>
-    <p>Scan this QR code with your PinBridge app or enter the code manually below.</p>
+    <h2>Secure Pairing</h2>
+    <p>Open the PinBridge app on your phone and scan the QR code to establish an end-to-end encrypted connection.</p>
     
     <canvas id="qrCanvas" width="256" height="256"></canvas>
     
-    <div class="code-container">
+    <div class="code-box">
       <div class="label">Manual Entry Code</div>
       <div id="code">------</div>
     </div>
     
-    <button id="copyBtn">Copy Code</button>
+    <button id="copyBtn">Copy Connection Code</button>
   </div>
 
-  <!-- Note: We use the local bundled scripts via dist/ -->
   <script src="dist/pairing.js"></script>
 </body>
 </html>
