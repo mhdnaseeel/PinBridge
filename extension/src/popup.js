@@ -16,6 +16,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     chrome.runtime.sendMessage({ type: 'getStatus' }, (response) => {
         if (response && response.status === 'paired') {
             showPaired();
+            // Fetch initial online status from session storage
+            chrome.storage.session.get(['isOnline'], ({isOnline}) => {
+                updateConnectionStatus(!!isOnline);
+            });
         } else {
             showUnpaired();
         }

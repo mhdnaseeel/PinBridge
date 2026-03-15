@@ -21,6 +21,32 @@ const db = initializeFirestore(app, {
 });
 
 let unsubscribe = null;
+let lastKnownDeviceId = null;
+let lastKnownHeartbeat = 0;
+let checkInterval = null;
+
+async function checkOnlineStatus() {
+  if (!lastKnownHeartbeat) return;
+  
+  // 5 minutes threshold to account for clock drift and WorkManager delays
+  const isOnline = (Date.now() - lastKnownHeartbeat) < 300000;
+  
+  const currentStatus = await chrome.storage.session.get(['isOnline']);
+  if (currentStatus.isOnline !== isOnline) {
+    chrome.storage.session.set({ isOnline });
+    safeSendMessage({ type: 'statusUpdate', online: isOnline });
+    console.log(`[PinBridge] Device status changed to: ${isOnline ? 'Online' : 'Offline'}`);
+  }
+}
+
+function safeSendMessage(message) {
+  chrome.runtime.sendMessage(message).catch(err => {
+    // Ignore "Could not establish connection" errors as they just mean the popup/sidepanel is closed
+    if (err.message !== 'Could not establish connection. Receiving end does not exist.') {
+      console.warn('[PinBridge] SendMessage error:', err);
+    }
+  });
+}
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.type === 'pair') {
@@ -88,26 +114,22 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
 function startOtpListener(deviceId) {
   if (!deviceId) return;
+  lastKnownDeviceId = deviceId;
   if (unsubscribe) unsubscribe();
-  const docRef = doc(db, 'pairings', deviceId); // Changed from 'otps' to 'pairings' to monitor metadata
+  
+  // Start the background monitoring interval if not already running
+  if (!checkInterval) {
+    checkInterval = setInterval(checkOnlineStatus, 60000);
+  }
+
+  const docRef = doc(db, 'pairings', deviceId);
   unsubscribe = onSnapshot(docRef, snap => {
     const data = snap.data();
     if (!data) return;
 
     // Monitor Online/Offline status
-    const lastSeen = data.lastSeen?.toMillis() || 0;
-    const isOnline = (Date.now() - lastSeen) < 90000; // 90 seconds threshold
-    chrome.runtime.sendMessage({type: 'statusUpdate', online: isOnline});
-
-    // We also monitor the OTPS separate document or the same document?
-    // In previous versions, 'otps' collection was used for the OTP data.
-    // Let's check the pairing doc for 'otp' field or if we still use separate doc.
-    // Assuming 'otp' data is now mirrored in the pairing doc for efficiency,
-    // or we check the 'otps' collection separately.
-    // The previous logic used: doc(db, 'otps', deviceId)
-    
-    // Let's stick to dual doc if needed, but for heartbeat 'pairings' is correct.
-    // I will add a separate listener for OTPS if it's not in the same doc.
+    lastKnownHeartbeat = data.lastSeen?.toMillis() || 0;
+    checkOnlineStatus(); // Immediate re-check
   });
 
   // Keep the OTP listener on 'otps' collection
@@ -127,7 +149,7 @@ function startOtpListener(deviceId) {
           message: `Your OTP is: ${decrypted}`,
           priority: 2
         });
-        chrome.runtime.sendMessage({type: 'newOtp', otp: decrypted});
+        safeSendMessage({type: 'newOtp', otp: decrypted});
         
         chrome.tabs.query({}, (tabs) => {
           tabs.forEach(tab => {
