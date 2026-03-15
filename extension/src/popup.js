@@ -7,6 +7,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const copyBtn = document.getElementById('copyBtn');
     const pairBtn = document.getElementById('pairBtn');
     const signOutBtn = document.getElementById('signOutBtn');
+    const manualFetchBtn = document.getElementById('manualFetchBtn');
+    const connectionIndicator = document.getElementById('connectionIndicator');
+    const statusDot = document.getElementById('statusDot');
+    const statusText = document.getElementById('statusText');
 
     // Check status
     chrome.runtime.sendMessage({ type: 'getStatus' }, (response) => {
@@ -29,6 +33,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         statusBadge.className = 'status-badge status-paired';
         otpView.classList.remove('hidden');
         unpairedView.classList.add('hidden');
+        connectionIndicator.classList.remove('hidden');
     }
 
     function showUnpaired() {
@@ -36,6 +41,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         statusBadge.className = 'status-badge status-unpaired';
         otpView.classList.add('hidden');
         unpairedView.classList.remove('hidden');
+        connectionIndicator.classList.add('hidden');
+    }
+
+    function updateConnectionStatus(online) {
+        if (online) {
+            statusDot.className = 'dot dot-online';
+            statusText.textContent = 'Online';
+            statusText.style.color = '#10b981';
+        } else {
+            statusDot.className = 'dot dot-offline';
+            statusText.textContent = 'Offline';
+            statusText.style.color = '#f59e0b';
+        }
     }
 
     function updateOtpDisplay(otpData) {
@@ -69,6 +87,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         }, 2000);
     };
 
+    manualFetchBtn.onclick = () => {
+        manualFetchBtn.disabled = true;
+        const originalText = manualFetchBtn.innerHTML;
+        manualFetchBtn.innerHTML = 'Fetching...';
+        
+        chrome.runtime.sendMessage({ type: 'manualFetch' }, (response) => {
+            setTimeout(() => {
+                manualFetchBtn.disabled = false;
+                manualFetchBtn.innerHTML = originalText;
+                if (response && response.otp) {
+                    updateOtpDisplay({ otp: response.otp, ts: Date.now() });
+                }
+            }, 1000);
+        });
+    };
+
     signOutBtn.onclick = () => {
         if (confirm('Are you sure you want to unpair this device?')) {
             chrome.runtime.sendMessage({ type: 'signOut' }, () => {
@@ -82,6 +116,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (msg.type === 'newOtp') {
             showPaired(); // Ensure we are in paired view
             updateOtpDisplay({ otp: msg.otp, ts: Date.now() });
+        } else if (msg.type === 'statusUpdate') {
+            updateConnectionStatus(msg.online);
         }
     });
 });

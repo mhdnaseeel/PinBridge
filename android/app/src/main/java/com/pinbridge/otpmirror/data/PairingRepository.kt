@@ -16,6 +16,8 @@ interface PairingRepository {
     val pairingStatus: StateFlow<Boolean>
     suspend fun pairWithQr(deviceId: String, secret: String)
     suspend fun pairWithCode(code: String)
+    suspend fun unpair()
+    suspend fun heartbeat()
     fun isPaired(): Boolean
 }
 
@@ -30,6 +32,51 @@ class PairingRepositoryImpl constructor(
     private val _pairingStatus = MutableStateFlow(isPaired())
     override val pairingStatus = _pairingStatus.asStateFlow()
 
+    private var statusListener: com.google.firebase.firestore.ListenerRegistration? = null
+
+    init {
+        startStatusListener()
+    }
+
+    private fun startStatusListener() {
+        val deviceId = prefs.getString(Constants.KEY_DEVICE_ID, null) ?: return
+        statusListener?.remove()
+        statusListener = db.collection(Constants.COLL_PAIRINGS).document(deviceId)
+            .addSnapshotListener { snapshot, e ->
+                if (e != null) {
+                    Log.w(TAG, "Listen failed for device $deviceId", e)
+                    return@addSnapshotListener
+                }
+
+                if (snapshot == null || !snapshot.exists()) {
+                    Log.i(TAG, "Snapshot for device $deviceId does not exist or was deleted.")
+                    if (_pairingStatus.value) {
+                        Log.i(TAG, "Triggering local unpair due to missing Firestore document.")
+                        clearLocalCredentials()
+                    }
+                } else if (snapshot.getBoolean("paired") != true) {
+                    Log.i(TAG, "Snapshot exists but 'paired' field is false/missing for $deviceId.")
+                    if (_pairingStatus.value) {
+                        Log.i(TAG, "Triggering local unpair due to 'paired' field change.")
+                        clearLocalCredentials()
+                    }
+                }
+            }
+    }
+
+    private fun clearLocalCredentials() {
+        Log.i(TAG, "Clearing local credentials and stopping listeners.")
+        statusListener?.remove()
+        statusListener = null
+        prefs.edit()
+            .remove(Constants.KEY_DEVICE_ID)
+            .remove(Constants.KEY_SECRET)
+            .putBoolean(Constants.KEY_IS_PAIRED, false)
+            .apply()
+        _pairingStatus.value = false
+        Log.i(TAG, "Local credentials cleared. pairingStatus flow updated to 'false'.")
+    }
+
     override suspend fun pairWithQr(deviceId: String, secret: String) {
         try {
             if (auth.currentUser == null) {
@@ -41,6 +88,7 @@ class PairingRepositoryImpl constructor(
                 .await()
             
             saveCredentials(deviceId, secret)
+            startStatusListener()
             Log.i(TAG, "Paired via QR successfully – DeviceID = $deviceId")
         } catch (e: Exception) {
             Log.e(TAG, "QR Pairing failed", e)
@@ -75,10 +123,36 @@ class PairingRepositoryImpl constructor(
                 .await()
 
             saveCredentials(deviceId, secret)
-            Log.i(TAG, "Paired via Code successfully – DeviceID = $deviceId")
+            startStatusListener()
+            Log.i(TAG, "Code pairing successfully – DeviceID = $deviceId")
         } catch (e: Exception) {
             Log.e(TAG, "Code pairing failed", e)
             throw e
+        }
+    }
+
+    override suspend fun unpair() {
+        val deviceId = prefs.getString(Constants.KEY_DEVICE_ID, null) ?: return
+        try {
+            // Remove from Firestore
+            db.collection(Constants.COLL_PAIRINGS).document(deviceId).delete().await()
+            db.collection(Constants.COLL_OTPS).document(deviceId).delete().await()
+            Log.i(TAG, "Unpaired from Firestore: $deviceId")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error unpairing from Firestore", e)
+        } finally {
+            clearLocalCredentials()
+        }
+    }
+
+    override suspend fun heartbeat() {
+        val deviceId = prefs.getString(Constants.KEY_DEVICE_ID, null) ?: return
+        try {
+            db.collection(Constants.COLL_PAIRINGS).document(deviceId)
+                .update("lastSeen", com.google.firebase.firestore.FieldValue.serverTimestamp())
+                .await()
+        } catch (e: Exception) {
+            Log.e(TAG, "Heartbeat failed", e)
         }
     }
 

@@ -9,7 +9,9 @@
     "128": "icons/128.png"
   },
   "action": {
-    "default_popup": "popup.html"
+  },
+  "side_panel": {
+    "default_path": "popup.html"
   },
   "background": {
     "service_worker": "dist/background.js",
@@ -17,7 +19,8 @@
   },
   "permissions": [
     "storage",
-    "notifications"
+    "notifications",
+    "sidePanel"
   ],
   "host_permissions": [
     "https://*.firebaseio.com/*",

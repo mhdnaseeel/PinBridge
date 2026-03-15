@@ -91,9 +91,9 @@ dependencies {
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
     
     // ML Kit Barcode Scanning (Replaces ZXing)
-    implementation("com.google.mlkit:barcode-scanning:17.2.0")
+    implementation("com.google.mlkit:barcode-scanning:17.3.0")
     // CameraX
-    val camerax_version = "1.3.1"
+    val camerax_version = "1.4.0"
     implementation("androidx.camera:camera-core:$camerax_version")
     implementation("androidx.camera:camera-camera2:$camerax_version")
     implementation("androidx.camera:camera-lifecycle:$camerax_version")

@@ -20,12 +20,14 @@
 
     body {
       font-family: 'Inter', system-ui, -apple-system, sans-serif;
-      width: 320px;
+      width: 100%;
+      min-width: 320px;
       margin: 0;
       padding: 0;
       background: var(--bg-gradient);
       color: var(--text-main);
-      overflow: hidden;
+      overflow-x: hidden;
+      height: 100vh;
     }
 
     .main-container {
@@ -80,6 +82,32 @@
       color: #b91c1c;
       border: 1px solid #fecaca;
     }
+
+    .status-container {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 4px;
+    }
+
+    .connection-indicator {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #9ca3af;
+    }
+
+    .dot-online { background: #10b981; box-shadow: 0 0 8px #10b981; }
+    .dot-offline { background: #f59e0b; box-shadow: 0 0 8px #f59e0b; }
 
     .card {
       background: var(--glass-bg);
@@ -239,7 +267,13 @@
       <div class="logo-area">
         <span class="logo-text">PinBridge</span>
       </div>
-      <div id="statusBadge" class="status-badge status-unpaired">Disconnected</div>
+      <div class="status-container">
+        <div id="statusBadge" class="status-badge status-unpaired">Disconnected</div>
+        <div id="connectionIndicator" class="connection-indicator hidden">
+          <span id="statusDot" class="dot"></span>
+          <span id="statusText">Offline</span>
+        </div>
+      </div>
     </div>
 
     <!-- Active OTP View -->
@@ -252,7 +286,11 @@
         <div class="action-group">
           <button id="copyBtn" class="btn-main">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-            Copy to Clipboard
+            Copy Code
+          </button>
+          <button id="manualFetchBtn" class="btn-main" style="background: #10b981;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+            Fetch Latest
           </button>
           <button id="signOutBtn" class="btn-ghost">Unpair Device</button>
         </div>

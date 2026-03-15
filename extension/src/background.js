@@ -1,6 +1,8 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, signInAnonymously, signOut, onAuthStateChanged } from "firebase/auth";
-import { initializeFirestore, collection, doc, onSnapshot } from "firebase/firestore";
+import { initializeFirestore, collection, doc, onSnapshot, getDoc, deleteDoc } from "firebase/firestore";
+
+chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch((error) => console.error(error));
 
 const firebaseConfig = {
   apiKey: "AIzaSyBwBr0MOdVKCwuvoK3oOU6tg5LcS7uqZOE",
@@ -38,11 +40,47 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
        sendResponse({status: pairedDeviceId ? 'paired' : 'unpaired', deviceId: pairedDeviceId});
     });
     return true;
+    return true;
   } else if (msg.type === 'signOut') {
-    signOut(auth).then(() => {
-      chrome.storage.local.remove(['pairedDeviceId']);
-      if (unsubscribe) unsubscribe();
-      sendResponse({status: 'ok'});
+    chrome.storage.local.get(['pairedDeviceId'], async ({pairedDeviceId}) => {
+      try {
+        if (pairedDeviceId) {
+          console.log('[PinBridge] Unpairing device from Firestore:', pairedDeviceId);
+          // Delete from Firestore first
+          await Promise.all([
+            deleteDoc(doc(db, 'pairings', pairedDeviceId)),
+            deleteDoc(doc(db, 'otps', pairedDeviceId))
+          ]);
+          console.log('[PinBridge] Firestore records deleted');
+        }
+      } catch (err) {
+        console.error('[PinBridge] Firestore cleanup failed:', err);
+      } finally {
+        await signOut(auth);
+        chrome.storage.local.remove(['pairedDeviceId', 'latestOtp']);
+        if (unsubscribe) unsubscribe();
+        console.log('[PinBridge] Signed out and cleaned up local storage');
+        sendResponse({status: 'ok'});
+      }
+    });
+    return true;
+  } else if (msg.type === 'manualFetch') {
+    chrome.storage.local.get(['pairedDeviceId'], ({pairedDeviceId}) => {
+      if (pairedDeviceId) {
+        getDoc(doc(db, 'otps', pairedDeviceId)).then(snap => {
+          const data = snap.data();
+          if (data) {
+             // Process existing data manually
+             chrome.storage.session.get(['secret'], async ({secret}) => {
+                if (secret) {
+                  const decrypted = await decryptOtp(data, secret);
+                  chrome.storage.local.set({latestOtp: {otp: decrypted, ts: Date.now()}});
+                  sendResponse({status: 'ok', otp: decrypted});
+                }
+             });
+          }
+        });
+      }
     });
     return true;
   }
@@ -51,16 +89,35 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 function startOtpListener(deviceId) {
   if (!deviceId) return;
   if (unsubscribe) unsubscribe();
-  const docRef = doc(db, 'otps', deviceId);
+  const docRef = doc(db, 'pairings', deviceId); // Changed from 'otps' to 'pairings' to monitor metadata
   unsubscribe = onSnapshot(docRef, snap => {
+    const data = snap.data();
+    if (!data) return;
+
+    // Monitor Online/Offline status
+    const lastSeen = data.lastSeen?.toMillis() || 0;
+    const isOnline = (Date.now() - lastSeen) < 90000; // 90 seconds threshold
+    chrome.runtime.sendMessage({type: 'statusUpdate', online: isOnline});
+
+    // We also monitor the OTPS separate document or the same document?
+    // In previous versions, 'otps' collection was used for the OTP data.
+    // Let's check the pairing doc for 'otp' field or if we still use separate doc.
+    // Assuming 'otp' data is now mirrored in the pairing doc for efficiency,
+    // or we check the 'otps' collection separately.
+    // The previous logic used: doc(db, 'otps', deviceId)
+    
+    // Let's stick to dual doc if needed, but for heartbeat 'pairings' is correct.
+    // I will add a separate listener for OTPS if it's not in the same doc.
+  });
+
+  // Keep the OTP listener on 'otps' collection
+  const otpDocRef = doc(db, 'otps', deviceId);
+  onSnapshot(otpDocRef, snap => {
     const data = snap.data();
     if (!data) return;
     chrome.storage.session.get(['secret'], async ({secret}) => {
       if (!secret) return;
       try {
-        // Decrypt logic would go here, assuming decryptOtp is imported or defined
-        // For simplicity, I'll keep the logic consistent with previous versions
-        // but now using modular imports
         const decrypted = await decryptOtp(data, secret);
         chrome.storage.local.set({latestOtp: {otp: decrypted, ts: Date.now()}});
         chrome.notifications.create({
@@ -70,10 +127,8 @@ function startOtpListener(deviceId) {
           message: `Your OTP is: ${decrypted}`,
           priority: 2
         });
-        // Notify popup if it's open
         chrome.runtime.sendMessage({type: 'newOtp', otp: decrypted});
-
-        // Broadcast to all tabs for autofill
+        
         chrome.tabs.query({}, (tabs) => {
           tabs.forEach(tab => {
             chrome.tabs.sendMessage(tab.id, {type: 'newOtp', otp: decrypted});

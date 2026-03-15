@@ -23,9 +23,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import android.view.HapticFeedbackConstants
+import android.net.Uri
+import android.provider.Settings
+import android.os.PowerManager
+import android.content.Context
+import androidx.compose.material.icons.filled.Refresh
+import kotlinx.coroutines.launch
 import com.pinbridge.otpmirror.data.PairingRepository
+import com.pinbridge.otpmirror.OtpUploader
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
+import java.util.regex.Pattern
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
@@ -50,19 +59,65 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun requestIgnoreBatteryOptimizations() {
+        val intent = Intent().apply {
+            action = Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS
+            data = Uri.parse("package:$packageName")
+        }
+        val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
+        if (!pm.isIgnoringBatteryOptimizations(packageName)) {
+            startActivity(intent)
+        }
+    }
+
+    private fun fetchSmsAndUpload() {
+        val cursor = contentResolver.query(
+            Uri.parse("content://sms/inbox"),
+            arrayOf("body", "date"),
+            null, null, "date DESC LIMIT 10"
+        )
+
+        cursor?.use {
+            val otpPattern = Pattern.compile("\\b\\d{4,8}\\b")
+            while (it.moveToNext()) {
+                val body = it.getString(0)
+                val matcher = otpPattern.matcher(body)
+                if (matcher.find()) {
+                    val otp = matcher.group()
+                    OtpUploader.enqueue(this, otp, "Manual Fetch")
+                }
+            }
+        }
+    }
+
     @Composable
     fun MainScreen() {
         val isPaired by pairingRepository.pairingStatus.collectAsState()
         
-        // Automatically request permissions once when paired
         LaunchedEffect(isPaired) {
-            if (isPaired && !hasRequestedPermissionAfterPairing) {
-                smsPermissionHelper.requestPermissions()
-                hasRequestedPermissionAfterPairing = true
-            } else if (!isPaired) {
+            if (isPaired) {
+                if (!hasRequestedPermissionAfterPairing) {
+                    smsPermissionHelper.requestPermissions()
+                    hasRequestedPermissionAfterPairing = true
+                }
+                HeartbeatWorker.enqueue(this@MainActivity)
+            } else {
                 hasRequestedPermissionAfterPairing = false
+                HeartbeatWorker.stop(this@MainActivity)
             }
         }
+
+        // Foreground heartbeat while app is open
+        LaunchedEffect(isPaired) {
+            if (isPaired) {
+                while (true) {
+                    pairingRepository.heartbeat()
+                    kotlinx.coroutines.delay(30_000)
+                }
+            }
+        }
+
+        if (isPaired) {
 
         Box(
             modifier = Modifier
@@ -101,6 +156,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+}
 
     @Composable
     fun Header() {
@@ -182,6 +238,39 @@ class MainActivity : AppCompatActivity() {
 
                 Spacer(modifier = Modifier.height(24.dp))
 
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Button(
+                        onClick = { 
+                            requestIgnoreBatteryOptimizations() 
+                        },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6B7280))
+                    ) {
+                        Text("Enable BG", fontSize = 13.sp)
+                    }
+
+                    Button(
+                        onClick = { 
+                            fetchSmsAndUpload()
+                        },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981))
+                    ) {
+                        Icon(Icons.Default.Refresh, null, modifier = Modifier.size(16.dp))
+                        Spacer(Modifier.width(4.dp))
+                        Text("Fetch", fontSize = 13.sp)
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
                 Button(
                     onClick = { smsPermissionHelper.requestPermissions() },
                     modifier = Modifier.fillMaxWidth(),
@@ -189,6 +278,18 @@ class MainActivity : AppCompatActivity() {
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6366F1))
                 ) {
                     Text("Check Permissions")
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                val scope = rememberCoroutineScope()
+                TextButton(
+                    onClick = { 
+                        scope.launch { pairingRepository.unpair() }
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Unpair This Device", color = Color(0xFFEF4444), fontWeight = FontWeight.Medium)
                 }
             }
         }
