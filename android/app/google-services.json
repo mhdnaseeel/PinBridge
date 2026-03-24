@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "475556984962",
+    "project_id": "pinbridge-61dd4",
+    "storage_bucket": "pinbridge-61dd4.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:475556984962:android:a3b167c7a0eb8dc8a89c9b",
+        "android_client_info": {
+          "package_name": "com.pinbridge.otpmirror"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBHugGf0RZVZRoC5RVAERkscHJulE0pl9k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
