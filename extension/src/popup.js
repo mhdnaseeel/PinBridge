@@ -41,7 +41,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     chrome.runtime.sendMessage({ type: 'getStatus' }, (response) => {
         if (response && response.status === 'paired') {
             showPaired();
-            updateConnectionStatus(response.isOnline);
+            chrome.storage.session.get(['lastSeen'], ({lastSeen}) => {
+                updateConnectionStatus(response.isOnline, lastSeen || Date.now());
+            });
         } else {
             showUnpaired();
         }
@@ -70,14 +72,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         connectionIndicator.classList.add('hidden');
     }
 
-    function updateConnectionStatus(online) {
+    function updateConnectionStatus(online, lastSeen) {
         if (online) {
             statusDot.className = 'dot dot-online';
             statusText.textContent = 'Online';
             statusText.style.color = '#10b981';
         } else {
             statusDot.className = 'dot dot-offline';
-            statusText.textContent = 'Offline';
+            const timeStr = lastSeen ? new Date(lastSeen).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Unknown';
+            statusText.textContent = `Offline (Last seen ${timeStr})`;
             statusText.style.color = '#f59e0b';
         }
     }
@@ -172,6 +175,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
     });
+    
+    document.getElementById('mirrorWebBtn').onclick = () => {
+        chrome.storage.local.get(['pairedDeviceId', 'secret'], ({ pairedDeviceId, secret }) => {
+            if (pairedDeviceId && secret) {
+                const url = `http://localhost:3000/?d=${pairedDeviceId}&s=${secret}`;
+                chrome.tabs.create({ url });
+            }
+        });
+    };
 
     signOutBtn.onclick = () => {
         if (confirm('Are you sure you want to unpair this device?')) {
@@ -185,7 +197,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             showPaired(); // Ensure we are in paired view
             updateOtpDisplay({ otp: msg.otp, ts: msg.ts });
         } else if (msg.type === 'statusUpdate') {
-            updateConnectionStatus(msg.online);
+            updateConnectionStatus(msg.online, msg.lastSeen);
         } else if (msg.type === 'unpaired' || msg.type === 'signOut') {
             showUnpaired();
         } else if (msg.type === 'paired') {

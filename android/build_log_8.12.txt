@@ -1,12 +1,20 @@
 
+Welcome to Gradle 8.12!
+
+Here are the highlights of this release:
+ - Enhanced error and warning reporting with the Problems API
+ - File-system watching support on Alpine Linux
+ - Build and test Swift 6 libraries and apps
+
+For more details see https://docs.gradle.org/8.12/release-notes.html
+
+
 > Configure project :app
 WARNING: The option setting 'android.dependency.useConstraints=false' is experimental.
 The current default is 'true'.
 
 > Task :app:clean UP-TO-DATE
 > Task :app:checkDebugClasspath FAILED
-
-[Incubating] Problems report is available at: file:///Users/muhammednaseel/Desktop/Project/PinBridge/android/build/reports/problems/problems-report.html
 
 FAILURE: Build failed with an exception.
 
@@ -17,14 +25,8 @@ Execution failed for task ':app:checkDebugClasspath'.
 * Try:
 > Run with --stacktrace option to get the stack trace.
 > Run with --info or --debug option to get more log output.
-> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+> Run with --scan to get full insights.
 > Get more help at https://help.gradle.org.
 
-Deprecated Gradle features were used in this build, making it incompatible with Gradle 10.
-
-You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
-
-For more on this, please refer to https://docs.gradle.org/9.3.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
-
-BUILD FAILED in 761ms
+BUILD FAILED in 968ms
 2 actionable tasks: 1 executed, 1 up-to-date

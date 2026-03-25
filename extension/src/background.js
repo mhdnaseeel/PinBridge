@@ -1,6 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, signInAnonymously, signOut, onAuthStateChanged } from "firebase/auth";
 import { getFirestore, doc, onSnapshot, getDoc, deleteDoc, updateDoc, serverTimestamp } from "firebase/firestore";
+import { getDatabase, ref, onValue, off } from "firebase/database";
 import { decryptOtp } from "./crypto";
 
 // Global error handlers to prevent Chrome Extension error UI
@@ -22,72 +23,30 @@ const firebaseConfig = {
   storageBucket: "pinbridge-61dd4.firebasestorage.app",
   messagingSenderId: "475556984962",
   appId: "1:475556984962:web:87e42b8f4e3b0ce9a89c9b",
-  measurementId: "G-LEDS6BH99B"
+  measurementId: "G-LEDS6BH99B",
+  databaseURL: "https://pinbridge-61dd4-default-rtdb.firebaseio.com/"
 };
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+const rtdb = getDatabase(app);
 
 let unsubscribePairing = null;
 let unsubscribeOtp = null;
+let unsubscribeStatus = null;
 let isSigningOut = false;
 
 async function checkOnlineStatus() {
-  try {
-    const { pairedDeviceId } = await chrome.storage.local.get(['pairedDeviceId']);
-    if (!pairedDeviceId) {
-        stopStatusMonitor();
-        return;
-    }
-
-    const docRef = doc(db, 'pairings', pairedDeviceId);
-    const snap = await getDoc(docRef);
-    const data = snap.data();
-    
-    if (!data || data.paired === false) {
-        console.log('[PinBridge] Device unpaired remotely or document deleted.');
-        performSignOut();
-        return;
-    }
-
-    let isOnline = false;
-    if (typeof data.isOnline === 'boolean') {
-      isOnline = data.isOnline;
-    }
-    
-    // Fallback to heartbeat (3 min threshold since Android sends every 30s)
-    const lastSeen = data.lastSeen?.toMillis() || 0;
-    const now = Date.now();
-    if (!isOnline && lastSeen > 0) {
-        isOnline = (now - lastSeen) < 180000; 
-    }
-
-    const currentStatus = await chrome.storage.session.get(['isOnline']);
-    if (currentStatus.isOnline !== isOnline) {
-      await chrome.storage.session.set({ isOnline });
-      safeSendMessage({ type: 'statusUpdate', online: isOnline });
-      console.log(`[PinBridge] Device status: ${isOnline ? 'Online' : 'Offline'}`);
-    }
-  } catch (err) {
-    if (err.code === 'permission-denied') {
-        console.warn('[PinBridge] Permission denied during status check. Unpairing...');
-        performSignOut();
-    } else {
-        console.error('[PinBridge] Status check failed:', err);
-    }
-  }
+  // Now handled by RTDB onValue listener in startListeners
 }
 
 function stopStatusMonitor() {
-    chrome.alarms.clear('statusCheck');
+    // Alarms no longer needed for primary status
 }
 
 function startStatusMonitor() {
-    // The primary status updates come from the onSnapshot listener.
-    chrome.alarms.create('statusCheck', { periodInMinutes: 1 });
-    // Run an initial check on startup
-    checkOnlineStatus();
+    // Relying on RTDB listeners
 }
 
 function safeSendMessage(message) {
@@ -137,8 +96,8 @@ async function handleManualFetch(sendResponse) {
     try {
         const isOnlineObj = await chrome.storage.session.get(['isOnline']);
         if (!isOnlineObj.isOnline) {
-            sendResponse({status: 'error', error: 'Phone is offline'});
-            return;
+            console.warn('[PinBridge] Manual fetch triggered while status is Offline. Proceeding with best-effort trigger.');
+            // We proceed anyway to trigger the Firestore signal, in case the heartbeat is just lagging.
         }
 
         // Ensure we are signed in
@@ -216,7 +175,7 @@ async function performSignOut() {
     
     isSigningOut = false;
     console.log('[PinBridge] Local state cleaned');
-    safeSendMessage({ type: 'statusUpdate', online: false });
+    safeSendMessage({ type: 'statusUpdate', online: false, lastSeen: Date.now() });
     safeSendMessage({ type: 'unpaired' }); 
   }
 }
@@ -224,6 +183,7 @@ async function performSignOut() {
 function stopListeners() {
     if (unsubscribePairing) { unsubscribePairing(); unsubscribePairing = null; }
     if (unsubscribeOtp) { unsubscribeOtp(); unsubscribeOtp = null; }
+    if (unsubscribeStatus) { unsubscribeStatus(); unsubscribeStatus = null; }
 }
 
 function startListeners(deviceId) {
@@ -231,31 +191,35 @@ function startListeners(deviceId) {
   stopListeners();
   startStatusMonitor();
 
-  // 1. Pairing Listener – derive status directly from snapshot data
+  // 1. Pairing Listener – handles pairing/unpairing only
   unsubscribePairing = onSnapshot(doc(db, 'pairings', deviceId), async snap => {
     const data = snap.data();
     if (!data || data.paired === false) {
       performSignOut();
       return;
     }
-    // Derive online status directly from the snapshot instead of a separate getDoc
-    let isOnline = false;
-    if (typeof data.isOnline === 'boolean') {
-      isOnline = data.isOnline;
-    }
-    const lastSeen = data.lastSeen?.toMillis() || 0;
-    const now = Date.now();
-    if (!isOnline && lastSeen > 0) {
-      isOnline = (now - lastSeen) < 180000;
-    }
-    const currentStatus = await chrome.storage.session.get(['isOnline']);
-    if (currentStatus.isOnline !== isOnline) {
-      await chrome.storage.session.set({ isOnline });
-      safeSendMessage({ type: 'statusUpdate', online: isOnline });
-      console.log(`[PinBridge] Device status (from snapshot): ${isOnline ? 'Online' : 'Offline'}`);
-    }
   }, err => {
     if (err.code === 'permission-denied') performSignOut();
+  });
+
+  // 2. Status Listener (RTDB) – handles live presence
+  const statusRef = ref(rtdb, `status/${deviceId}`);
+  unsubscribeStatus = onValue(statusRef, async snapshot => {
+    const data = snapshot.val();
+    if (!data) return;
+
+    const now = Date.now();
+    const lastSeen = data.last_changed || now;
+    
+    // Grace Logic: Even if state is 'offline', treat as online if last_changed is < 30s ago (Heartbeat grace)
+    const isOnline = data.state === 'online' || (now - lastSeen < 30000);
+    
+    const currentStatus = await chrome.storage.session.get(['isOnline']);
+    // Always update session storage with last seen
+    await chrome.storage.session.set({ isOnline, lastSeen });
+    
+    safeSendMessage({ type: 'statusUpdate', online: isOnline, lastSeen });
+    console.log(`[PinBridge] RTDB Presence: ${isOnline ? 'Online' : 'Offline'} (Raw: ${data.state}), Last Seen: ${new Date(lastSeen).toLocaleString()}`);
   });
 
   // 2. OTP Listener

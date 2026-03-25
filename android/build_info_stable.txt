@@ -1,12 +1,75 @@
+Initialized native services in: /Users/muhammednaseel/.gradle/native
+Initialized jansi services in: /Users/muhammednaseel/.gradle/native
+The client will now receive all logging from the daemon (pid: 75608). The daemon log file: /Users/muhammednaseel/.gradle/daemon/8.12/daemon-75608.out.log
+Starting 7th build in daemon [uptime: 23 mins 32.406 secs, performance: 99%, GC rate: 0.00/s, heap usage: 0% of 6 GiB, non-heap usage: 18% of 1 GiB]
+Using 8 worker leases.
+Now considering [/Users/muhammednaseel/Desktop/Project/PinBridge/android] as hierarchies to watch
+Watching the file system is configured to be enabled if available
+File system watching is active
+Starting Build
+Resolved plugin [id: 'org.gradle.toolchains.foojay-resolver-convention', version: '0.10.0']
+Settings evaluated using settings file '/Users/muhammednaseel/Desktop/Project/PinBridge/android/settings.gradle.kts'.
+Using local directory build cache for the root build (location = /Users/muhammednaseel/.gradle/caches/build-cache-1, remove unused entries = after 7 days).
+Projects loaded. Root project using build file '/Users/muhammednaseel/Desktop/Project/PinBridge/android/build.gradle.kts'.
+Included projects: [root project 'PinBridge', project ':app']
+
+> Configure project :
+Evaluating root project 'PinBridge' using build file '/Users/muhammednaseel/Desktop/Project/PinBridge/android/build.gradle.kts'.
+Resolved plugin [id: 'com.android.application', version: '8.8.0', apply: false]
+Resolved plugin [id: 'org.jetbrains.kotlin.android', version: '2.0.21', apply: false]
+Resolved plugin [id: 'org.jetbrains.kotlin.plugin.compose', version: '2.0.21', apply: false]
+Resolved plugin [id: 'com.google.gms.google-services', version: '4.4.4', apply: false]
+Resolved plugin [id: 'com.google.dagger.hilt.android', version: '2.51.1', apply: false]
+Resolved plugin [id: 'org.jetbrains.kotlin.kapt', version: '2.0.21', apply: false]
 
 > Configure project :app
+Evaluating project ':app' using build file '/Users/muhammednaseel/Desktop/Project/PinBridge/android/app/build.gradle.kts'.
+Resolved plugin [id: 'com.android.application']
+Resolved plugin [id: 'org.jetbrains.kotlin.android']
+Resolved plugin [id: 'org.jetbrains.kotlin.plugin.compose']
+Resolved plugin [id: 'com.google.gms.google-services']
+Resolved plugin [id: 'com.google.dagger.hilt.android']
+Resolved plugin [id: 'org.jetbrains.kotlin.kapt']
 WARNING: The option setting 'android.dependency.useConstraints=false' is experimental.
 The current default is 'true'.
+Using default execution profile
+Using Kotlin Gradle Plugin gradle85 variant
+Detected Android Gradle Plugin compose compiler configuration
+Detected Android Gradle Plugin compose compiler configuration
+Detected Android Gradle Plugin compose compiler configuration
+Detected Android Gradle Plugin compose compiler configuration
+Detected Android Gradle Plugin compose compiler configuration
+All projects evaluated.
+Task name matched 'clean'
+Task name matched 'assembleDebug'
+Selected primary task 'clean' from project :
+Selected primary task 'assembleDebug' from project :
+Tasks to be executed: [task ':app:clean', task ':app:checkDebugClasspath', task ':app:preBuild', task ':app:preDebugBuild', task ':app:mergeDebugNativeDebugMetadata', task ':app:checkKotlinGradlePluginConfigurationErrors', task ':app:checkDebugAarMetadata', task ':app:generateDebugResValues', task ':app:processDebugGoogleServices', task ':app:mapDebugSourceSetPaths', task ':app:generateDebugResources', task ':app:mergeDebugResources', task ':app:packageDebugResources', task ':app:parseDebugLocalResources', task ':app:createDebugCompatibleScreenManifests', task ':app:extractDeepLinksDebug', task ':app:processDebugMainManifest', task ':app:processDebugManifest', task ':app:processDebugManifestForPackage', task ':app:processDebugResources', task ':app:kaptGenerateStubsDebugKotlin', task ':app:kaptDebugKotlin', task ':app:compileDebugKotlin', task ':app:javaPreCompileDebug', task ':app:compileDebugJavaWithJavac', task ':app:mergeDebugShaders', task ':app:compileDebugShaders', task ':app:generateDebugAssets', task ':app:mergeDebugAssets', task ':app:compressDebugAssets', task ':app:desugarDebugFileDependencies', task ':app:hiltAggregateDepsDebug', task ':app:hiltJavaCompileDebug', task ':app:transformDebugClassesWithAsm', task ':app:dexBuilderDebug', task ':app:mergeDebugGlobalSynthetics', task ':app:processDebugJavaRes', task ':app:mergeDebugJavaResource', task ':app:checkDebugDuplicateClasses', task ':app:mergeExtDexDebug', task ':app:mergeLibDexDebug', task ':app:mergeProjectDexDebug', task ':app:mergeDebugJniLibFolders', task ':app:mergeDebugNativeLibs', task ':app:stripDebugDebugSymbols', task ':app:validateSigningDebug', task ':app:writeDebugAppMetadata', task ':app:writeDebugSigningConfigVersions', task ':app:packageDebug', task ':app:createDebugApkListingFileRedirect', task ':app:assembleDebug']
+Tasks that were excluded: []
+Resolve mutations for :app:clean (Thread[#390,Execution worker,5,main]) started.
+:app:clean (Thread[#390,Execution worker,5,main]) started.
+destroyer locations for task group 0 (Thread[#389,included builds,5,main]) started.
 
 > Task :app:clean UP-TO-DATE
-> Task :app:checkDebugClasspath FAILED
+Caching disabled for task ':app:clean' because:
+  Deletion cannot be cached
+Task ':app:clean' is not up-to-date because:
+  Task has not declared any outputs despite executing actions.
+Resolve mutations for :app:checkDebugClasspath (Thread[#390,Execution worker,5,main]) started.
+:app:checkDebugClasspath (Thread[#390,Execution worker,5,main]) started.
 
-[Incubating] Problems report is available at: file:///Users/muhammednaseel/Desktop/Project/PinBridge/android/build/reports/problems/problems-report.html
+> Task :app:checkDebugClasspath FAILED
+Registered task dependencies: app:debugCompileClasspath
+Skipping misunderstood TO dep string: androidx.compose.ui:ui
+Skipping misunderstood TO dep string: androidx.compose.ui:ui-graphics
+Skipping misunderstood TO dep string: androidx.compose.ui:ui-tooling-preview
+Skipping misunderstood TO dep string: androidx.compose.material3:material3
+Skipping misunderstood TO dep string: com.google.firebase:firebase-analytics
+Skipping misunderstood TO dep string: com.google.firebase:firebase-auth
+Skipping misunderstood TO dep string: com.google.firebase:firebase-firestore
+Skipping misunderstood TO dep string: com.google.firebase:firebase-database
+Skipping misunderstood TO dep string: com.google.firebase:firebase-functions
+Starting dependency analysis
 
 FAILURE: Build failed with an exception.
 
@@ -16,15 +79,10 @@ Execution failed for task ':app:checkDebugClasspath'.
 
 * Try:
 > Run with --stacktrace option to get the stack trace.
-> Run with --info or --debug option to get more log output.
-> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+> Run with --debug option to get more log output.
+> Run with --scan to get full insights.
 > Get more help at https://help.gradle.org.
 
-Deprecated Gradle features were used in this build, making it incompatible with Gradle 10.
-
-You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
-
-For more on this, please refer to https://docs.gradle.org/9.3.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
-
-BUILD FAILED in 761ms
+BUILD FAILED in 1s
 2 actionable tasks: 1 executed, 1 up-to-date
+Watched directory hierarchies: [/Users/muhammednaseel/Desktop/Project/PinBridge/android]

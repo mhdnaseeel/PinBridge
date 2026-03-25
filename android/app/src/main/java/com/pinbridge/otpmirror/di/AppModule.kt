@@ -28,6 +28,12 @@ object AppModule {
 
     @Provides
     @Singleton
+    fun provideFirebaseDatabase(): com.google.firebase.database.FirebaseDatabase {
+        return com.google.firebase.database.FirebaseDatabase.getInstance("https://pinbridge-61dd4-default-rtdb.firebaseio.com/")
+    }
+
+    @Provides
+    @Singleton
     fun provideEncryptedSharedPreferences(@ApplicationContext context: Context): SharedPreferences {
         val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
         return EncryptedSharedPreferences.create(

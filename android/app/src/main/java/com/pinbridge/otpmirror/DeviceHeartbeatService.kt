@@ -17,6 +17,8 @@ import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ServerValue
 import com.pinbridge.otpmirror.data.PairingRepository
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
@@ -35,57 +37,69 @@ class DeviceHeartbeatService : Service() {
     @Inject
     lateinit var prefs: android.content.SharedPreferences
 
+    @Inject
+    lateinit var rtdb: FirebaseDatabase
+
     private val TAG = "DeviceHeartbeatService"
-    private val HEARTBEAT_INTERVAL_MS = 30_000L
     private val CHANNEL_ID = "PinBridgeHeartbeatChannel"
     private val NOTIFICATION_ID = 1001
 
-    private var hasInternet = false
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-    private var heartbeatJob: Job? = null
     private var deviceId: String? = null
+
+    private fun updateStatus(online: Boolean) {
+        val id = deviceId ?: return
+        val statusRef = rtdb.getReference("status/$id")
+        if (online) {
+            statusRef.onDisconnect().setValue(
+                mapOf(
+                    "state" to "offline",
+                    "last_changed" to ServerValue.TIMESTAMP
+                )
+            )
+            statusRef.setValue(
+                mapOf(
+                    "state" to "online",
+                    "last_changed" to ServerValue.TIMESTAMP
+                )
+            )
+        } else {
+            statusRef.setValue(
+                mapOf(
+                    "state" to "offline",
+                    "last_changed" to ServerValue.TIMESTAMP
+                )
+            )
+        }
+    }
 
     private val networkCallback = object : ConnectivityManager.NetworkCallback() {
         override fun onAvailable(network: Network) {
-            hasInternet = true
-            Log.d(TAG, "Network available")
+            Log.d(TAG, "Network validated and available")
+            updateStatus(true)
         }
 
         override fun onLost(network: Network) {
-            hasInternet = false
-            Log.d(TAG, "Network lost")
+            Log.d(TAG, "Network lost - Relying on Server-side onDisconnect for status precision")
+            // REMOVED explicit updateStatus(false) to prevent 'offline jitter' during blips.
+            // The Firebase server will trigger onDisconnect if the connection is truly lost.
         }
     }
 
     override fun onCreate() {
         super.onCreate()
         createNotificationChannel()
+        
+        // Initialize deviceId early to avoid race conditions with network callbacks
+        deviceId = prefs.getString(Constants.KEY_DEVICE_ID, null)
+        
         val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         val networkRequest = NetworkRequest.Builder()
             .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+            .addCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
             .build()
         
-        // Initialize current state
-        val activeNetwork = connectivityManager.activeNetwork
-        val caps = connectivityManager.getNetworkCapabilities(activeNetwork)
-        hasInternet = caps?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true
-        
         connectivityManager.registerNetworkCallback(networkRequest, networkCallback)
-    }
-
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        // ALWAYS call startForeground immediately to satisfy Android 8.0+ OS requirements and prevent ANR/crash loops
-        startForeground(NOTIFICATION_ID, createNotification())
-
-        deviceId = intent?.getStringExtra("deviceId") ?: prefs.getString(Constants.KEY_DEVICE_ID, null)
-        
-        if (deviceId == null) {
-            Log.w(TAG, "No device ID found for heartbeat service. Stopping.")
-            stopSelf()
-            return START_NOT_STICKY
-        }
-
-        startHeartbeatLoop()
         
         // Listen for remote fetch requests from the Extension
         scope.launch {
@@ -100,39 +114,60 @@ class DeviceHeartbeatService : Service() {
                 }
             }
         }
-
-        return START_STICKY
     }
 
-    private fun startHeartbeatLoop() {
+    private var heartbeatJob: Job? = null
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // ALWAYS call startForeground immediately
+        startForeground(NOTIFICATION_ID, createNotification())
+
+        val intentDeviceId = intent?.getStringExtra("deviceId")
+        if (intentDeviceId != null) {
+            deviceId = intentDeviceId
+        }
+        
+        if (deviceId == null) {
+            Log.w(TAG, "No device ID found for heartbeat service. Stopping.")
+            stopSelf()
+            return START_NOT_STICKY
+        }
+
+        // 1. Initial manual check and immediate announcement
+        val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val activeNetwork = connectivityManager.activeNetwork
+        val caps = connectivityManager.getNetworkCapabilities(activeNetwork)
+        val isInitiallyOnline = caps != null && 
+            caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) && 
+            caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
+        
+        updateStatus(isInitiallyOnline)
+        
+        // 2. Proactive Heartbeat Loop (Protects against accidental onDisconnect server triggers)
         heartbeatJob?.cancel()
         heartbeatJob = scope.launch {
             while (isActive) {
-                sendHeartbeat()
-                delay(HEARTBEAT_INTERVAL_MS)
+                if (isInternetAvailable()) {
+                    Log.d(TAG, "Periodic heartbeat: Re-asserting online status")
+                    updateStatus(true)
+                }
+                delay(20_000) // 20 seconds
             }
         }
+        
+        return START_STICKY
     }
 
-    private suspend fun sendHeartbeat() {
-        if (!hasInternet) {
-            Log.w(TAG, "Skipping heartbeat: No internet")
-            return
-        }
-
-        val id = deviceId ?: return
-        
-        try {
-            pairingRepository.heartbeat()
-            Log.d(TAG, "Heartbeat sent successfully to Firestore for $id")
-        } catch (e: Exception) {
-            Log.w(TAG, "Heartbeat error: ${e.message}")
-        }
+    private fun isInternetAvailable(): Boolean {
+        val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val network = connectivityManager.activeNetwork ?: return false
+        val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
+        return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) && 
+               capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        heartbeatJob?.cancel()
         val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         connectivityManager.unregisterNetworkCallback(networkCallback)
     }

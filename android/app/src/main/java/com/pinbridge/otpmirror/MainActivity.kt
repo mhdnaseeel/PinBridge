@@ -61,48 +61,16 @@ class MainActivity : AppCompatActivity() {
             isExplicitPermissionCheck = false
         }
     
-    private var isOnline by mutableStateOf(true)
     private var hasRequestedPermissionAfterPairing = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
-        registerConnectivityCallback()
         
         setContent {
             PinBridgeTheme {
                 MainScreen()
             }
         }
-    }
-
-    private fun registerConnectivityCallback() {
-        val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        val request = NetworkRequest.Builder()
-            .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-            .build()
-        
-        // Initial check
-        isOnline = isInternetAvailable()
-
-        connectivityManager.registerNetworkCallback(request, object : ConnectivityManager.NetworkCallback() {
-            override fun onAvailable(network: Network) {
-                if (!isOnline) { // Only update if state actually changed
-                    isOnline = true
-                    lifecycleScope.launch {
-                        pairingRepository.setOnlineStatusAtomically(true)
-                    }
-                }
-            }
-            override fun onLost(network: Network) {
-                if (isOnline) { // Only update if state actually changed
-                    isOnline = false
-                    lifecycleScope.launch {
-                        pairingRepository.setOnlineStatusAtomically(false)
-                    }
-                }
-            }
-        })
     }
 
     private fun isInternetAvailable(): Boolean {
@@ -125,6 +93,7 @@ class MainActivity : AppCompatActivity() {
 
 
     private fun fetchSmsAndUpload() {
+        val isOnline = isInternetAvailable()
         if (!isOnline) {
             Toast.makeText(this, "Fetch Failed: No Internet Connection", Toast.LENGTH_SHORT).show()
             Log.w("MainActivity", "Fetch aborted: Device is offline")
@@ -269,17 +238,45 @@ class MainActivity : AppCompatActivity() {
                     status = "AES-GCM Active",
                     statusColor = Color(0xFF6366F1)
                 )
+
+                val activeId = pairingRepository.getDeviceId() ?: "Unknown"
+                StatusItem(
+                    icon = Icons.Default.Info,
+                    label = "Device ID",
+                    status = activeId.take(8) + "...",
+                    statusColor = Color(0xFF6B7280)
+                )
                 
                 Spacer(modifier = Modifier.height(12.dp))
                 
                 StatusItem(
                     icon = Icons.Default.Info,
                     label = "SMS Service",
-                    status = if (isOnline) "Monitoring..." else "Offline",
-                    statusColor = if (isOnline) Color(0xFF6366F1) else Color(0xFFEF4444)
+                    status = if (isInternetAvailable()) "Monitoring..." else "Offline",
+                    statusColor = if (isInternetAvailable()) Color(0xFF6366F1) else Color(0xFFEF4444)
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
+
+                val context = androidx.compose.ui.platform.LocalContext.current
+                Button(
+                    onClick = {
+                        val deviceId = pairingRepository.getDeviceId()
+                        val secret = pairingRepository.getSecret()
+                        if (deviceId != null && secret != null) {
+                            val url = "http://localhost:3000/?d=$deviceId&s=$secret"
+                            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                            val clip = android.content.ClipData.newPlainText("PinBridge Mirror Link", url)
+                            clipboard.setPrimaryClip(clip)
+                            Toast.makeText(context, "Mirror Link Copied!", Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981).copy(alpha = 0.1f), contentColor = Color(0xFF10B981))
+                ) {
+                    Text("Copy Web Mirror Link", fontWeight = FontWeight.Bold)
+                }
 
                 Spacer(modifier = Modifier.height(24.dp))
 

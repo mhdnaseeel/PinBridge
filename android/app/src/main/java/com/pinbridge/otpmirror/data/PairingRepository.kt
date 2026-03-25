@@ -24,10 +24,9 @@ interface PairingRepository {
     suspend fun pairWithQr(deviceId: String, secret: String)
     suspend fun pairWithCode(code: String)
     suspend fun unpair()
-    suspend fun heartbeat()
-    suspend fun setOnlineStatus(online: Boolean)
-    suspend fun setOnlineStatusAtomically(online: Boolean)
     fun isPaired(): Boolean
+    fun getDeviceId(): String?
+    fun getSecret(): String?
     val remoteFetchRequest: SharedFlow<Unit>
 }
 
@@ -50,6 +49,15 @@ class PairingRepositoryImpl constructor(
 
     init {
         startStatusListener()
+        startHeartbeatIfPaired()
+    }
+
+    private fun startHeartbeatIfPaired() {
+        val deviceId = prefs.getString(Constants.KEY_DEVICE_ID, null)
+        if (isPaired() && deviceId != null) {
+            Log.i(TAG, "Device is already paired. Starting heartbeat service on initialization.")
+            DeviceHeartbeatService.start(context, deviceId)
+        }
     }
 
     private fun startStatusListener() {
@@ -171,49 +179,16 @@ class PairingRepositoryImpl constructor(
         }
     }
 
-    private var lastHeartbeatTimestamp: Long = 0
-
-    override suspend fun heartbeat() {
-        val deviceId = prefs.getString(Constants.KEY_DEVICE_ID, null) ?: return
-        val now = System.currentTimeMillis()
-        // Skip if a heartbeat was sent less than 25s ago (interval is 30s)
-        if (now - lastHeartbeatTimestamp < 25_000) return
-        try {
-            db.collection(Constants.COLL_PAIRINGS).document(deviceId)
-                .update(
-                    "lastSeen", com.google.firebase.firestore.FieldValue.serverTimestamp(),
-                    "isOnline", true
-                )
-                .await()
-            lastHeartbeatTimestamp = now
-        } catch (e: Exception) {
-            Log.e(TAG, "Heartbeat failed", e)
-        }
-    }
-
-    override suspend fun setOnlineStatus(online: Boolean) {
-        setOnlineStatusAtomically(online)
-    }
-
-    override suspend fun setOnlineStatusAtomically(online: Boolean) {
-        val deviceId = prefs.getString(Constants.KEY_DEVICE_ID, null) ?: return
-        try {
-            val data = hashMapOf<String, Any>(
-                "isOnline" to online,
-                "lastSeen" to if (online) com.google.firebase.firestore.FieldValue.serverTimestamp() else com.google.firebase.firestore.FieldValue.delete()
-            )
-            db.collection(Constants.COLL_PAIRINGS)
-                .document(deviceId)
-                .update(data)
-                .await()
-            Log.i(TAG, "Set online status atomically to $online for $deviceId")
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to set online status atomically", e)
-        }
-    }
-
     override fun isPaired(): Boolean {
         return prefs.getBoolean(Constants.KEY_IS_PAIRED, false)
+    }
+
+    override fun getDeviceId(): String? {
+        return prefs.getString(Constants.KEY_DEVICE_ID, null)
+    }
+
+    override fun getSecret(): String? {
+        return prefs.getString(Constants.KEY_SECRET, null)
     }
 
     private fun saveCredentials(deviceId: String, secret: String) {
