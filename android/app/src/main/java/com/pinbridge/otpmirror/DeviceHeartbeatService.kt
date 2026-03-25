@@ -32,6 +32,9 @@ class DeviceHeartbeatService : Service() {
     @Inject
     lateinit var pairingRepository: PairingRepository
 
+    @Inject
+    lateinit var prefs: android.content.SharedPreferences
+
     private val TAG = "DeviceHeartbeatService"
     private val HEARTBEAT_INTERVAL_MS = 30_000L
     private val CHANNEL_ID = "PinBridgeHeartbeatChannel"
@@ -71,22 +74,27 @@ class DeviceHeartbeatService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        deviceId = intent?.getStringExtra("deviceId")
+        // ALWAYS call startForeground immediately to satisfy Android 8.0+ OS requirements and prevent ANR/crash loops
+        startForeground(NOTIFICATION_ID, createNotification())
+
+        deviceId = intent?.getStringExtra("deviceId") ?: prefs.getString(Constants.KEY_DEVICE_ID, null)
+        
         if (deviceId == null) {
+            Log.w(TAG, "No device ID found for heartbeat service. Stopping.")
             stopSelf()
             return START_NOT_STICKY
         }
 
-        startForeground(NOTIFICATION_ID, createNotification())
         startHeartbeatLoop()
         
         // Listen for remote fetch requests from the Extension
         scope.launch {
             pairingRepository.remoteFetchRequest.collect {
                 Log.d(TAG, "Remote fetch request received for: $deviceId")
-                val otp = SmsRetriever.getLatestOtp(this@DeviceHeartbeatService)
-                if (otp != null) {
-                    OtpUploader.enqueue(this@DeviceHeartbeatService, otp, "Remote Fetch")
+                val result = SmsRetriever.getLatestOtp(this@DeviceHeartbeatService)
+                if (result != null) {
+                    val (otp, timestamp) = result
+                    OtpUploader.enqueue(this@DeviceHeartbeatService, otp, "Remote Fetch", timestamp)
                 } else {
                     Log.w(TAG, "No OTP found for remote fetch request")
                 }

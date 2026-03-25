@@ -1,7 +1,17 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, signInAnonymously, signOut, onAuthStateChanged } from "firebase/auth";
-import { initializeFirestore, doc, onSnapshot, getDoc, deleteDoc } from "firebase/firestore";
+import { getFirestore, doc, onSnapshot, getDoc, deleteDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { decryptOtp } from "./crypto";
+
+// Global error handlers to prevent Chrome Extension error UI
+self.addEventListener('error', (e) => {
+    e.preventDefault();
+    console.debug('[PinBridge] Suppressed error:', e.error || e.message);
+});
+self.addEventListener('unhandledrejection', (e) => {
+    e.preventDefault();
+    console.debug('[PinBridge] Suppressed unhandled rejection:', e.reason);
+});
 
 chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch((error) => console.error(error));
 
@@ -125,11 +135,21 @@ async function handleManualFetch(sendResponse) {
     }
 
     try {
+        const isOnlineObj = await chrome.storage.session.get(['isOnline']);
+        if (!isOnlineObj.isOnline) {
+            sendResponse({status: 'error', error: 'Phone is offline'});
+            return;
+        }
+
         // Ensure we are signed in
         if (!auth.currentUser) {
             console.log('[PinBridge] No active session. Signing in...');
             await signInAnonymously(auth);
         }
+
+        // Save pre-fetch uploadTs to detect when new upload completes
+        const currentData = await chrome.storage.local.get(['latestOtp']);
+        const preFetchUploadTs = currentData.latestOtp ? (currentData.latestOtp.uploadTs || 0) : 0;
 
         const pairingDoc = doc(db, 'pairings', pairedDeviceId);
         await updateDoc(pairingDoc, {
@@ -137,22 +157,30 @@ async function handleManualFetch(sendResponse) {
         });
         console.log('[PinBridge] Remote fetch requested for:', pairedDeviceId);
 
-        // Optional: Wait a bit for the phone to upload, or just read the current state
-        await new Promise(r => setTimeout(r, 5000)); 
+        // Wait up to 15 seconds for Android to respond
+        let attempts = 0;
+        const maxAttempts = 15;
+        while (attempts < maxAttempts) {
+            await new Promise(r => setTimeout(r, 1000));
+            
+            // Check if phone went offline during polling (prevents hanging success)
+            const statusCheck = await chrome.storage.session.get(['isOnline']);
+            if (!statusCheck.isOnline) {
+                sendResponse({status: 'error', error: 'Phone went offline'});
+                return;
+            }
 
-        const otpDoc = doc(db, 'otps', pairedDeviceId);
-        const snap = await getDoc(otpDoc);
-        
-        if (snap.exists()) {
-            const data = snap.data();
-            console.log('[PinBridge] OTP document found. Decrypting...');
-            const decrypted = await decryptOtp(data, secret);
-            chrome.storage.local.set({latestOtp: {otp: decrypted, ts: Date.now()}});
-            sendResponse({status: 'ok', otp: decrypted});
-        } else {
-            console.warn('[PinBridge] No OTP document found at: otps/' + pairedDeviceId);
-            sendResponse({status: 'error', error: 'No OTP found in Firestore'});
+            const { latestOtp } = await chrome.storage.local.get(['latestOtp']);
+            if (latestOtp && (latestOtp.uploadTs || 0) > preFetchUploadTs) {
+                console.log('[PinBridge] New OTP successfully fetched by device.');
+                sendResponse({status: 'ok', otp: latestOtp.otp});
+                return;
+            }
+            attempts++;
         }
+        
+        console.warn('[PinBridge] Manual fetch timeout. No OTP uploaded by device.');
+        sendResponse({status: 'error', error: 'Timeout waiting for phone to upload'});
     } catch (err) {
         console.error('[PinBridge] Manual fetch error details:', {
             code: err.code,
@@ -246,7 +274,9 @@ async function processNewOtp(data) {
 
     try {
         const decrypted = await decryptOtp(data, secret);
-        chrome.storage.local.set({latestOtp: {otp: decrypted, ts: Date.now()}});
+        const tsFromDb = data.smsTs || (data.ts && typeof data.ts.toMillis === 'function' ? data.ts.toMillis() : Date.now());
+        const uploadTs = data.ts && typeof data.ts.toMillis === 'function' ? data.ts.toMillis() : Date.now();
+        chrome.storage.local.set({latestOtp: {otp: decrypted, ts: tsFromDb, uploadTs}});
         
         chrome.notifications.create({
           type: 'basic',
@@ -256,11 +286,11 @@ async function processNewOtp(data) {
           priority: 2
         });
         
-        safeSendMessage({type: 'newOtp', otp: decrypted});
+        safeSendMessage({type: 'newOtp', otp: decrypted, ts: tsFromDb});
         
         chrome.tabs.query({}, (tabs) => {
           tabs.forEach(tab => {
-            chrome.tabs.sendMessage(tab.id, {type: 'newOtp', otp: decrypted}).catch(() => {});
+            chrome.tabs.sendMessage(tab.id, {type: 'newOtp', otp: decrypted, ts: tsFromDb}).catch(() => {});
           });
         });
     } catch (e) {

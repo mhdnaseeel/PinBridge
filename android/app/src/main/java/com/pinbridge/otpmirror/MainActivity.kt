@@ -44,7 +44,22 @@ class MainActivity : AppCompatActivity() {
     @Inject
     lateinit var pairingRepository: PairingRepository
 
-    private val smsPermissionHelper by lazy { SmsPermissionHelper(this) { } }
+    private var isExplicitPermissionCheck = false
+
+    private val smsPermissionHelper =
+        SmsPermissionHelper(this) { granted ->
+            if (granted) {
+                val pm = getSystemService(Context.POWER_SERVICE) as android.os.PowerManager
+                if (!pm.isIgnoringBatteryOptimizations(packageName)) {
+                    requestIgnoreBatteryOptimizations()
+                } else if (isExplicitPermissionCheck) {
+                    Toast.makeText(this, "All permissions are accepted!", Toast.LENGTH_SHORT).show()
+                }
+            } else if (isExplicitPermissionCheck) {
+                Toast.makeText(this, "SMS permissions are required.", Toast.LENGTH_SHORT).show()
+            }
+            isExplicitPermissionCheck = false
+        }
     
     private var isOnline by mutableStateOf(true)
     private var hasRequestedPermissionAfterPairing = false
@@ -99,14 +114,15 @@ class MainActivity : AppCompatActivity() {
 
     private fun requestIgnoreBatteryOptimizations() {
         val intent = Intent().apply {
-            action = Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS
-            data = Uri.parse("package:$packageName")
+            action = android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS
+            data = android.net.Uri.parse("package:$packageName")
         }
-        val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
+        val pm = getSystemService(Context.POWER_SERVICE) as android.os.PowerManager
         if (!pm.isIgnoringBatteryOptimizations(packageName)) {
             startActivity(intent)
         }
     }
+
 
     private fun fetchSmsAndUpload() {
         if (!isOnline) {
@@ -114,10 +130,11 @@ class MainActivity : AppCompatActivity() {
             Log.w("MainActivity", "Fetch aborted: Device is offline")
             return
         }
-        val otp = SmsRetriever.getLatestOtp(this)
-        if (otp != null) {
+        val result = SmsRetriever.getLatestOtp(this)
+        if (result != null) {
+            val (otp, timestamp) = result
             Toast.makeText(this, "OTP found and uploaded", Toast.LENGTH_SHORT).show()
-            OtpUploader.enqueue(this, otp, "Manual Fetch")
+            OtpUploader.enqueue(this, otp, "Manual Fetch", timestamp)
         } else {
             Toast.makeText(this, "No valid OTP found", Toast.LENGTH_SHORT).show()
         }
@@ -130,6 +147,7 @@ class MainActivity : AppCompatActivity() {
         LaunchedEffect(isPaired) {
             if (isPaired) {
                 if (!hasRequestedPermissionAfterPairing) {
+                    isExplicitPermissionCheck = false
                     smsPermissionHelper.requestPermissions()
                     hasRequestedPermissionAfterPairing = true
                 }
@@ -297,7 +315,10 @@ class MainActivity : AppCompatActivity() {
                 Spacer(modifier = Modifier.height(12.dp))
 
                 Button(
-                    onClick = { smsPermissionHelper.requestPermissions() },
+                    onClick = { 
+                        isExplicitPermissionCheck = true
+                        smsPermissionHelper.requestPermissions() 
+                    },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6366F1))

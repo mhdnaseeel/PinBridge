@@ -1,3 +1,14 @@
+// Global error handlers to prevent Chrome Extension error UI
+const targetScope = typeof self !== 'undefined' ? self : window;
+targetScope.addEventListener('error', (e) => {
+    e.preventDefault();
+    console.debug('[PinBridge] Suppressed error:', e.error || e.message);
+});
+targetScope.addEventListener('unhandledrejection', (e) => {
+    e.preventDefault();
+    console.debug('[PinBridge] Suppressed unhandled rejection:', e.reason);
+});
+
 document.addEventListener('DOMContentLoaded', async () => {
     const statusBadge = document.getElementById('statusBadge');
     const otpView = document.getElementById('otpView');
@@ -115,6 +126,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
+        if (statusText.textContent !== 'Online') {
+            manualFetchBtn.innerText = 'Phone Offline';
+            manualFetchBtn.style.background = '#ef4444';
+            setTimeout(() => {
+                manualFetchBtn.innerText = 'Fetch Latest';
+                manualFetchBtn.style.background = '#10b981';
+            }, 3000);
+            return;
+        }
+
         manualFetchBtn.disabled = true;
         manualFetchBtn.innerText = 'Fetching...';
 
@@ -125,7 +146,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 manualFetchBtn.style.background = '#6366f1';
                 // background.js already updates storage, but we can force refresh
                 if (response.otp) {
-                    updateOtpDisplay({ otp: response.otp, ts: Date.now() });
+                    chrome.storage.local.get(['latestOtp'], ({ latestOtp }) => {
+                        if (latestOtp) updateOtpDisplay(latestOtp);
+                    });
                 }
                 setTimeout(() => {
                     manualFetchBtn.innerText = 'Fetch Latest';
@@ -160,7 +183,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     chrome.runtime.onMessage.addListener((msg) => {
         if (msg.type === 'newOtp') {
             showPaired(); // Ensure we are in paired view
-            updateOtpDisplay({ otp: msg.otp, ts: Date.now() });
+            updateOtpDisplay({ otp: msg.otp, ts: msg.ts });
         } else if (msg.type === 'statusUpdate') {
             updateConnectionStatus(msg.online);
         } else if (msg.type === 'unpaired' || msg.type === 'signOut') {

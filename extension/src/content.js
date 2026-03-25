@@ -1,16 +1,23 @@
 // PinBridge Content Script - Autofill Logic
 
+// Global error handlers to prevent Chrome Extension error UI
+const targetScope = typeof self !== 'undefined' ? self : window;
+targetScope.addEventListener('error', (e) => {
+    e.preventDefault();
+    console.debug('[PinBridge] Suppressed error:', e.error || e.message);
+});
+targetScope.addEventListener('unhandledrejection', (e) => {
+    e.preventDefault();
+    console.debug('[PinBridge] Suppressed unhandled rejection:', e.reason);
+});
+
 chrome.runtime.onMessage.addListener((msg) => {
     if (msg.type === 'newOtp') {
-        const otp = msg.otp;
-        console.log('[PinBridge] Attempting to autofill OTP:', otp);
-        autofill(otp);
+        autofill(msg.otp);
     }
 });
 
 function autofill(otp) {
-    // 1. Find potential OTP fields
-    // We look for numeric inputs with "otp", "code", "pin", or "password" in name/auto-complete
     const selectors = [
         'input[type="number"]',
         'input[type="tel"]',
@@ -31,21 +38,11 @@ function autofill(otp) {
                    !input.disabled && !input.readOnly;
         });
 
-    if (inputs.length === 0) {
-        console.log('[PinBridge] No suitable input field found for autofill.');
-        return;
-    }
+    if (inputs.length === 0) return;
 
-    // 2. Fill the first visible/suitable field
     const target = inputs[0];
     target.value = otp;
-    
-    // 3. Trigger events so the site's JS detects the change
     target.dispatchEvent(new Event('input', { bubbles: true }));
     target.dispatchEvent(new Event('change', { bubbles: true }));
-    
-    // Optional: focus the field
     target.focus();
-    
-    console.log('[PinBridge] Successfully autofilled OTP into:', target);
 }

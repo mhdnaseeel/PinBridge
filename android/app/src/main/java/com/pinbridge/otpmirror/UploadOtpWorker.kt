@@ -25,6 +25,8 @@ class UploadOtpWorker @AssistedInject constructor(
     override suspend fun doWork(): Result {
         val otp = inputData.getString("otp") ?: return Result.failure()
 
+        val smsTs = inputData.getLong("smsTs", System.currentTimeMillis())
+
         val deviceId = sharedPrefs.getString(Constants.KEY_DEVICE_ID, null) ?: return Result.failure()
         val secret = sharedPrefs.getString(Constants.KEY_SECRET, null) ?: return Result.failure()
         val secretBytes = Base64.decode(secret, Base64.NO_WRAP)
@@ -46,6 +48,7 @@ class UploadOtpWorker @AssistedInject constructor(
                     "iv"  to encrypted.iv,
                     "sender" to (inputData.getString("sender") ?: "Unknown"),
                     "ts"  to FieldValue.serverTimestamp(),
+                    "smsTs" to smsTs,
                     "expiresAt" to com.google.firebase.Timestamp(
                         java.util.Date(System.currentTimeMillis() + 10 * 60 * 1000)
                     )

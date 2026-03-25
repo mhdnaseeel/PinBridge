@@ -64,14 +64,14 @@ class PairingRepositoryImpl constructor(
 
                 if (snapshot == null || !snapshot.exists()) {
                     Log.i(TAG, "Snapshot for device $deviceId does not exist or was deleted.")
-                    // Only unpair if we were previously paired and the document is truly gone from the server
-                    if (_pairingStatus.value && snapshot?.metadata?.hasPendingWrites() != true) {
+                    // Only unpair if we were previously paired, the document is truly gone from the server, and this isn't a stale cached read
+                    if (_pairingStatus.value && snapshot?.metadata?.isFromCache == false && snapshot.metadata?.hasPendingWrites() != true) {
                         Log.i(TAG, "Triggering local unpair due to missing Firestore document.")
                         clearLocalCredentials()
                     }
                 } else if (snapshot.getBoolean("paired") != true) {
                     Log.i(TAG, "Snapshot exists but 'paired' field is false/missing for $deviceId.")
-                    if (_pairingStatus.value && snapshot.metadata.hasPendingWrites() != true) {
+                    if (_pairingStatus.value && snapshot.metadata.isFromCache == false && snapshot.metadata.hasPendingWrites() != true) {
                         Log.i(TAG, "Triggering local unpair due to 'paired' field change.")
                         clearLocalCredentials()
                     }

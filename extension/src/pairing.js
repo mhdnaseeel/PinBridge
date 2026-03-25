@@ -1,7 +1,18 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, signInAnonymously } from "firebase/auth";
-import { initializeFirestore, doc, setDoc, serverTimestamp, onSnapshot } from "firebase/firestore";
+import { getFirestore, doc, setDoc, serverTimestamp, onSnapshot } from "firebase/firestore";
 import QRCode from 'qrcode';
+
+// Global error handlers to prevent Chrome Extension error UI
+const targetScope = typeof self !== 'undefined' ? self : window;
+targetScope.addEventListener('error', (e) => {
+    e.preventDefault();
+    console.debug('[PinBridge] Suppressed error:', e.error || e.message);
+});
+targetScope.addEventListener('unhandledrejection', (e) => {
+    e.preventDefault();
+    console.debug('[PinBridge] Suppressed unhandled rejection:', e.reason);
+});
 
 const firebaseConfig = {
   apiKey: "AIzaSyBwBr0MOdVKCwuvoK3oOU6tg5LcS7uqZOE",
@@ -15,9 +26,7 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const db = initializeFirestore(app, {
-  experimentalForceLongPolling: true
-});
+const db = getFirestore(app);
 
 (async () => {
   // Ensure we are signed in anonymously

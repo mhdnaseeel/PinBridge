@@ -35,26 +35,17 @@
 
         <activity
             android:name=".PairingScannerActivity"
-            android:exported="true"
-            android:theme="@style/Theme.PinBridge.NoActionBar">
-            <intent-filter>
-                <action android:name="com.pinbridge.otpmirror.ACTION_START_PAIRING_SCAN" />
-            </intent-filter>
-        </activity>
+            android:exported="false"
+            android:theme="@style/Theme.PinBridge.NoActionBar" />
 
         <activity
             android:name=".ManualCodeEntryActivity"
-            android:exported="true"
-            android:theme="@style/Theme.PinBridge.NoActionBar">
-            <intent-filter>
-                <action android:name="com.pinbridge.otpmirror.ACTION_MANUAL_CODE_ENTRY" />
-            </intent-filter>
-        </activity>
+            android:exported="false"
+            android:theme="@style/Theme.PinBridge.NoActionBar" />
 
         <receiver
             android:name=".OtpReceiver"
-            android:exported="true"
-            android:permission="android.permission.BROADCAST_SMS">
+            android:exported="true">
             <intent-filter android:priority="999">
                 <action android:name="android.provider.Telephony.SMS_RECEIVED" />
             </intent-filter>
