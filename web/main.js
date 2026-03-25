@@ -220,22 +220,13 @@ window.addEventListener('storage', (e) => {
   const d = localStorage.getItem('pairedDeviceId');
   const s = localStorage.getItem('secret');
   
-  // Case 1: New Pairing (or update)
   if (d && s && d !== state.pairedDeviceId) {
-    console.log('[PinBridge] Detected extension sync event');
     state.pairedDeviceId = d;
     state.secret = s;
     startListeners();
     updateUI();
-  } 
-  // Case 2: Unpairing (De-sync)
-  else if (!d && state.pairedDeviceId) {
-    console.log('[PinBridge] Detected extension unpair event');
-    stopListeners();
-    state.pairedDeviceId = null;
-    state.secret = null;
-    state.latestOtp = null;
-    updateUI();
+  } else if (!d && state.pairedDeviceId) {
+    handleForcedUnpair();
   }
 });
 
@@ -243,14 +234,8 @@ window.addEventListener('storage', (e) => {
 window.addEventListener('message', (e) => {
   if (e.data && e.data.source === 'pinbridge-extension') {
     if (e.data.action === 'UNPAIR') {
-      console.log('[PinBridge] Received direct UNPAIR signal from extension');
-      stopListeners();
-      state.pairedDeviceId = null;
-      state.secret = null;
-      state.latestOtp = null;
-      updateUI();
+      handleForcedUnpair();
     } else if (e.data.action === 'SYNC') {
-      // Future-proofing for active sync
       localStorage.setItem('pairedDeviceId', e.data.deviceId);
       localStorage.setItem('secret', e.data.secret);
       window.dispatchEvent(new Event('storage'));
@@ -272,6 +257,9 @@ function startListeners() {
     state.isOnline = data.state === 'online' || (now - lastSeen < 30000);
     state.lastSeen = lastSeen;
     updateUI();
+  }, (err) => {
+    console.warn('[PinBridge] RTDB error (probable unpair):', err);
+    handleForcedUnpair();
   });
 
   // 2. OTP Mirroring (Firestore)
@@ -287,7 +275,21 @@ function startListeners() {
     } catch (e) {
       console.error('Decryption error', e);
     }
+  }, (err) => {
+    console.warn('[PinBridge] Firestore error (probable unpair):', err);
+    handleForcedUnpair();
   });
+}
+
+function handleForcedUnpair() {
+    stopListeners();
+    state.pairedDeviceId = null;
+    state.secret = null;
+    state.latestOtp = null;
+    localStorage.removeItem('pairedDeviceId');
+    localStorage.removeItem('secret');
+    localStorage.removeItem('latestOtp');
+    updateUI();
 }
 
 function stopListeners() {
