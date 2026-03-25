@@ -258,28 +258,6 @@ class MainActivity : AppCompatActivity() {
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                val context = androidx.compose.ui.platform.LocalContext.current
-                Button(
-                    onClick = {
-                        val deviceId = pairingRepository.getDeviceId()
-                        val secret = pairingRepository.getSecret()
-                        if (deviceId != null && secret != null) {
-                            val url = "http://localhost:3000/?d=$deviceId&s=$secret"
-                            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
-                            val clip = android.content.ClipData.newPlainText("PinBridge Mirror Link", url)
-                            clipboard.setPrimaryClip(clip)
-                            Toast.makeText(context, "Mirror Link Copied!", Toast.LENGTH_SHORT).show()
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981).copy(alpha = 0.1f), contentColor = Color(0xFF10B981))
-                ) {
-                    Text("Copy Web Mirror Link", fontWeight = FontWeight.Bold)
-                }
-
-                Spacer(modifier = Modifier.height(24.dp))
-
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)

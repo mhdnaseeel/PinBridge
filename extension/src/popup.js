@@ -175,15 +175,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
     });
-    
-    document.getElementById('mirrorWebBtn').onclick = () => {
-        chrome.storage.local.get(['pairedDeviceId', 'secret'], ({ pairedDeviceId, secret }) => {
-            if (pairedDeviceId && secret) {
-                const url = `http://localhost:3000/?d=${pairedDeviceId}&s=${secret}`;
-                chrome.tabs.create({ url });
-            }
-        });
-    };
 
     signOutBtn.onclick = () => {
         if (confirm('Are you sure you want to unpair this device?')) {

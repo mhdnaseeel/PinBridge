@@ -28,7 +28,9 @@ let state = {
   secret: localStorage.getItem('secret'),
   isOnline: false,
   lastSeen: null,
-  latestOtp: JSON.parse(localStorage.getItem('latestOtp') || 'null')
+  latestOtp: JSON.parse(localStorage.getItem('latestOtp') || 'null'),
+  pairingDeviceId: null,
+  pairingSecret: null
 };
 
 /**
@@ -100,9 +102,9 @@ function renderUnpaired() {
         <div class="locked-view">
           <div class="lock-icon">🔒</div>
           <h2 class="view-title">Dashboard Locked</h2>
-          <p class="view-subtitle">Please initialize this workspace using your unique pairing link.</p>
-          <div style="margin-top: 24px; font-size: 12px; color: var(--text-muted); font-family: monospace;">
-            ERR_CREDENTIALS_MISSING
+          <p class="view-subtitle">The Dashboard mirrors your active PinBridge extension session automatically.</p>
+          <div style="margin-top: 24px; font-size: 13px; color: var(--text-muted);">
+            Please ensure you are paired in the Chrome Extension.
           </div>
         </div>
       </div>
@@ -142,7 +144,6 @@ function renderPaired() {
             <span class="status-value" style="color: var(--primary);">AES-256</span>
           </div>
         </div>
-
       </aside>
 
       <!-- Main Stage -->
@@ -213,6 +214,49 @@ function renderPaired() {
     }
   };
 }
+
+// Listen for sync/unpair from Extension
+window.addEventListener('storage', (e) => {
+  const d = localStorage.getItem('pairedDeviceId');
+  const s = localStorage.getItem('secret');
+  
+  // Case 1: New Pairing (or update)
+  if (d && s && d !== state.pairedDeviceId) {
+    console.log('[PinBridge] Detected extension sync event');
+    state.pairedDeviceId = d;
+    state.secret = s;
+    startListeners();
+    updateUI();
+  } 
+  // Case 2: Unpairing (De-sync)
+  else if (!d && state.pairedDeviceId) {
+    console.log('[PinBridge] Detected extension unpair event');
+    stopListeners();
+    state.pairedDeviceId = null;
+    state.secret = null;
+    state.latestOtp = null;
+    updateUI();
+  }
+});
+
+// Listen for direct messages from Extension Content Script (Robust Sync)
+window.addEventListener('message', (e) => {
+  if (e.data && e.data.source === 'pinbridge-extension') {
+    if (e.data.action === 'UNPAIR') {
+      console.log('[PinBridge] Received direct UNPAIR signal from extension');
+      stopListeners();
+      state.pairedDeviceId = null;
+      state.secret = null;
+      state.latestOtp = null;
+      updateUI();
+    } else if (e.data.action === 'SYNC') {
+      // Future-proofing for active sync
+      localStorage.setItem('pairedDeviceId', e.data.deviceId);
+      localStorage.setItem('secret', e.data.secret);
+      window.dispatchEvent(new Event('storage'));
+    }
+  }
+});
 
 function startListeners() {
   if (!state.pairedDeviceId) return;
