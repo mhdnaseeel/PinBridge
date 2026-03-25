@@ -258,8 +258,7 @@ function startListeners() {
     state.lastSeen = lastSeen;
     updateUI();
   }, (err) => {
-    console.warn('[PinBridge] RTDB error (probable unpair):', err);
-    handleForcedUnpair();
+    console.warn('[PinBridge] RTDB error:', err);
   });
 
   // 2. OTP Mirroring (Firestore)
@@ -276,8 +275,7 @@ function startListeners() {
       console.error('Decryption error', e);
     }
   }, (err) => {
-    console.warn('[PinBridge] Firestore error (probable unpair):', err);
-    handleForcedUnpair();
+    console.warn('[PinBridge] Firestore error:', err);
   });
 }
 
