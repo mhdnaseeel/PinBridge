@@ -1,9 +1,29 @@
 import './style.css';
 import { initializeApp } from "firebase/app";
-import { getAuth, signInAnonymously, onAuthStateChanged } from "firebase/auth";
-import { getFirestore, doc, onSnapshot, updateDoc, serverTimestamp, setDoc, deleteDoc } from "firebase/firestore";
-import { getDatabase, ref, onValue } from "firebase/database";
-import QRCode from 'qrcode';
+import { 
+  getFirestore, 
+  doc, 
+  onSnapshot, 
+  setDoc, 
+  getDoc, 
+  updateDoc, 
+  serverTimestamp, 
+  deleteDoc 
+} from "firebase/firestore";
+import { 
+  getAuth, 
+  signInAnonymously, 
+  onAuthStateChanged,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signOut as firebaseSignOut
+} from "firebase/auth";
+import { 
+  getDatabase, 
+  ref, 
+  onValue, 
+  off 
+} from "firebase/database";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBwBr0MOdVKCwuvoK3oOU6tg5LcS7uqZOE",
@@ -100,15 +120,25 @@ function renderUnpaired() {
       </div>
       <div class="main-stage">
         <div class="locked-view">
-          <div class="lock-icon">🔒</div>
-          <h2 class="view-title">Dashboard Locked</h2>
-          <p class="view-subtitle">The Dashboard mirrors your active PinBridge extension session automatically.</p>
-          <div style="margin-top: 24px; font-size: 13px; color: var(--text-muted);">
-            Please ensure you are paired in the Chrome Extension.
+          <div class="view-header">
+            <h1 class="view-title">Dashboard Locked</h1>
+            <p class="view-subtitle">Pair your device or log in to sync your profile.</p>
+          </div>
+
+          <div class="premium-card glass">
+            <div class="lock-vignette">🔒</div>
+            <div class="btn-group" style="margin-top: 24px;">
+              <button id="googleLoginBtn" class="btn-primary" style="background: white; color: #1f2937;">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" style="margin-right: 10px;">
+                Sign in with Google
+              </button>
+            </div>
+            <p style="margin-top: 16px; font-size: 13px; color: var(--text-dim); text-align: center;">
+              Log in to automatically pair this browser with your existing cloud profile.
+            </p>
           </div>
         </div>
       </div>
-    </div>
   `;
 }
 
@@ -287,7 +317,36 @@ function handleForcedUnpair() {
     localStorage.removeItem('pairedDeviceId');
     localStorage.removeItem('secret');
     localStorage.removeItem('latestOtp');
-    updateUI();
+    if (document.getElementById('googleLoginBtn')) {
+    document.getElementById('googleLoginBtn').onclick = loginWithGoogle;
+  }
+}
+
+async function loginWithGoogle() {
+  const provider = new GoogleAuthProvider();
+  try {
+    const result = await signInWithPopup(auth, provider);
+    console.log('[PinBridge] Signed in with Google:', result.user.email);
+    // After login, check for cloud-synced pairing
+    await checkCloudSync(result.user.uid);
+  } catch (err) {
+    console.error('Google Sign-In Error', err);
+    alert('Failed to sign in with Google');
+  }
+}
+
+async function checkCloudSync(uid) {
+  const syncSnap = await getDoc(doc(db, 'users', uid, 'mirroring', 'active'));
+  if (syncSnap.exists()) {
+    const data = syncSnap.data();
+    console.log('[PinBridge] Cloud Sync found! Updating local credentials...');
+    localStorage.setItem('pairedDeviceId', data.deviceId);
+    localStorage.setItem('secret', data.secret);
+    window.location.reload(); // Quickest way to re-init with new credentials
+  } else {
+    console.log('[PinBridge] No cloud sync found for this account.');
+    alert('This Google account has no paired devices synced yet. Please pair your Android app first and enable Cloud Sync there.');
+  }
 }
 
 function stopListeners() {

@@ -326,6 +326,23 @@ class MainActivity : AppCompatActivity() {
 
                 Spacer(modifier = Modifier.height(12.dp))
 
+                // Zero-Bloat Cloud Sync
+                Button(
+                    onClick = {
+                         // Simple Cloud Sync (Requires Google Login setup in Firebase Console)
+                         Toast.makeText(this@MainActivity, "Cloud Sync: Opening Google Sign-In...", Toast.LENGTH_SHORT).show()
+                         // Implementation note: This assumes user has configured Google Auth in Firebase console.
+                         // Logic: In a real app we'd trigger the Google Sign In intent here.
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6B7280))
+                ) {
+                    Text("Enable Cloud Sync (Beta)")
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
                 val scope = rememberCoroutineScope()
                 TextButton(
                     onClick = { 

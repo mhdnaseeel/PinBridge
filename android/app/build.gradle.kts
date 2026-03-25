@@ -91,6 +91,7 @@ dependencies {
     implementation("com.google.firebase:firebase-firestore")
     implementation("com.google.firebase:firebase-database")
     implementation("com.google.firebase:firebase-functions")
+    implementation("com.google.android.gms:play-services-auth:21.0.0")
     
     // Encryption
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
