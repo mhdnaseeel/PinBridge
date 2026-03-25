@@ -38,15 +38,32 @@ if (window.location.hostname === 'localhost' || window.location.hostname.include
 
 // Listen for unpairing in extension and sync to dashboard
 chrome.storage.onChanged.addListener((changes, area) => {
-    if (area === 'local' && changes.pairedDeviceId && !changes.pairedDeviceId.newValue) {
-        if (window.location.hostname === 'localhost' || window.location.hostname.includes('firebaseapp.com') || window.location.hostname.includes('web.app') || window.location.hostname === 'pin-bridge.vercel.app') {
+    if (area === 'local' && changes.pairedDeviceId) {
+        const isTarget = window.location.hostname === 'localhost' || window.location.hostname.includes('firebaseapp.com') || window.location.hostname.includes('web.app') || window.location.hostname === 'pin-bridge.vercel.app';
+        if (!isTarget) return;
+
+        if (!changes.pairedDeviceId.newValue) {
+            // Unpairing
             console.log('[PinBridge] Extension unpaired. Clearing dashboard...');
             localStorage.removeItem('pairedDeviceId');
             localStorage.removeItem('secret');
             localStorage.removeItem('latestOtp');
-            // Dispatch both storage event and postMessage for maximum reliability
             window.dispatchEvent(new Event('storage'));
             window.postMessage({ source: 'pinbridge-extension', action: 'UNPAIR' }, '*');
+        } else {
+            // New Pairing or update
+            chrome.storage.local.get(['secret'], (data) => {
+                console.log('[PinBridge] New extension pairing detected. Syncing...');
+                localStorage.setItem('pairedDeviceId', changes.pairedDeviceId.newValue);
+                if (data.secret) localStorage.setItem('secret', data.secret);
+                window.dispatchEvent(new Event('storage'));
+                window.postMessage({ 
+                    source: 'pinbridge-extension', 
+                    action: 'SYNC', 
+                    deviceId: changes.pairedDeviceId.newValue,
+                    secret: data.secret
+                }, '*');
+            });
         }
     }
 });
