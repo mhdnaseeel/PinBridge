@@ -54,6 +54,13 @@ chrome.storage.onChanged.addListener((changes, area) => {
 chrome.runtime.onMessage.addListener((msg) => {
     if (msg.type === 'newOtp') {
         autofill(msg.otp);
+    } else if (msg.type === 'forceUnpair') {
+        console.log('[PinBridge] Forced unpair received from extension');
+        localStorage.removeItem('pairedDeviceId');
+        localStorage.removeItem('secret');
+        localStorage.removeItem('latestOtp');
+        window.dispatchEvent(new Event('storage'));
+        window.postMessage({ source: 'pinbridge-extension', action: 'UNPAIR' }, '*');
     }
 });
 
