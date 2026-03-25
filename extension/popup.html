@@ -327,14 +327,20 @@
     <!-- Unpaired View -->
     <div id="unpairedView">
       <div class="card empty-state">
-        <span class="empty-icon">📱</span>
-        <div class="empty-text">
-          Pair your browser with the PinBridge Android app to start mirroring OTPs.
-        </div>
-        <button id="pairBtn" class="btn-main">
-          Pair New Device
-        </button>
-      </div>
+            <div class="action-grid">
+                <button id="fetchBtn" class="action-card">
+                    <div class="action-icon">🔄</div>
+                    <span>Quick Sync</span>
+                </button>
+                <button id="mobileAccessBtn" class="action-card">
+                    <div class="action-icon">📱</div>
+                    <span>Mobile Access</span>
+                </button>
+                <button id="unpairBtn" class="action-card btn-danger">
+                    <div class="action-icon">🔓</div>
+                    <span>Unpair Device</span>
+                </button>
+            </div>
     </div>
   </div>
 
