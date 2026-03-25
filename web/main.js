@@ -88,7 +88,7 @@ function renderUnpaired() {
     <div class="dashboard-layout">
       <div class="sidebar">
         <div class="logo-area">
-          <div class="logo-icon"></div>
+          <img src="/logo.png" class="logo-icon-img" alt="Logo">
           <span class="logo-text">PinBridge</span>
         </div>
         <div class="status-group">
@@ -121,7 +121,7 @@ function renderPaired() {
       <!-- Professional Sidebar -->
       <aside class="sidebar">
         <div class="logo-area">
-          <div class="logo-icon"></div>
+          <img src="/logo.png" class="logo-icon-img" alt="Logo">
           <span class="logo-text">PinBridge</span>
         </div>
         
