@@ -305,6 +305,84 @@ button {
   filter: drop-shadow(0 0 20px rgba(255,255,255,0.1));
 }
 
+/* --- Mobile Responsiveness --- */
+@media (max-width: 800px) {
+  .dashboard-layout {
+    flex-direction: column;
+    height: auto;
+    overflow-y: auto;
+  }
+
+  .sidebar {
+    width: 100%;
+    height: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--border-color);
+    padding: 24px;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .sidebar .logo-area {
+    margin-bottom: 0;
+  }
+
+  .sidebar .status-group {
+    display: none; /* Hide detailed status on small headers */
+  }
+
+  /* Optional: Show minimal status in header */
+  .sidebar::after {
+    content: '';
+    display: block;
+  }
+
+  .main-stage {
+    padding: 24px 16px;
+    height: auto;
+  }
+
+  .view-header {
+    margin-bottom: 32px;
+  }
+
+  .view-title {
+    font-size: 28px;
+  }
+
+  .premium-card {
+    padding: 32px 20px;
+  }
+
+  .otp-value {
+    font-size: 48px;
+    letter-spacing: 4px;
+  }
+
+  .btn-group {
+    flex-direction: column;
+  }
+
+  .btn-primary, .btn-secondary {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+    .otp-value {
+        font-size: 36px;
+        letter-spacing: 2px;
+    }
+    .premium-card {
+        padding: 24px 16px;
+    }
+}
+
 /* Responsive */
 @media (max-width: 900px) {
   .dashboard-layout {

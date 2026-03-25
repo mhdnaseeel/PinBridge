@@ -37,8 +37,26 @@ let unsubscribeOtp = null;
 let unsubscribeStatus = null;
 let isSigningOut = false;
 
+async function checkPairingStatus() {
+  const { pairedDeviceId } = await chrome.storage.local.get(['pairedDeviceId']);
+  if (!pairedDeviceId) return;
+
+  try {
+    const pairingDoc = await getDoc(doc(db, 'pairings', pairedDeviceId));
+    if (!pairingDoc.exists() || pairingDoc.data().paired === false) {
+      console.log('[PinBridge] Pairing no longer valid on server. Signing out...');
+      performSignOut();
+    }
+  } catch (err) {
+    if (err.code === 'permission-denied') {
+      performSignOut();
+    }
+  }
+}
+
 async function checkOnlineStatus() {
   // Now handled by RTDB onValue listener in startListeners
+  checkPairingStatus(); 
 }
 
 function stopStatusMonitor() {
