@@ -80,6 +80,13 @@ body {
   box-shadow: 0 0 15px var(--primary-glow);
 }
 
+.logo-icon-img {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  object-fit: contain;
+}
+
 .logo-text {
   font-family: var(--font-heading);
   font-size: 22px;
