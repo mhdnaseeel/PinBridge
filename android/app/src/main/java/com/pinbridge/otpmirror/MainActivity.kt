@@ -9,6 +9,8 @@ import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.ActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -32,6 +34,11 @@ import android.content.Context
 import android.widget.Toast
 import androidx.compose.material.icons.filled.Refresh
 import kotlinx.coroutines.launch
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.GoogleAuthProvider
+import com.google.firebase.firestore.FirebaseFirestore
 import com.pinbridge.otpmirror.data.PairingRepository
 import com.pinbridge.otpmirror.OtpUploader
 import dagger.hilt.android.AndroidEntryPoint
@@ -45,6 +52,74 @@ class MainActivity : AppCompatActivity() {
     lateinit var pairingRepository: PairingRepository
 
     private var isExplicitPermissionCheck = false
+
+    private val firebaseAuth by lazy { FirebaseAuth.getInstance() }
+    private val firestore by lazy { FirebaseFirestore.getInstance() }
+
+    // Google Sign-in launcher
+    private val googleSignInLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result: ActivityResult ->
+        val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+        try {
+            val account = task.getResult(Exception::class.java)
+            val idToken = account?.idToken
+            if (idToken != null) {
+                val credential = GoogleAuthProvider.getCredential(idToken, null)
+                firebaseAuth.signInWithCredential(credential).addOnCompleteListener(this) { authTask ->
+                    if (authTask.isSuccessful) {
+                        val uid = firebaseAuth.currentUser?.uid ?: return@addOnCompleteListener
+                        checkCloudSync(uid)
+                    } else {
+                        Toast.makeText(this, "Google Sign-In failed", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Google Sign-In error", e)
+            Toast.makeText(this, "Sign-in cancelled", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun checkCloudSync(uid: String) {
+        firestore.collection("users").document(uid)
+            .collection("mirroring").document("active")
+            .get()
+            .addOnSuccessListener { doc ->
+                if (doc.exists()) {
+                    val deviceId = doc.getString("deviceId")
+                    val secret = doc.getString("secret")
+                    if (deviceId != null && secret != null) {
+                        lifecycleScope.launch {
+                            try {
+                                pairingRepository.pairWithQr(deviceId, secret)
+                                Toast.makeText(this@MainActivity, "Cloud Sync activated! Device paired.", Toast.LENGTH_LONG).show()
+                            } catch (e: Exception) {
+                                Toast.makeText(this@MainActivity, "Pairing failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    } else {
+                        Toast.makeText(this, "Cloud Sync data incomplete.", Toast.LENGTH_SHORT).show()
+                    }
+                } else {
+                    Toast.makeText(this, "No cloud sync found. Pair your browser extension first.", Toast.LENGTH_LONG).show()
+                }
+            }
+            .addOnFailureListener {
+                Toast.makeText(this, "Failed to read cloud sync data.", Toast.LENGTH_SHORT).show()
+            }
+    }
+
+    private fun startGoogleSignIn() {
+        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestIdToken(getString(R.string.default_web_client_id))
+            .requestEmail()
+            .build()
+        val googleSignInClient = GoogleSignIn.getClient(this, gso)
+        googleSignInClient.signOut().addOnCompleteListener {
+            googleSignInLauncher.launch(googleSignInClient.signInIntent)
+        }
+    }
 
     private val smsPermissionHelper =
         SmsPermissionHelper(this) { granted ->
@@ -326,19 +401,14 @@ class MainActivity : AppCompatActivity() {
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Zero-Bloat Cloud Sync
+                // Google Cloud Sync
                 Button(
-                    onClick = {
-                         // Simple Cloud Sync (Requires Google Login setup in Firebase Console)
-                         Toast.makeText(this@MainActivity, "Cloud Sync: Opening Google Sign-In...", Toast.LENGTH_SHORT).show()
-                         // Implementation note: This assumes user has configured Google Auth in Firebase console.
-                         // Logic: In a real app we'd trigger the Google Sign In intent here.
-                    },
+                    onClick = { startGoogleSignIn() },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6B7280))
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6366F1))
                 ) {
-                    Text("Enable Cloud Sync (Beta)")
+                    Text("🔒  Sign in with Google (Cloud Sync)")
                 }
 
                 Spacer(modifier = Modifier.height(12.dp))

@@ -120,26 +120,24 @@ function renderUnpaired() {
       </div>
       <div class="main-stage">
         <div class="locked-view">
-          <div class="view-header">
-            <h1 class="view-title">Dashboard Locked</h1>
-            <p class="view-subtitle">Pair your device or log in to sync your profile.</p>
-          </div>
+          <div class="lock-icon">🔒</div>
+          <h1 class="view-title">Dashboard Locked</h1>
+          <p class="view-subtitle">Sign in with Google to automatically pair this browser with your existing cloud profile.</p>
 
-          <div class="premium-card glass">
-            <div class="lock-vignette">🔒</div>
-            <div class="btn-group" style="margin-top: 24px;">
-              <button id="googleLoginBtn" class="btn-primary" style="background: white; color: #1f2937;">
-                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" style="margin-right: 10px;">
-                Sign in with Google
-              </button>
-            </div>
-            <p style="margin-top: 16px; font-size: 13px; color: var(--text-dim); text-align: center;">
-              Log in to automatically pair this browser with your existing cloud profile.
-            </p>
+          <div class="premium-card locked-card">
+            <button id="googleLoginBtn" class="google-signin-btn">
+              <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20" alt="Google">
+              Sign in with Google
+            </button>
+            <p class="locked-hint">Your credentials are synced securely via AES-256 encryption.</p>
           </div>
         </div>
       </div>
+    </div>
   `;
+  
+  const googleBtn = document.getElementById('googleLoginBtn');
+  if (googleBtn) googleBtn.onclick = loginWithGoogle;
 }
 
 function renderPaired() {
@@ -317,9 +315,7 @@ function handleForcedUnpair() {
     localStorage.removeItem('pairedDeviceId');
     localStorage.removeItem('secret');
     localStorage.removeItem('latestOtp');
-    if (document.getElementById('googleLoginBtn')) {
-    document.getElementById('googleLoginBtn').onclick = loginWithGoogle;
-  }
+    updateUI();
 }
 
 async function loginWithGoogle() {

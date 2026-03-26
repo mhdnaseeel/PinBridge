@@ -24,6 +24,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const statusDot = document.getElementById('statusDot');
     const statusText = document.getElementById('statusText');
     const offlineBanner = document.getElementById('offlineBanner');
+    const googleSignInBtn = document.getElementById('googleSignInBtn');
 
     function updateBrowserStatus() {
         if (navigator.onLine) {
@@ -100,9 +101,28 @@ document.addEventListener('DOMContentLoaded', async () => {
         otpTime.textContent = `Latest OTP received at ${timeStr}`;
     }
 
-    pairBtn.onclick = () => {
+    pairBtn?.addEventListener('click', () => {
         chrome.tabs.create({ url: 'pairing.html' });
-    };
+    });
+
+    if (googleSignInBtn) {
+        googleSignInBtn.onclick = async () => {
+            googleSignInBtn.disabled = true;
+            googleSignInBtn.textContent = 'Signing in...';
+            chrome.runtime.sendMessage({ type: 'googleSignIn' }, (response) => {
+                if (response && response.status === 'ok') {
+                    showPaired();
+                } else {
+                    const errMsg = response?.error || 'Sign-in failed';
+                    googleSignInBtn.textContent = errMsg.includes('popup') ? 'Popup blocked' : 'Failed – try again';
+                    setTimeout(() => {
+                        googleSignInBtn.disabled = false;
+                        googleSignInBtn.innerHTML = '<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" alt="Google"> Sign in with Google';
+                    }, 3000);
+                }
+            });
+        };
+    }
 
     copyBtn.onclick = () => {
         navigator.clipboard.writeText(otpValue.textContent);

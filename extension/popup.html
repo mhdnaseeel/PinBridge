@@ -283,6 +283,84 @@
     .btn-main.copied::after {
       opacity: 1;
     }
+    .action-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .action-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      background: rgba(99, 102, 241, 0.08);
+      border: 1px solid rgba(99, 102, 241, 0.15);
+      border-radius: 14px;
+      padding: 16px 8px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-main);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .action-card:hover {
+      background: rgba(99, 102, 241, 0.15);
+      transform: translateY(-2px);
+    }
+
+    .action-card.btn-danger {
+      grid-column: span 2;
+      background: rgba(239, 68, 68, 0.08);
+      border-color: rgba(239, 68, 68, 0.15);
+      color: #ef4444;
+    }
+
+    .action-card.btn-danger:hover {
+      background: rgba(239, 68, 68, 0.15);
+    }
+
+    .action-icon {
+      font-size: 20px;
+    }
+
+    .google-signin-section {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(0,0,0,0.07);
+    }
+
+    .google-signin-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+
+    .google-signin-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      background: #ffffff;
+      color: #3c4043;
+      border: 1px solid #dadce0;
+      border-radius: 24px;
+      padding: 10px 20px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      transition: all 0.2s ease;
+    }
+
+    .google-signin-btn:hover {
+      box-shadow: 0 4px 12px rgba(0,0,0,0.18);
+      transform: translateY(-1px);
+    }
   </style>
 </head>
 <body>
@@ -341,8 +419,15 @@
                     <span>Unpair Device</span>
                 </button>
             </div>
+            <div class="google-signin-section">
+              <p class="google-signin-label">Or sync with your Google account</p>
+              <button id="googleSignInBtn" class="google-signin-btn">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" alt="Google">
+                Sign in with Google
+              </button>
+            </div>
+      </div>
     </div>
-  </div>
 
   <script src="dist/popup.js"></script>
 </body>
