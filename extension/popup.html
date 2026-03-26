@@ -254,6 +254,13 @@
       display: block;
     }
 
+    .empty-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 8px;
+    }
+
     .empty-text {
       font-size: 14px;
       color: var(--text-muted);
@@ -405,27 +412,20 @@
     <!-- Unpaired View -->
     <div id="unpairedView">
       <div class="card empty-state">
-            <div class="action-grid">
-                <button id="fetchBtn" class="action-card">
-                    <div class="action-icon">🔄</div>
-                    <span>Quick Sync</span>
-                </button>
-                <button id="mobileAccessBtn" class="action-card">
-                    <div class="action-icon">📱</div>
-                    <span>Mobile Access</span>
-                </button>
-                <button id="unpairBtn" class="action-card btn-danger">
-                    <div class="action-icon">🔓</div>
-                    <span>Unpair Device</span>
-                </button>
-            </div>
-            <div class="google-signin-section">
-              <p class="google-signin-label">Or sync with your Google account</p>
-              <button id="googleSignInBtn" class="google-signin-btn">
-                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" alt="Google">
-                Sign in with Google
-              </button>
-            </div>
+        <div class="empty-icon">🔗</div>
+        <p class="empty-title">Not Connected</p>
+        <p class="empty-text">Pair your Android device or sign in with Google to start mirroring OTPs.</p>
+
+        <div class="action-group">
+          <button id="pairBtn" class="btn-main">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12" y2="18"></line></svg>
+            Pair Device
+          </button>
+          <button id="googleSignInBtn" class="google-signin-btn">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" alt="Google">
+            Sign in with Google
+          </button>
+        </div>
       </div>
     </div>
 

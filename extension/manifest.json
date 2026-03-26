@@ -30,10 +30,6 @@
     "alarms",
     "identity"
   ],
-  "oauth2": {
-    "client_id": "475556984962-chrome-extension.apps.googleusercontent.com",
-    "scopes": ["openid", "email", "profile"]
-  },
   "host_permissions": [
     "https://*.firebaseio.com/*",
     "https://*.firebaseapp.com/*",

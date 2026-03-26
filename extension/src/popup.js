@@ -112,12 +112,27 @@ document.addEventListener('DOMContentLoaded', async () => {
             chrome.runtime.sendMessage({ type: 'googleSignIn' }, (response) => {
                 if (response && response.status === 'ok') {
                     showPaired();
+                    // Reload OTP
+                    chrome.storage.local.get(['latestOtp'], ({ latestOtp }) => {
+                        if (latestOtp) updateOtpDisplay(latestOtp);
+                    });
+                } else if (response && response.status === 'signed_in') {
+                    // Signed in but no pairing yet — show success + message
+                    googleSignInBtn.textContent = '✓ Signed in';
+                    googleSignInBtn.style.background = '#10b981';
+                    googleSignInBtn.style.color = '#fff';
+                    googleSignInBtn.style.border = 'none';
+                    const emptyText = document.querySelector('.empty-text');
+                    if (emptyText) {
+                        emptyText.textContent = response.message || 'Signed in! Now pair your Android app to start syncing OTPs.';
+                    }
                 } else {
                     const errMsg = response?.error || 'Sign-in failed';
-                    googleSignInBtn.textContent = errMsg.includes('popup') ? 'Popup blocked' : 'Failed – try again';
+                    googleSignInBtn.textContent = errMsg.length > 30 ? 'Failed – try again' : errMsg;
                     setTimeout(() => {
                         googleSignInBtn.disabled = false;
                         googleSignInBtn.innerHTML = '<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" alt="Google"> Sign in with Google';
+                        googleSignInBtn.style = '';
                     }, 3000);
                 }
             });

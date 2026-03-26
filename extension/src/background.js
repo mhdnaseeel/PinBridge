@@ -108,37 +108,69 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 });
 
 async function handleGoogleSignIn(sendResponse) {
+  const GOOGLE_CLIENT_ID = '475556984962-jekqarbki0ob5s1una398poptimup0eq.apps.googleusercontent.com';
+  const REDIRECT_URL = chrome.identity.getRedirectURL();
+  const SCOPES = ['openid', 'email', 'profile'];
+  
+  const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
+  authUrl.searchParams.set('client_id', GOOGLE_CLIENT_ID);
+  authUrl.searchParams.set('redirect_uri', REDIRECT_URL);
+  authUrl.searchParams.set('response_type', 'token');
+  authUrl.searchParams.set('scope', SCOPES.join(' '));
+  authUrl.searchParams.set('prompt', 'select_account');
+  
   try {
-    // Chrome extension MV3: use chrome.identity.getAuthToken for OAuth2
-    chrome.identity.getAuthToken({ interactive: true }, async (token) => {
-      if (chrome.runtime.lastError || !token) {
-        console.error('[PinBridge] Google auth error:', chrome.runtime.lastError?.message);
-        sendResponse({ status: 'error', error: chrome.runtime.lastError?.message || 'Token error' });
-        return;
-      }
-      try {
-        // Use the token to sign in to Firebase via credential
-        const { GoogleAuthProvider, signInWithCredential } = await import('firebase/auth');
-        const credential = GoogleAuthProvider.credential(null, token);
-        const result = await signInWithCredential(auth, credential);
-        const uid = result.user.uid;
-        console.log('[PinBridge] Extension signed in with Google:', result.user.email);
-        // Check for cloud-synced pairing data
-        const syncSnap = await getDoc(doc(db, 'users', uid, 'mirroring', 'active'));
-        if (syncSnap.exists()) {
-          const data = syncSnap.data();
-          await chrome.storage.local.set({ pairedDeviceId: data.deviceId, secret: data.secret });
-          startListeners(data.deviceId);
-          safeSendMessage({ type: 'paired', deviceId: data.deviceId });
-          sendResponse({ status: 'ok' });
-        } else {
-          sendResponse({ status: 'error', error: 'No cloud sync found. Pair your Android app first.' });
+    chrome.identity.launchWebAuthFlow(
+      { url: authUrl.toString(), interactive: true },
+      async (redirectUrl) => {
+        if (chrome.runtime.lastError || !redirectUrl) {
+          console.error('[PinBridge] Auth flow error:', chrome.runtime.lastError?.message);
+          sendResponse({ status: 'error', error: chrome.runtime.lastError?.message || 'Auth cancelled' });
+          return;
         }
-      } catch (err) {
-        console.error('[PinBridge] Firebase credential error:', err);
-        sendResponse({ status: 'error', error: err.message });
+        try {
+          // Extract access_token from redirect URL fragment
+          const params = new URLSearchParams(new URL(redirectUrl).hash.substring(1));
+          const accessToken = params.get('access_token');
+          
+          if (!accessToken) {
+            sendResponse({ status: 'error', error: 'No access token received' });
+            return;
+          }
+          
+          // Sign in to Firebase with the Google credential
+          const credential = GoogleAuthProvider.credential(null, accessToken);
+          const result = await signInWithCredential(auth, credential);
+          const uid = result.user.uid;
+          console.log('[PinBridge] Extension signed in with Google:', result.user.email);
+          
+          // Check for cloud-synced pairing data
+          const syncSnap = await getDoc(doc(db, 'users', uid, 'mirroring', 'active'));
+          if (syncSnap.exists()) {
+            const data = syncSnap.data();
+            await chrome.storage.local.set({ 
+              pairedDeviceId: data.deviceId, 
+              secret: data.secret,
+              googleUid: uid,
+              googleEmail: result.user.email
+            });
+            startListeners(data.deviceId);
+            safeSendMessage({ type: 'paired', deviceId: data.deviceId });
+            sendResponse({ status: 'ok' });
+          } else {
+            // Store that user is signed in even without pairing
+            await chrome.storage.local.set({
+              googleUid: uid,
+              googleEmail: result.user.email
+            });
+            sendResponse({ status: 'signed_in', message: 'Signed in! No paired device found yet. Pair your Android app first.' });
+          }
+        } catch (err) {
+          console.error('[PinBridge] Firebase credential error:', err);
+          sendResponse({ status: 'error', error: err.message });
+        }
       }
-    });
+    );
   } catch (err) {
     sendResponse({ status: 'error', error: err.message });
   }
