@@ -501,6 +501,15 @@ checkUrlParams();
 onAuthStateChanged(auth, (user) => {
   if (user && !user.isAnonymous) {
     state.user = user;
+
+    // Always broadcast to extension content script (handles both fresh sign-in and existing session)
+    window.postMessage({
+      source: 'pinbridge-web',
+      action: 'LOGIN_SUCCESS',
+      uid: user.uid,
+      email: user.email
+    }, '*');
+
     listenToCloudSync(user.uid);
   } else {
     state.user = null;
