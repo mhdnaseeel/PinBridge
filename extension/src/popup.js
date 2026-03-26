@@ -24,6 +24,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const statusText = document.getElementById('statusText');
     const offlineBanner = document.getElementById('offlineBanner');
     const googleSignInBtn = document.getElementById('googleSignInBtn');
+    const startPairingBtn = document.getElementById('startPairingBtn');
     const emptyText = document.getElementById('emptyText');
     const errorMsg = document.getElementById('errorMsg');
     const unpairedSignOutBtn = document.getElementById('unpairedSignOutBtn');
@@ -76,19 +77,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         connectionIndicator.classList.add('hidden');
         
         chrome.storage.local.get(['googleEmail'], ({ googleEmail }) => {
-            if (googleEmail && googleSignInBtn) {
-                googleSignInBtn.innerHTML = '✓ Signed in';
-                googleSignInBtn.style.background = '#10b981';
-                googleSignInBtn.style.color = '#fff';
-                googleSignInBtn.style.border = 'none';
-                emptyText.textContent = `Signed in as ${googleEmail}. Pair your Android app to start syncing OTPs.`;
+            if (googleEmail) {
+                if (googleSignInBtn) googleSignInBtn.classList.add('hidden');
+                if (startPairingBtn) startPairingBtn.classList.remove('hidden');
+                emptyText.innerHTML = `Signed in as <strong>${googleEmail}</strong>.<br>Start pairing to configure your Android device.`;
                 if (unpairedSignOutBtn) unpairedSignOutBtn.classList.remove('hidden');
-            } else if (googleSignInBtn) {
-                googleSignInBtn.disabled = false;
-                googleSignInBtn.style.background = '';
-                googleSignInBtn.style.color = '';
-                googleSignInBtn.style.border = '';
-                googleSignInBtn.innerHTML = '<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" alt="Google"> Sign in with Google';
+            } else {
+                if (googleSignInBtn) {
+                    googleSignInBtn.disabled = false;
+                    googleSignInBtn.style.background = '';
+                    googleSignInBtn.style.color = '';
+                    googleSignInBtn.style.border = '';
+                    googleSignInBtn.innerHTML = '<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" alt="Google"> Sign in with Google';
+                    googleSignInBtn.classList.remove('hidden');
+                }
+                if (startPairingBtn) startPairingBtn.classList.add('hidden');
                 emptyText.textContent = 'Sign in with Google to start mirroring OTPs from your Android device.';
                 if (unpairedSignOutBtn) unpairedSignOutBtn.classList.add('hidden');
             }
@@ -129,7 +132,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         otpTime.textContent = `Latest OTP received at ${timeStr}`;
     }
 
-    // ─── Google Sign-In ─────────────────────────────────────
+    // ─── Google Sign-In & Pairing ───────────────────────────
     let authPollInterval = null;
 
     function startAuthPolling() {
@@ -172,6 +175,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                     googleSignInBtn.innerHTML = '<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" alt="Google"> Sign in with Google';
                 }
             });
+        };
+    }
+
+    if (startPairingBtn) {
+        startPairingBtn.onclick = () => {
+            chrome.tabs.create({ url: chrome.runtime.getURL('pairing.html') });
         };
     }
 
