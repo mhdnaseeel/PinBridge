@@ -26,6 +26,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const googleSignInBtn = document.getElementById('googleSignInBtn');
     const emptyText = document.getElementById('emptyText');
     const errorMsg = document.getElementById('errorMsg');
+    const unpairedSignOutBtn = document.getElementById('unpairedSignOutBtn');
 
     // ─── Browser Online/Offline ─────────────────────────────
     function updateBrowserStatus() {
@@ -81,6 +82,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 googleSignInBtn.style.color = '#fff';
                 googleSignInBtn.style.border = 'none';
                 emptyText.textContent = `Signed in as ${googleEmail}. Pair your Android app to start syncing OTPs.`;
+                if (unpairedSignOutBtn) unpairedSignOutBtn.classList.remove('hidden');
             } else if (googleSignInBtn) {
                 googleSignInBtn.disabled = false;
                 googleSignInBtn.style.background = '';
@@ -88,6 +90,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 googleSignInBtn.style.border = '';
                 googleSignInBtn.innerHTML = '<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" alt="Google"> Sign in with Google';
                 emptyText.textContent = 'Sign in with Google to start mirroring OTPs from your Android device.';
+                if (unpairedSignOutBtn) unpairedSignOutBtn.classList.add('hidden');
             }
         });
     }
@@ -205,13 +208,23 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     });
 
-    // ─── Sign Out ───────────────────────────────────────────
+    // ─── Sign Out (paired view) ─────────────────────────────
     signOutBtn.onclick = () => {
         if (confirm('Sign out and unpair this device?')) {
             chrome.runtime.sendMessage({ type: 'signOut' });
             chrome.storage.local.remove(['googleUid', 'googleEmail']);
+            showUnpaired();
         }
     };
+
+    // ─── Sign Out (unpaired view) ───────────────────────────
+    if (unpairedSignOutBtn) {
+        unpairedSignOutBtn.onclick = () => {
+            chrome.runtime.sendMessage({ type: 'signOut' });
+            chrome.storage.local.remove(['googleUid', 'googleEmail']);
+            showUnpaired();
+        };
+    }
 
     // ─── Live Updates ───────────────────────────────────────
     chrome.runtime.onMessage.addListener((msg) => {
