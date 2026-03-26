@@ -14,7 +14,8 @@ import {
   getAuth, 
   onAuthStateChanged,
   GoogleAuthProvider,
-  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   signOut as firebaseSignOut
 } from "firebase/auth";
 import { 
@@ -315,30 +316,13 @@ async function loginWithGoogle() {
 
   const provider = new GoogleAuthProvider();
   try {
-    const result = await signInWithPopup(auth, provider);
-    console.log('[PinBridge] Signed in with Google:', result.user.email);
-    state.user = result.user;
-    state.signingIn = false;
-
-    // Send the login success to the content script so the extension can pick it up
-    window.postMessage({
-      source: 'pinbridge-web',
-      action: 'LOGIN_SUCCESS',
-      uid: result.user.uid,
-      email: result.user.email
-    }, '*');
-
-    // Start listening for cloud-synced pairing
-    listenToCloudSync(result.user.uid);
+    // Navigate away to Google auth to bypass popup blockers & COOP issues
+    await signInWithRedirect(auth, provider);
   } catch (err) {
     console.error('[PinBridge] Google Sign-In Error:', err.code, err.message);
     state.signingIn = false;
     
-    if (err.code === 'auth/popup-closed-by-user') {
-      state.error = 'Sign-in cancelled.';
-    } else if (err.code === 'auth/popup-blocked') {
-      state.error = 'Popup blocked. Allow popups for this site.';
-    } else if (err.code === 'auth/unauthorized-domain') {
+    if (err.code === 'auth/unauthorized-domain') {
       state.error = 'This domain is not authorized. Add it in Firebase Console → Authentication → Settings → Authorized domains.';
     } else if (err.code === 'auth/operation-not-allowed') {
       state.error = 'Google Sign-In not enabled. Enable it in Firebase Console → Authentication → Sign-in method.';
@@ -496,6 +480,20 @@ if (!navigator.onLine) offlineBanner.classList.add('active');
 
 // Check URL params before auth
 checkUrlParams();
+
+// Check for redirect result (if coming back from Google Sign-In redirect)
+getRedirectResult(auth).then((result) => {
+  if (result && result.user) {
+    console.log('[PinBridge] Successfully signed in via redirect:', result.user.email);
+    state.signingIn = false;
+    updateUI();
+  }
+}).catch((err) => {
+  console.error('[PinBridge] Redirect sign-in error:', err);
+  state.signingIn = false;
+  state.error = 'Sign-in failed during redirect callback.';
+  updateUI();
+});
 
 // Auth state listener — single source of truth
 onAuthStateChanged(auth, (user) => {
