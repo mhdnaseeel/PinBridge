@@ -107,6 +107,9 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   } else if (msg.type === 'webLoginSuccess') {
     handleWebLoginSuccess(msg);
     return true;
+  } else if (msg.type === 'webPairingSuccess') {
+    handleWebPairingSuccess(msg);
+    return true;
   }
 });
 
@@ -156,6 +159,17 @@ async function handleWebLoginSuccess(msg) {
   } catch (err) {
     console.error('Error in handling web login:', err);
   }
+}
+
+async function handleWebPairingSuccess(msg) {
+  const { deviceId, secret } = msg;
+  console.log('[PinBridge] Captured auto-pairing from web for device:', deviceId);
+  await chrome.storage.local.set({ 
+    pairedDeviceId: deviceId, 
+    secret: secret
+  });
+  startListeners(deviceId);
+  safeSendMessage({ type: 'paired', deviceId: deviceId });
 }
 
 async function handleManualFetch(sendResponse) {

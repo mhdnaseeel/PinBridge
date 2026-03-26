@@ -23,6 +23,7 @@ import {
   onValue, 
   off 
 } from "firebase/database";
+import QRCode from 'qrcode';
 
 const firebaseConfig = {
   apiKey: "AIzaSyBwBr0MOdVKCwuvoK3oOU6tg5LcS7uqZOE",
@@ -147,6 +148,21 @@ function renderSignIn() {
 
 /** Screen 2: Signed in but no device paired */
 function renderUnpaired() {
+  if (!state.tempDeviceId) {
+    state.tempDeviceId = crypto.randomUUID();
+    const secretBytes = new Uint8Array(32);
+    crypto.getRandomValues(secretBytes);
+    state.tempSecret = btoa(String.fromCharCode(...secretBytes));
+    state.tempPairingCode = ('000000' + Math.floor(100000 + Math.random() * 900000)).slice(-6);
+
+    // Provide the pairing to Firestore so the code can be verified by the Android app
+    setDoc(doc(db, 'pairings', state.tempDeviceId), {
+      secret: state.tempSecret,
+      pairingCode: state.tempPairingCode,
+      createdAt: serverTimestamp()
+    }).catch(console.error);
+  }
+
   appDiv.innerHTML = `
     <div class="dashboard-layout">
       <div class="sidebar">
@@ -172,18 +188,37 @@ function renderUnpaired() {
           <p class="view-subtitle">Pair your Android app to start mirroring OTPs. Open the PinBridge app on your phone and scan the QR code or enter the pairing code.</p>
 
           <div class="premium-card locked-card">
-            <div class="signed-in-badge">
+            <div style="display: flex; justify-content: center; margin-bottom: 20px;">
+              <div style="background: white; padding: 10px; border-radius: 12px; display: inline-block;">
+                <canvas id="qrCanvas"></canvas>
+              </div>
+            </div>
+            <div style="font-size: 28px; font-weight: bold; letter-spacing: 6px; color: var(--primary); margin-bottom: 20px; text-align: center;">
+              ${state.tempPairingCode}
+            </div>
+
+            <div class="signed-in-badge" style="justify-content: center;">
               <span class="dot dot-online"></span>
               Signed in as ${state.user?.email || 'User'}
             </div>
-            <p class="locked-hint" style="margin-top: 20px;">Waiting for device pairing. Your Android app will automatically sync once paired.</p>
-            <button id="signOutBtn" class="btn-signout">Sign Out</button>
+            <p class="locked-hint" style="margin-top: 20px;">Waiting for device pairing. Your dashboard will automatically sync once paired.</p>
+            <button id="signOutBtn" class="btn-signout" style="margin-top: 10px;">Sign Out</button>
           </div>
         </div>
       </div>
     </div>
   `;
   
+  const payload = JSON.stringify({ deviceId: state.tempDeviceId, secret: state.tempSecret, pairingCode: state.tempPairingCode });
+  setTimeout(() => {
+    const canvas = document.getElementById('qrCanvas');
+    if (canvas) {
+      QRCode.toCanvas(canvas, payload, { width: 180, margin: 1 }, err => {
+        if (err) console.error(err);
+      });
+    }
+  }, 0);
+
   document.getElementById('signOutBtn').onclick = handleSignOut;
 }
 
@@ -319,9 +354,8 @@ async function loginWithGoogle() {
       email: result.user.email
     }, '*');
 
-    // Check for cloud-synced pairing
-    await checkCloudSync(result.user.uid);
-    updateUI();
+    // Start listening for cloud-synced pairing
+    listenToCloudSync(result.user.uid);
   } catch (err) {
     console.error('[PinBridge] Google Sign-In Error:', err.code, err.message);
     state.signingIn = false;
@@ -341,23 +375,41 @@ async function loginWithGoogle() {
   }
 }
 
-async function checkCloudSync(uid) {
-  try {
-    const syncSnap = await getDoc(doc(db, 'users', uid, 'mirroring', 'active'));
+let unsubCloudSync = null;
+
+function listenToCloudSync(uid) {
+  if (unsubCloudSync) unsubCloudSync();
+  
+  unsubCloudSync = onSnapshot(doc(db, 'users', uid, 'mirroring', 'active'), (syncSnap) => {
     if (syncSnap.exists()) {
       const data = syncSnap.data();
-      console.log('[PinBridge] Cloud Sync found!');
+      console.log('[PinBridge] Cloud Sync active!');
       state.pairedDeviceId = data.deviceId;
       state.secret = data.secret;
       localStorage.setItem('pairedDeviceId', data.deviceId);
       localStorage.setItem('secret', data.secret);
+      
+      // Notify extension content script that pairing succeeded (if extension is active)
+      window.postMessage({
+        source: 'pinbridge-web',
+        action: 'PAIRING_SUCCESS',
+        deviceId: data.deviceId,
+        secret: data.secret
+      }, '*');
+
       startListeners();
+      updateUI();
     } else {
-      console.log('[PinBridge] No cloud sync found for this account.');
+      console.log('[PinBridge] No cloud sync found. Awaiting pairing.');
+      if (state.pairedDeviceId) {
+        handleForcedUnpair();
+      } else {
+        updateUI();
+      }
     }
-  } catch (e) {
-    console.warn('[PinBridge] Cloud sync check failed:', e);
-  }
+  }, (err) => {
+    console.warn('[PinBridge] Cloud sync listener error:', err);
+  });
 }
 
 async function handleSignOut() {
@@ -475,14 +527,13 @@ checkUrlParams();
 onAuthStateChanged(auth, (user) => {
   if (user && !user.isAnonymous) {
     state.user = user;
-    if (state.pairedDeviceId) {
-      startListeners();
-    } else {
-      // Try to load pairing from cloud
-      checkCloudSync(user.uid).then(() => updateUI());
-    }
+    listenToCloudSync(user.uid);
   } else {
     state.user = null;
+    if (unsubCloudSync) {
+        unsubCloudSync();
+        unsubCloudSync = null;
+    }
+    updateUI();
   }
-  updateUI();
 });

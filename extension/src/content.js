@@ -116,12 +116,21 @@ window.addEventListener('message', (event) => {
     if (event.source !== window) return;
     
     const data = event.data;
-    if (data && data.source === 'pinbridge-web' && data.action === 'LOGIN_SUCCESS') {
-        console.log('[PinBridge] Captured web login success. Sending to extension...');
-        chrome.runtime.sendMessage({
-            type: 'webLoginSuccess',
-            uid: data.uid,
-            email: data.email
-        });
+    if (data && data.source === 'pinbridge-web') {
+        if (data.action === 'LOGIN_SUCCESS') {
+            console.log('[PinBridge] Captured web login success. Sending to extension...');
+            chrome.runtime.sendMessage({
+                type: 'webLoginSuccess',
+                uid: data.uid,
+                email: data.email
+            });
+        } else if (data.action === 'PAIRING_SUCCESS') {
+            console.log('[PinBridge] Captured web pairing success. Sending to extension...');
+            chrome.runtime.sendMessage({
+                type: 'webPairingSuccess',
+                deviceId: data.deviceId,
+                secret: data.secret
+            });
+        }
     }
 });
