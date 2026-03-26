@@ -310,6 +310,15 @@ async function loginWithGoogle() {
     console.log('[PinBridge] Signed in with Google:', result.user.email);
     state.user = result.user;
     state.signingIn = false;
+
+    // Send the login success to the content script so the extension can pick it up
+    window.postMessage({
+      source: 'pinbridge-web',
+      action: 'LOGIN_SUCCESS',
+      uid: result.user.uid,
+      email: result.user.email
+    }, '*');
+
     // Check for cloud-synced pairing
     await checkCloudSync(result.user.uid);
     updateUI();

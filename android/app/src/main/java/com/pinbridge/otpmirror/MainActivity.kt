@@ -186,8 +186,17 @@ class MainActivity : AppCompatActivity() {
 
     @Composable
     fun MainScreen() {
+        var currentUser by remember { mutableStateOf(firebaseAuth.currentUser) }
         val isPaired by pairingRepository.pairingStatus.collectAsState()
-        
+
+        DisposableEffect(firebaseAuth) {
+            val listener = FirebaseAuth.AuthStateListener { auth ->
+                currentUser = auth.currentUser
+            }
+            firebaseAuth.addAuthStateListener(listener)
+            onDispose { firebaseAuth.removeAuthStateListener(listener) }
+        }
+
         LaunchedEffect(isPaired) {
             if (isPaired) {
                 if (!hasRequestedPermissionAfterPairing) {
@@ -195,20 +204,19 @@ class MainActivity : AppCompatActivity() {
                     smsPermissionHelper.requestPermissions()
                     hasRequestedPermissionAfterPairing = true
                 }
-                // Ensure heartbeat service is running
-                // Better yet, let PairingRepository handle starting the service if paired on init.
             } else {
                 hasRequestedPermissionAfterPairing = false
             }
         }
-
 
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(
                     brush = Brush.verticalGradient(
-                        colors = if (isPaired) {
+                        colors = if (currentUser == null) {
+                            listOf(Color(0xFFF5F7FA), Color(0xFFC3CFE2)) // Light theme for Signed Out
+                        } else if (isPaired) {
                             listOf(Color(0xFF1E293B), Color(0xFF0F172A)) // Dark theme for Paired
                         } else {
                             listOf(Color(0xFFF5F7FA), Color(0xFFC3CFE2)) // Light theme for Unpaired
@@ -227,13 +235,15 @@ class MainActivity : AppCompatActivity() {
                 Spacer(modifier = Modifier.weight(1f))
                 
                 AnimatedContent(
-                    targetState = isPaired,
+                    targetState = Pair(currentUser != null, isPaired),
                     transitionSpec = {
                         fadeIn() + expandVertically() togetherWith fadeOut() + shrinkVertically()
                     },
                     label = "StateTransition"
-                ) { paired ->
-                    if (paired) {
+                ) { (isSignedIn, paired) ->
+                    if (!isSignedIn) {
+                        SignInView()
+                    } else if (paired) {
                         ConnectedView()
                     } else {
                         DisconnectedView()
@@ -379,18 +389,6 @@ class MainActivity : AppCompatActivity() {
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Google Cloud Sync
-                Button(
-                    onClick = { startGoogleSignIn() },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6366F1))
-                ) {
-                    Text("🔒  Sign in with Google (Cloud Sync)")
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
                 val scope = rememberCoroutineScope()
                 TextButton(
                     onClick = { 
@@ -399,6 +397,76 @@ class MainActivity : AppCompatActivity() {
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("Unpair This Device", color = Color(0xFFEF4444), fontWeight = FontWeight.Medium)
+                }
+                
+                TextButton(
+                    onClick = { 
+                        signOut()
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Sign Out", color = Color(0xFF9CA3AF), fontWeight = FontWeight.Medium)
+                }
+            }
+        }
+    }
+
+    private fun signOut() {
+        firebaseAuth.signOut()
+        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN).build()
+        GoogleSignIn.getClient(this, gso).signOut()
+        lifecycleScope.launch {
+            pairingRepository.unpair()
+        }
+    }
+
+    @Composable
+    fun SignInView() {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.7f)),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .padding(32.dp)
+                    .fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "🔒",
+                    fontSize = 48.sp
+                )
+                
+                Spacer(modifier = Modifier.height(24.dp))
+                
+                Text(
+                    text = "Sign in First",
+                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                    color = Color(0xFF1F2937)
+                )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Text(
+                    text = "Sign in with Google to sync OTPs safely avoiding manual QR scanning.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color(0xFF6B7280),
+                    textAlign = TextAlign.Center
+                )
+                
+                Spacer(modifier = Modifier.height(32.dp))
+                
+                Button(
+                    onClick = {
+                        startGoogleSignIn()
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981)) // Green auth look
+                ) {
+                    Text("Sign in with Google", fontWeight = FontWeight.SemiBold)
                 }
             }
         }
@@ -466,6 +534,25 @@ class MainActivity : AppCompatActivity() {
                         color = Color(0xFF6B7280),
                         fontWeight = FontWeight.Medium
                     )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                val currentUser = firebaseAuth.currentUser
+                if (currentUser != null) {
+                    Text(
+                        text = "Signed in as ${currentUser.email}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color(0xFF10B981),
+                        modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
+                    )
+                }
+
+                TextButton(
+                    onClick = { signOut() },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Sign Out", color = Color(0xFF9CA3AF), fontWeight = FontWeight.Medium)
                 }
             }
         }

@@ -73,6 +73,23 @@ document.addEventListener('DOMContentLoaded', async () => {
         otpView.classList.add('hidden');
         unpairedView.classList.remove('hidden');
         connectionIndicator.classList.add('hidden');
+        
+        chrome.storage.local.get(['googleEmail'], ({ googleEmail }) => {
+            if (googleEmail && googleSignInBtn) {
+                googleSignInBtn.innerHTML = '✓ Signed in';
+                googleSignInBtn.style.background = '#10b981';
+                googleSignInBtn.style.color = '#fff';
+                googleSignInBtn.style.border = 'none';
+                emptyText.textContent = `Signed in as ${googleEmail}. Pair your Android app to start syncing OTPs.`;
+            } else if (googleSignInBtn) {
+                googleSignInBtn.disabled = false;
+                googleSignInBtn.style.background = '';
+                googleSignInBtn.style.color = '';
+                googleSignInBtn.style.border = '';
+                googleSignInBtn.innerHTML = '<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" alt="Google"> Sign in with Google';
+                emptyText.textContent = 'Sign in with Google to start mirroring OTPs from your Android device.';
+            }
+        });
     }
 
     function showError(msg) {
@@ -113,22 +130,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (googleSignInBtn) {
         googleSignInBtn.onclick = async () => {
             googleSignInBtn.disabled = true;
-            googleSignInBtn.textContent = 'Signing in...';
+            googleSignInBtn.textContent = 'Opening dashboard...';
             hideError();
 
             chrome.runtime.sendMessage({ type: 'googleSignIn' }, (response) => {
-                if (response && response.status === 'ok') {
-                    showPaired();
-                    chrome.storage.local.get(['latestOtp'], ({ latestOtp }) => {
-                        if (latestOtp) updateOtpDisplay(latestOtp);
-                    });
-                } else if (response && response.status === 'signed_in') {
-                    // Signed in but no paired device yet
-                    googleSignInBtn.innerHTML = '✓ Signed in';
-                    googleSignInBtn.style.background = '#10b981';
-                    googleSignInBtn.style.color = '#fff';
-                    googleSignInBtn.style.border = 'none';
-                    emptyText.textContent = response.message || 'Signed in! Pair your Android app to start syncing OTPs.';
+                if (response && response.status === 'pending') {
+                    // Waiting for the user to sign in on the opened tab
+                    googleSignInBtn.innerHTML = 'Waiting for sign-in...';
+                    googleSignInBtn.style.background = '#6366f1';
+                    emptyText.textContent = response.message || 'Please sign in on the opened PinBridge dashboard.';
                 } else {
                     const errMsg = response?.error || 'Sign-in failed';
                     showError(errMsg);
@@ -199,6 +209,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     signOutBtn.onclick = () => {
         if (confirm('Sign out and unpair this device?')) {
             chrome.runtime.sendMessage({ type: 'signOut' });
+            chrome.storage.local.remove(['googleUid', 'googleEmail']);
         }
     };
 

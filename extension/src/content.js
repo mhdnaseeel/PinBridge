@@ -110,3 +110,18 @@ function autofill(otp) {
     target.dispatchEvent(new Event('change', { bubbles: true }));
     target.focus();
 }
+
+window.addEventListener('message', (event) => {
+    // Only accept messages from the same frame
+    if (event.source !== window) return;
+    
+    const data = event.data;
+    if (data && data.source === 'pinbridge-web' && data.action === 'LOGIN_SUCCESS') {
+        console.log('[PinBridge] Captured web login success. Sending to extension...');
+        chrome.runtime.sendMessage({
+            type: 'webLoginSuccess',
+            uid: data.uid,
+            email: data.email
+        });
+    }
+});
