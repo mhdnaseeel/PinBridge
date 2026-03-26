@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, signInAnonymously, signOut, onAuthStateChanged, GoogleAuthProvider, signInWithCredential } from "firebase/auth";
-import { getFirestore, doc, onSnapshot, getDoc, deleteDoc, updateDoc, serverTimestamp } from "firebase/firestore";
+import { getFirestore, doc, onSnapshot, getDoc, deleteDoc, updateDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { getDatabase, ref, onValue, off } from "firebase/database";
 import { decryptOtp } from "./crypto";
 
@@ -76,10 +76,26 @@ function safeSendMessage(message) {
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.type === 'pair') {
     signInAnonymously(auth)
-      .then(() => {
+      .then(async () => {
         chrome.storage.local.set({ pairedDeviceId: msg.deviceId, secret: msg.secret });
         startListeners(msg.deviceId);
         safeSendMessage({ type: 'paired', deviceId: msg.deviceId, isOnline: true });
+
+        // Write pairing to cloud so the web dashboard can auto-sync
+        const { googleUid } = await chrome.storage.local.get(['googleUid']);
+        if (googleUid) {
+          try {
+            await setDoc(doc(db, 'users', googleUid, 'mirroring', 'active'), {
+              deviceId: msg.deviceId,
+              secret: msg.secret,
+              pairedAt: serverTimestamp()
+            });
+            console.log('[PinBridge] Cloud sync written for uid:', googleUid);
+          } catch (e) {
+            console.warn('[PinBridge] Cloud sync write failed:', e);
+          }
+        }
+
         sendResponse({status: 'paired'});
       })
       .catch(err => sendResponse({status: 'error', error: err.message}));

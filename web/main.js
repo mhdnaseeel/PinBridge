@@ -23,7 +23,6 @@ import {
   onValue, 
   off 
 } from "firebase/database";
-import QRCode from 'qrcode';
 
 const firebaseConfig = {
   apiKey: "AIzaSyBwBr0MOdVKCwuvoK3oOU6tg5LcS7uqZOE",
@@ -146,23 +145,8 @@ function renderSignIn() {
   if (googleBtn) googleBtn.onclick = loginWithGoogle;
 }
 
-/** Screen 2: Signed in but no device paired */
+/** Screen 2: Signed in but no device paired — passive waiting */
 function renderUnpaired() {
-  if (!state.tempDeviceId) {
-    state.tempDeviceId = crypto.randomUUID();
-    const secretBytes = new Uint8Array(32);
-    crypto.getRandomValues(secretBytes);
-    state.tempSecret = btoa(String.fromCharCode(...secretBytes));
-    state.tempPairingCode = ('000000' + Math.floor(100000 + Math.random() * 900000)).slice(-6);
-
-    // Provide the pairing to Firestore so the code can be verified by the Android app
-    setDoc(doc(db, 'pairings', state.tempDeviceId), {
-      secret: state.tempSecret,
-      pairingCode: state.tempPairingCode,
-      createdAt: serverTimestamp()
-    }).catch(console.error);
-  }
-
   appDiv.innerHTML = `
     <div class="dashboard-layout">
       <div class="sidebar">
@@ -184,24 +168,24 @@ function renderUnpaired() {
       <div class="main-stage">
         <div class="locked-view">
           <div class="lock-icon">📱</div>
-          <h1 class="view-title">No Device Paired</h1>
-          <p class="view-subtitle">Pair your Android app to start mirroring OTPs. Open the PinBridge app on your phone and scan the QR code or enter the pairing code.</p>
+          <h1 class="view-title">Waiting for Pairing</h1>
+          <p class="view-subtitle">Use the <strong>PinBridge Chrome Extension</strong> to pair with your Android app. This dashboard will automatically sync once pairing is complete.</p>
 
           <div class="premium-card locked-card">
-            <div style="display: flex; justify-content: center; margin-bottom: 20px;">
-              <div style="background: white; padding: 10px; border-radius: 12px; display: inline-block;">
-                <canvas id="qrCanvas"></canvas>
-              </div>
-            </div>
-            <div style="font-size: 28px; font-weight: bold; letter-spacing: 6px; color: var(--primary); margin-bottom: 20px; text-align: center;">
-              ${state.tempPairingCode}
-            </div>
+            <div style="font-size: 48px; margin-bottom: 16px;">🔗</div>
+            <div style="font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 8px;">How to connect:</div>
+            <ol style="text-align: left; font-size: 13px; color: var(--text-muted); line-height: 2; padding-left: 20px;">
+              <li>Open the <strong>PinBridge Extension</strong> in Chrome</li>
+              <li>Sign in with this same Google account</li>
+              <li>Click <strong>"Start Pairing"</strong> to get a QR code</li>
+              <li>Scan the QR with the <strong>PinBridge Android App</strong></li>
+            </ol>
 
-            <div class="signed-in-badge" style="justify-content: center;">
+            <div class="signed-in-badge" style="justify-content: center; margin-top: 20px;">
               <span class="dot dot-online"></span>
               Signed in as ${state.user?.email || 'User'}
             </div>
-            <p class="locked-hint" style="margin-top: 20px;">Waiting for device pairing. Your dashboard will automatically sync once paired.</p>
+            <p class="locked-hint" style="margin-top: 16px;">This page will update automatically once your extension pairs with a device.</p>
             <button id="signOutBtn" class="btn-signout" style="margin-top: 10px;">Sign Out</button>
           </div>
         </div>
@@ -209,16 +193,6 @@ function renderUnpaired() {
     </div>
   `;
   
-  const payload = JSON.stringify({ deviceId: state.tempDeviceId, secret: state.tempSecret, pairingCode: state.tempPairingCode });
-  setTimeout(() => {
-    const canvas = document.getElementById('qrCanvas');
-    if (canvas) {
-      QRCode.toCanvas(canvas, payload, { width: 180, margin: 1 }, err => {
-        if (err) console.error(err);
-      });
-    }
-  }, 0);
-
   document.getElementById('signOutBtn').onclick = handleSignOut;
 }
 
