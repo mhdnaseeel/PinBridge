@@ -12,7 +12,6 @@ import {
 } from "firebase/firestore";
 import { 
   getAuth, 
-  signInAnonymously, 
   onAuthStateChanged,
   GoogleAuthProvider,
   signInWithPopup,
@@ -44,14 +43,23 @@ const rtdb = getDatabase(app);
 
 // State
 let state = {
+  user: null, // Firebase user object
   pairedDeviceId: localStorage.getItem('pairedDeviceId'),
   secret: localStorage.getItem('secret'),
   isOnline: false,
   lastSeen: null,
   latestOtp: JSON.parse(localStorage.getItem('latestOtp') || 'null'),
-  pairingDeviceId: null,
-  pairingSecret: null
+  signingIn: false,
+  error: null
 };
+
+// DOM Elements
+const appDiv = document.getElementById('app');
+const offlineBanner = document.getElementById('offlineBanner');
+
+// Listeners
+let unsubOtp = null;
+let unsubStatus = null;
 
 /**
  * Checks URL for ?d=DEVICE_ID&s=SECRET and initializes pairing
@@ -67,23 +75,14 @@ function checkUrlParams() {
     state.secret = s;
     localStorage.setItem('pairedDeviceId', d);
     localStorage.setItem('secret', s);
-    // Clear URL params without reloading
     window.history.replaceState({}, document.title, window.location.pathname);
     return true;
   }
   return false;
 }
 
-// DOM Elements
-const appDiv = document.getElementById('app');
-const offlineBanner = document.getElementById('offlineBanner');
-
-// Listeners
-let unsubOtp = null;
-let unsubStatus = null;
-
 /**
- * Decrypts an OTP using AES-GCM (Mirrored from extension)
+ * Decrypts an OTP using AES-GCM
  */
 async function decryptOtp(data, b64Secret) {
     if (!data || !data.iv || !data.otp || !b64Secret) throw new Error('Missing data');
@@ -95,15 +94,20 @@ async function decryptOtp(data, b64Secret) {
     return new TextDecoder().decode(decrypted);
 }
 
+// ─── UI RENDERING ───────────────────────────────────────────────
+
 function updateUI() {
-  if (state.pairedDeviceId) {
+  if (!state.user) {
+    renderSignIn();
+  } else if (state.pairedDeviceId) {
     renderPaired();
   } else {
     renderUnpaired();
   }
 }
 
-function renderUnpaired() {
+/** Screen 1: Not signed in — show Google Sign-In */
+function renderSignIn() {
   appDiv.innerHTML = `
     <div class="dashboard-layout">
       <div class="sidebar">
@@ -122,13 +126,14 @@ function renderUnpaired() {
         <div class="locked-view">
           <div class="lock-icon">🔒</div>
           <h1 class="view-title">Dashboard Locked</h1>
-          <p class="view-subtitle">Sign in with Google to automatically pair this browser with your existing cloud profile.</p>
+          <p class="view-subtitle">Sign in with your Google account to access your OTP dashboard.</p>
 
           <div class="premium-card locked-card">
-            <button id="googleLoginBtn" class="google-signin-btn">
+            <button id="googleLoginBtn" class="google-signin-btn" ${state.signingIn ? 'disabled' : ''}>
               <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20" alt="Google">
-              Sign in with Google
+              ${state.signingIn ? 'Signing in...' : 'Sign in with Google'}
             </button>
+            ${state.error ? `<p class="auth-error">${state.error}</p>` : ''}
             <p class="locked-hint">Your credentials are synced securely via AES-256 encryption.</p>
           </div>
         </div>
@@ -140,13 +145,55 @@ function renderUnpaired() {
   if (googleBtn) googleBtn.onclick = loginWithGoogle;
 }
 
+/** Screen 2: Signed in but no device paired */
+function renderUnpaired() {
+  appDiv.innerHTML = `
+    <div class="dashboard-layout">
+      <div class="sidebar">
+        <div class="logo-area">
+          <img src="/logo.png" class="logo-icon-img" alt="Logo">
+          <span class="logo-text">PinBridge</span>
+        </div>
+        <div class="status-group">
+          <div class="status-item">
+            <span class="status-label">Account</span>
+            <span class="status-value" style="font-size: 11px;">${state.user?.email || 'Signed In'}</span>
+          </div>
+          <div class="status-item">
+            <span class="status-label">Environment</span>
+            <span class="status-value">Secure Cloud</span>
+          </div>
+        </div>
+      </div>
+      <div class="main-stage">
+        <div class="locked-view">
+          <div class="lock-icon">📱</div>
+          <h1 class="view-title">No Device Paired</h1>
+          <p class="view-subtitle">Pair your Android app to start mirroring OTPs. Open the PinBridge app on your phone and scan the QR code or enter the pairing code.</p>
+
+          <div class="premium-card locked-card">
+            <div class="signed-in-badge">
+              <span class="dot dot-online"></span>
+              Signed in as ${state.user?.email || 'User'}
+            </div>
+            <p class="locked-hint" style="margin-top: 20px;">Waiting for device pairing. Your Android app will automatically sync once paired.</p>
+            <button id="signOutBtn" class="btn-signout">Sign Out</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  document.getElementById('signOutBtn').onclick = handleSignOut;
+}
+
+/** Screen 3: Signed in + device paired — full OTP dashboard */
 function renderPaired() {
   const otp = state.latestOtp?.otp || '------';
   const time = state.latestOtp?.ts ? new Date(state.latestOtp.ts).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'}) : 'Waiting for signal...';
   
   appDiv.innerHTML = `
     <div class="dashboard-layout">
-      <!-- Professional Sidebar -->
       <aside class="sidebar">
         <div class="logo-area">
           <img src="/logo.png" class="logo-icon-img" alt="Logo">
@@ -154,6 +201,10 @@ function renderPaired() {
         </div>
         
         <div class="status-group">
+          <div class="status-item">
+            <span class="status-label">Account</span>
+            <span class="status-value" style="font-size: 11px;">${state.user?.email || 'Signed In'}</span>
+          </div>
           <div class="status-item">
             <span class="status-label">Device Status</span>
             <span class="status-value">
@@ -174,7 +225,6 @@ function renderPaired() {
         </div>
       </aside>
 
-      <!-- Main Stage -->
       <main class="main-stage">
         <header class="view-header">
           <h1 class="view-title">Security Terminal</h1>
@@ -191,7 +241,7 @@ function renderPaired() {
           <div class="btn-group">
             <button id="copyBtn" class="btn-primary">
               <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-              Copy Terminal
+              Copy Code
             </button>
             <button id="fetchBtn" class="btn-secondary">
               <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
@@ -200,10 +250,12 @@ function renderPaired() {
           </div>
         </div>
 
-        <div style="margin-top: 40px; color: var(--text-muted); font-size: 12px; display: flex; gap: 20px;">
-          <span>● Secure Channel</span>
-          <span>● End-to-End Encrypted</span>
-          <span>● Private Instance</span>
+        <div style="margin-top: 40px; display: flex; justify-content: space-between; align-items: center;">
+          <div style="color: var(--text-muted); font-size: 12px; display: flex; gap: 20px;">
+            <span>● Secure Channel</span>
+            <span>● End-to-End Encrypted</span>
+          </div>
+          <button id="signOutBtn" class="btn-signout">Sign Out</button>
         </div>
       </main>
     </div>
@@ -215,7 +267,7 @@ function renderPaired() {
       navigator.clipboard.writeText(state.latestOtp.otp);
       const btn = document.getElementById('copyBtn');
       const original = btn.innerHTML;
-      btn.innerHTML = 'Success';
+      btn.innerHTML = '✓ Copied';
       setTimeout(() => btn.innerHTML = original, 2000);
     }
   };
@@ -241,7 +293,82 @@ function renderPaired() {
       }, 3000);
     }
   };
+
+  document.getElementById('signOutBtn').onclick = handleSignOut;
 }
+
+// ─── AUTH ACTIONS ───────────────────────────────────────────────
+
+async function loginWithGoogle() {
+  state.signingIn = true;
+  state.error = null;
+  updateUI();
+
+  const provider = new GoogleAuthProvider();
+  try {
+    const result = await signInWithPopup(auth, provider);
+    console.log('[PinBridge] Signed in with Google:', result.user.email);
+    state.user = result.user;
+    state.signingIn = false;
+    // Check for cloud-synced pairing
+    await checkCloudSync(result.user.uid);
+    updateUI();
+  } catch (err) {
+    console.error('[PinBridge] Google Sign-In Error:', err.code, err.message);
+    state.signingIn = false;
+    
+    if (err.code === 'auth/popup-closed-by-user') {
+      state.error = 'Sign-in cancelled.';
+    } else if (err.code === 'auth/popup-blocked') {
+      state.error = 'Popup blocked. Allow popups for this site.';
+    } else if (err.code === 'auth/unauthorized-domain') {
+      state.error = 'This domain is not authorized. Add it in Firebase Console → Authentication → Settings → Authorized domains.';
+    } else if (err.code === 'auth/operation-not-allowed') {
+      state.error = 'Google Sign-In not enabled. Enable it in Firebase Console → Authentication → Sign-in method.';
+    } else {
+      state.error = `Sign-in failed: ${err.code || err.message}`;
+    }
+    updateUI();
+  }
+}
+
+async function checkCloudSync(uid) {
+  try {
+    const syncSnap = await getDoc(doc(db, 'users', uid, 'mirroring', 'active'));
+    if (syncSnap.exists()) {
+      const data = syncSnap.data();
+      console.log('[PinBridge] Cloud Sync found!');
+      state.pairedDeviceId = data.deviceId;
+      state.secret = data.secret;
+      localStorage.setItem('pairedDeviceId', data.deviceId);
+      localStorage.setItem('secret', data.secret);
+      startListeners();
+    } else {
+      console.log('[PinBridge] No cloud sync found for this account.');
+    }
+  } catch (e) {
+    console.warn('[PinBridge] Cloud sync check failed:', e);
+  }
+}
+
+async function handleSignOut() {
+  stopListeners();
+  state.pairedDeviceId = null;
+  state.secret = null;
+  state.latestOtp = null;
+  state.user = null;
+  localStorage.removeItem('pairedDeviceId');
+  localStorage.removeItem('secret');
+  localStorage.removeItem('latestOtp');
+  try {
+    await firebaseSignOut(auth);
+  } catch (e) {
+    console.warn('[PinBridge] Sign out error:', e);
+  }
+  updateUI();
+}
+
+// ─── LISTENERS ──────────────────────────────────────────────────
 
 // Listen for sync/unpair from Extension
 window.addEventListener('storage', (e) => {
@@ -258,7 +385,7 @@ window.addEventListener('storage', (e) => {
   }
 });
 
-// Listen for direct messages from Extension Content Script (Robust Sync)
+// Listen for direct messages from Extension Content Script
 window.addEventListener('message', (e) => {
   if (e.data && e.data.source === 'pinbridge-extension') {
     if (e.data.action === 'UNPAIR') {
@@ -272,7 +399,7 @@ window.addEventListener('message', (e) => {
 });
 
 function startListeners() {
-  if (!state.pairedDeviceId) return;
+  if (!state.pairedDeviceId || !state.user) return;
   stopListeners();
 
   // 1. Presence (RTDB)
@@ -318,52 +445,35 @@ function handleForcedUnpair() {
     updateUI();
 }
 
-async function loginWithGoogle() {
-  const provider = new GoogleAuthProvider();
-  try {
-    const result = await signInWithPopup(auth, provider);
-    console.log('[PinBridge] Signed in with Google:', result.user.email);
-    // After login, check for cloud-synced pairing
-    await checkCloudSync(result.user.uid);
-  } catch (err) {
-    console.error('Google Sign-In Error', err);
-    alert('Failed to sign in with Google');
-  }
-}
-
-async function checkCloudSync(uid) {
-  const syncSnap = await getDoc(doc(db, 'users', uid, 'mirroring', 'active'));
-  if (syncSnap.exists()) {
-    const data = syncSnap.data();
-    console.log('[PinBridge] Cloud Sync found! Updating local credentials...');
-    localStorage.setItem('pairedDeviceId', data.deviceId);
-    localStorage.setItem('secret', data.secret);
-    window.location.reload(); // Quickest way to re-init with new credentials
-  } else {
-    console.log('[PinBridge] No cloud sync found for this account.');
-    alert('This Google account has no paired devices synced yet. Please pair your Android app first and enable Cloud Sync there.');
-  }
-}
-
 function stopListeners() {
   if (unsubOtp) unsubOtp();
   if (unsubStatus) unsubStatus();
+  unsubOtp = null;
+  unsubStatus = null;
 }
 
-// Global Browser Status
+// ─── GLOBAL INIT ────────────────────────────────────────────────
+
+// Browser online/offline
 window.addEventListener('online', () => offlineBanner.classList.remove('active'));
 window.addEventListener('offline', () => offlineBanner.classList.add('active'));
 if (!navigator.onLine) offlineBanner.classList.add('active');
 
-// Auth Lifecycle & Init
+// Check URL params before auth
 checkUrlParams();
 
-onAuthStateChanged(auth, user => {
-  if (user && state.pairedDeviceId) {
-    startListeners();
-  } else if (!user) {
-    signInAnonymously(auth);
+// Auth state listener — single source of truth
+onAuthStateChanged(auth, (user) => {
+  if (user && !user.isAnonymous) {
+    state.user = user;
+    if (state.pairedDeviceId) {
+      startListeners();
+    } else {
+      // Try to load pairing from cloud
+      checkCloudSync(user.uid).then(() => updateUI());
+    }
+  } else {
+    state.user = null;
   }
+  updateUI();
 });
-
-updateUI();

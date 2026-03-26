@@ -16,8 +16,9 @@
       --text-main: #0f172a;
       --text-muted: #64748b;
       --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
-      --shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
     }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
       font-family: 'Inter', system-ui, -apple-system, sans-serif;
@@ -28,7 +29,7 @@
       background: var(--bg-gradient);
       color: var(--text-main);
       overflow-x: hidden;
-      height: 100vh;
+      min-height: 100vh;
     }
 
     .main-container {
@@ -38,17 +39,12 @@
       flex-direction: column;
     }
 
+    /* Header */
     .header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 24px;
-    }
-
-    .logo-area {
-      display: flex;
-      align-items: center;
-      gap: 10px;
+      margin-bottom: 20px;
     }
 
     .logo-text {
@@ -58,7 +54,6 @@
       -webkit-background-clip: text;
       background-clip: text;
       -webkit-text-fill-color: transparent;
-      color: transparent;
       letter-spacing: -0.5px;
     }
 
@@ -69,20 +64,10 @@
       border-radius: 20px;
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      transition: all 0.3s ease;
     }
 
-    .status-paired {
-      background: #dcfce7;
-      color: #15803d;
-      border: 1px solid #bbf7d0;
-    }
-
-    .status-unpaired {
-      background: #fee2e2;
-      color: #b91c1c;
-      border: 1px solid #fecaca;
-    }
+    .status-paired { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+    .status-unpaired { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
 
     .status-container {
       display: flex;
@@ -100,16 +85,11 @@
       color: var(--text-muted);
     }
 
-    .dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #9ca3af;
-    }
-
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #9ca3af; }
     .dot-online { background: #10b981; box-shadow: 0 0 8px #10b981; }
     .dot-offline { background: #f59e0b; box-shadow: 0 0 8px #f59e0b; }
 
+    /* Card */
     .card {
       background: var(--glass-bg);
       backdrop-filter: blur(8px);
@@ -119,30 +99,25 @@
       padding: 24px;
       box-shadow: var(--shadow);
       text-align: center;
-      transition: transform 0.3s ease;
     }
 
-    .card:hover {
-      transform: translateY(-2px);
-    }
-
+    /* OTP Display */
     .otp-label {
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 600;
       color: var(--text-muted);
       text-transform: uppercase;
       letter-spacing: 1px;
-      margin-bottom: 12px;
+      margin-bottom: 8px;
     }
 
     .otp-display {
       font-size: 42px;
       font-weight: 800;
       color: var(--primary);
-      margin: 12px 0;
+      margin: 8px 0;
       font-variant-numeric: tabular-nums;
       letter-spacing: 4px;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     #otpContent {
@@ -159,74 +134,133 @@
       font-size: 11px;
       color: var(--text-muted);
       font-weight: 500;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
     }
 
+    /* Action group */
     .action-group {
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
     }
 
+    /* Buttons */
     button {
       position: relative;
-      padding: 12px;
+      padding: 11px 16px;
       border: none;
       border-radius: 12px;
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: all 0.2s ease;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
-      overflow: hidden;
-      transform: translateZ(0);
-    }
-
-    button::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-      transition: all 0.5s;
-    }
-
-    button:hover::before {
-      left: 100%;
+      font-family: 'Inter', sans-serif;
     }
 
     .btn-main {
       background: var(--primary);
       color: white;
-      box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.4);
+      box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.3);
     }
 
     .btn-main:hover {
       background: var(--primary-hover);
       transform: translateY(-1px);
-      box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.4);
-    }
-
-    .btn-main:active {
-      transform: translateY(0);
     }
 
     .btn-ghost {
       background: transparent;
       color: var(--text-muted);
-      border: 1px solid transparent;
+      font-size: 12px;
+      padding: 8px;
     }
 
     .btn-ghost:hover {
       background: rgba(0, 0, 0, 0.05);
-      color: var(--text-main);
+      color: #ef4444;
     }
 
+    /* Google Sign-in Button */
+    .google-signin-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      background: #ffffff;
+      color: #3c4043;
+      border: 1px solid #dadce0;
+      border-radius: 24px;
+      padding: 11px 20px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      transition: all 0.2s ease;
+    }
+
+    .google-signin-btn:hover {
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      transform: translateY(-1px);
+    }
+
+    .google-signin-btn:disabled {
+      opacity: 0.6;
+      cursor: default;
+      transform: none;
+    }
+
+    /* Empty/unpaired state */
+    .empty-state { text-align: center; }
+
+    .empty-icon {
+      font-size: 40px;
+      margin-bottom: 12px;
+      display: block;
+    }
+
+    .empty-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 6px;
+    }
+
+    .empty-text {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.5;
+      margin-bottom: 20px;
+    }
+
+    /* Fetch button with green background */
+    .btn-fetch {
+      background: #10b981;
+      color: white;
+      box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.3);
+    }
+
+    .btn-fetch:hover {
+      background: #059669;
+      transform: translateY(-1px);
+    }
+
+    /* Status feedback */
+    .error-msg {
+      padding: 8px 12px;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: 8px;
+      color: #b91c1c;
+      font-size: 12px;
+      margin-top: 10px;
+    }
+
+    /* Offline banner */
     .offline-banner {
       background: #ef4444;
       color: white;
@@ -240,39 +274,11 @@
       display: none;
     }
     
-    .offline-banner.active {
-      display: block;
-    }
+    .offline-banner.active { display: block; }
 
-    .empty-state {
-      padding: 20px 0;
-    }
+    .hidden { display: none !important; }
 
-    .empty-icon {
-      font-size: 40px;
-      margin-bottom: 16px;
-      display: block;
-    }
-
-    .empty-title {
-      font-size: 18px;
-      font-weight: 700;
-      color: var(--text-main);
-      margin-bottom: 8px;
-    }
-
-    .empty-text {
-      font-size: 14px;
-      color: var(--text-muted);
-      line-height: 1.5;
-      margin-bottom: 24px;
-    }
-
-    .hidden {
-      display: none !important;
-    }
-
-    /* Tooltip simulation */
+    /* Copied tooltip */
     .btn-main::after {
       content: 'Copied!';
       position: absolute;
@@ -287,87 +293,7 @@
       transition: opacity 0.2s;
     }
 
-    .btn-main.copied::after {
-      opacity: 1;
-    }
-    .action-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      margin-bottom: 12px;
-    }
-
-    .action-card {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      background: rgba(99, 102, 241, 0.08);
-      border: 1px solid rgba(99, 102, 241, 0.15);
-      border-radius: 14px;
-      padding: 16px 8px;
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--text-main);
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    .action-card:hover {
-      background: rgba(99, 102, 241, 0.15);
-      transform: translateY(-2px);
-    }
-
-    .action-card.btn-danger {
-      grid-column: span 2;
-      background: rgba(239, 68, 68, 0.08);
-      border-color: rgba(239, 68, 68, 0.15);
-      color: #ef4444;
-    }
-
-    .action-card.btn-danger:hover {
-      background: rgba(239, 68, 68, 0.15);
-    }
-
-    .action-icon {
-      font-size: 20px;
-    }
-
-    .google-signin-section {
-      margin-top: 16px;
-      padding-top: 16px;
-      border-top: 1px solid rgba(0,0,0,0.07);
-    }
-
-    .google-signin-label {
-      font-size: 11px;
-      color: var(--text-muted);
-      margin-bottom: 10px;
-    }
-
-    .google-signin-btn {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      width: 100%;
-      background: #ffffff;
-      color: #3c4043;
-      border: 1px solid #dadce0;
-      border-radius: 24px;
-      padding: 10px 20px;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      transition: all 0.2s ease;
-    }
-
-    .google-signin-btn:hover {
-      box-shadow: 0 4px 12px rgba(0,0,0,0.18);
-      transform: translateY(-1px);
-    }
+    .btn-main.copied::after { opacity: 1; }
   </style>
 </head>
 <body>
@@ -388,7 +314,7 @@
       </div>
     </div>
 
-    <!-- Active OTP View -->
+    <!-- Active OTP View (Paired) -->
     <div id="otpView" class="hidden">
       <div class="card">
         <div class="otp-label">Security Code</div>
@@ -400,31 +326,28 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
             Copy Code
           </button>
-          <button id="manualFetchBtn" class="btn-main" style="background: #10b981;">
+          <button id="manualFetchBtn" class="btn-fetch">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
             Fetch Latest
           </button>
-          <button id="signOutBtn" class="btn-ghost">Unpair Device</button>
+          <button id="signOutBtn" class="btn-ghost">Sign Out & Unpair</button>
         </div>
       </div>
     </div>
 
-    <!-- Unpaired View -->
+    <!-- Unpaired View (Sign-in required) -->
     <div id="unpairedView">
       <div class="card empty-state">
         <div class="empty-icon">🔗</div>
         <p class="empty-title">Not Connected</p>
-        <p class="empty-text">Pair your Android device or sign in with Google to start mirroring OTPs.</p>
+        <p id="emptyText" class="empty-text">Sign in with Google to start mirroring OTPs from your Android device.</p>
 
         <div class="action-group">
-          <button id="pairBtn" class="btn-main">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12" y2="18"></line></svg>
-            Pair Device
-          </button>
           <button id="googleSignInBtn" class="google-signin-btn">
             <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" alt="Google">
             Sign in with Google
           </button>
+          <div id="errorMsg" class="error-msg hidden"></div>
         </div>
       </div>
     </div>

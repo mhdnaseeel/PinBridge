@@ -17,7 +17,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const otpContent = document.getElementById('otpContent');
     const otpTime = document.getElementById('otpTime');
     const copyBtn = document.getElementById('copyBtn');
-    const pairBtn = document.getElementById('pairBtn');
     const signOutBtn = document.getElementById('signOutBtn');
     const manualFetchBtn = document.getElementById('manualFetchBtn');
     const connectionIndicator = document.getElementById('connectionIndicator');
@@ -25,7 +24,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const statusText = document.getElementById('statusText');
     const offlineBanner = document.getElementById('offlineBanner');
     const googleSignInBtn = document.getElementById('googleSignInBtn');
+    const emptyText = document.getElementById('emptyText');
+    const errorMsg = document.getElementById('errorMsg');
 
+    // ─── Browser Online/Offline ─────────────────────────────
     function updateBrowserStatus() {
         if (navigator.onLine) {
             offlineBanner.classList.remove('active');
@@ -33,12 +35,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             offlineBanner.classList.add('active');
         }
     }
-
     window.addEventListener('online', updateBrowserStatus);
     window.addEventListener('offline', updateBrowserStatus);
     updateBrowserStatus();
 
-    // Check status
+    // ─── Check Initial Status ───────────────────────────────
     chrome.runtime.sendMessage({ type: 'getStatus' }, (response) => {
         if (response && response.status === 'paired') {
             showPaired();
@@ -57,6 +58,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
+    // ─── View Toggling ──────────────────────────────────────
     function showPaired() {
         statusBadge.textContent = 'Connected';
         statusBadge.className = 'status-badge status-paired';
@@ -73,6 +75,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         connectionIndicator.classList.add('hidden');
     }
 
+    function showError(msg) {
+        errorMsg.textContent = msg;
+        errorMsg.classList.remove('hidden');
+    }
+
+    function hideError() {
+        errorMsg.classList.add('hidden');
+    }
+
+    // ─── Connection Status ──────────────────────────────────
     function updateConnectionStatus(online, lastSeen) {
         if (online) {
             statusDot.className = 'dot dot-online';
@@ -81,66 +93,55 @@ document.addEventListener('DOMContentLoaded', async () => {
         } else {
             statusDot.className = 'dot dot-offline';
             const timeStr = lastSeen ? new Date(lastSeen).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Unknown';
-            statusText.textContent = `Offline (Last seen ${timeStr})`;
+            statusText.textContent = `Offline (${timeStr})`;
             statusText.style.color = '#f59e0b';
         }
     }
 
+    // ─── OTP Display ────────────────────────────────────────
     function updateOtpDisplay(otpData) {
         if (!otpData || !otpData.otp) return;
-        
-        // Use a simpler CSS-only approach for standard updates
         otpContent.textContent = otpData.otp;
-        
-        // Trigger subtle re-animation on the container
         otpValue.style.animation = 'none';
         void otpValue.offsetWidth;
         otpValue.style.animation = 'fadeIn 0.5s ease-out';
-        
         const timeStr = new Date(otpData.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         otpTime.textContent = `Latest OTP received at ${timeStr}`;
     }
 
-    pairBtn?.addEventListener('click', () => {
-        chrome.tabs.create({ url: 'pairing.html' });
-    });
-
+    // ─── Google Sign-In ─────────────────────────────────────
     if (googleSignInBtn) {
         googleSignInBtn.onclick = async () => {
             googleSignInBtn.disabled = true;
             googleSignInBtn.textContent = 'Signing in...';
+            hideError();
+
             chrome.runtime.sendMessage({ type: 'googleSignIn' }, (response) => {
                 if (response && response.status === 'ok') {
                     showPaired();
-                    // Reload OTP
                     chrome.storage.local.get(['latestOtp'], ({ latestOtp }) => {
                         if (latestOtp) updateOtpDisplay(latestOtp);
                     });
                 } else if (response && response.status === 'signed_in') {
-                    // Signed in but no pairing yet — show success + message
-                    googleSignInBtn.textContent = '✓ Signed in';
+                    // Signed in but no paired device yet
+                    googleSignInBtn.innerHTML = '✓ Signed in';
                     googleSignInBtn.style.background = '#10b981';
                     googleSignInBtn.style.color = '#fff';
                     googleSignInBtn.style.border = 'none';
-                    const emptyText = document.querySelector('.empty-text');
-                    if (emptyText) {
-                        emptyText.textContent = response.message || 'Signed in! Now pair your Android app to start syncing OTPs.';
-                    }
+                    emptyText.textContent = response.message || 'Signed in! Pair your Android app to start syncing OTPs.';
                 } else {
                     const errMsg = response?.error || 'Sign-in failed';
-                    googleSignInBtn.textContent = errMsg.length > 30 ? 'Failed – try again' : errMsg;
-                    setTimeout(() => {
-                        googleSignInBtn.disabled = false;
-                        googleSignInBtn.innerHTML = '<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" alt="Google"> Sign in with Google';
-                        googleSignInBtn.style = '';
-                    }, 3000);
+                    showError(errMsg);
+                    googleSignInBtn.disabled = false;
+                    googleSignInBtn.innerHTML = '<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" alt="Google"> Sign in with Google';
                 }
             });
         };
     }
 
+    // ─── Copy Button ────────────────────────────────────────
     copyBtn.onclick = () => {
-        navigator.clipboard.writeText(otpValue.textContent);
+        navigator.clipboard.writeText(otpContent.textContent);
         copyBtn.classList.add('copied');
         const originalText = copyBtn.innerHTML;
         copyBtn.innerHTML = `
@@ -153,19 +154,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         }, 2000);
     };
 
+    // ─── Manual Fetch ───────────────────────────────────────
     manualFetchBtn.addEventListener('click', () => {
         if (!navigator.onLine) {
             manualFetchBtn.innerText = 'No Internet';
-            manualFetchBtn.style.background = '#ef4444';
-            setTimeout(() => {
-                manualFetchBtn.innerText = 'Fetch Latest';
-                manualFetchBtn.style.background = '#10b981';
-            }, 3000);
-            return;
-        }
-
-        if (statusText.textContent !== 'Online') {
-            manualFetchBtn.innerText = 'Phone Offline';
             manualFetchBtn.style.background = '#ef4444';
             setTimeout(() => {
                 manualFetchBtn.innerText = 'Fetch Latest';
@@ -182,7 +174,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (response && response.status === 'ok') {
                 manualFetchBtn.innerText = 'Success!';
                 manualFetchBtn.style.background = '#6366f1';
-                // background.js already updates storage, but we can force refresh
                 if (response.otp) {
                     chrome.storage.local.get(['latestOtp'], ({ latestOtp }) => {
                         if (latestOtp) updateOtpDisplay(latestOtp);
@@ -193,16 +184,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     manualFetchBtn.style.background = '#10b981';
                 }, 2000);
             } else {
-                const errorMsg = response?.error || 'Failed';
-                if (errorMsg.includes('No OTP') || errorMsg.includes('No data')) {
-                    manualFetchBtn.innerText = 'No Data Yet';
-                } else if (errorMsg.includes('Not paired')) {
-                    manualFetchBtn.innerText = 'Not Paired';
-                } else {
-                    manualFetchBtn.innerText = 'Fetch Failed';
-                }
+                const errorText = response?.error || 'Failed';
+                manualFetchBtn.innerText = errorText.includes('Not paired') ? 'Not Paired' : 'Fetch Failed';
                 manualFetchBtn.style.background = '#ef4444';
-                console.warn('[PinBridge] Manual fetch failed:', errorMsg);
                 setTimeout(() => {
                     manualFetchBtn.innerText = 'Fetch Latest';
                     manualFetchBtn.style.background = '#10b981';
@@ -211,16 +195,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     });
 
+    // ─── Sign Out ───────────────────────────────────────────
     signOutBtn.onclick = () => {
-        if (confirm('Are you sure you want to unpair this device?')) {
+        if (confirm('Sign out and unpair this device?')) {
             chrome.runtime.sendMessage({ type: 'signOut' });
         }
     };
 
-    // Listen for live updates
+    // ─── Live Updates ───────────────────────────────────────
     chrome.runtime.onMessage.addListener((msg) => {
         if (msg.type === 'newOtp') {
-            showPaired(); // Ensure we are in paired view
+            showPaired();
             updateOtpDisplay({ otp: msg.otp, ts: msg.ts });
         } else if (msg.type === 'statusUpdate') {
             updateConnectionStatus(msg.online, msg.lastSeen);

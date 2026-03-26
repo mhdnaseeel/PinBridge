@@ -376,28 +376,6 @@ class MainActivity : AppCompatActivity() {
                     Text("Check Permissions")
                 }
 
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Button(
-                    onClick = { 
-                        val deviceId = pairingRepository.getDeviceId()
-                        val secret = pairingRepository.getSecret()
-                        if (deviceId != null && secret != null) {
-                            val url = "https://pin-bridge.vercel.app/?d=$deviceId&s=${android.net.Uri.encode(secret)}"
-                            val intent = Intent().apply {
-                                action = Intent.ACTION_SEND
-                                putExtra(Intent.EXTRA_TEXT, "PinBridge Dashboard: $url")
-                                type = "text/plain"
-                            }
-                            startActivity(Intent.createChooser(intent, "Share Dashboard Link"))
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981))
-                ) {
-                    Text("Share Dashboard Link")
-                }
 
                 Spacer(modifier = Modifier.height(12.dp))
 

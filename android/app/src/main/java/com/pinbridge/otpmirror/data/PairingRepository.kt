@@ -116,6 +116,7 @@ class PairingRepositoryImpl constructor(
                 .await()
             
             saveCredentials(deviceId, secret)
+            syncPairingToCloud(deviceId, secret)
             startStatusListener()
             // Start heartbeat service
             DeviceHeartbeatService.start(context, deviceId)
@@ -153,6 +154,7 @@ class PairingRepositoryImpl constructor(
                 .await()
 
             saveCredentials(deviceId, secret)
+            syncPairingToCloud(deviceId, secret)
             startStatusListener()
             // Start heartbeat service
             DeviceHeartbeatService.start(context, deviceId)
@@ -198,5 +200,29 @@ class PairingRepositoryImpl constructor(
             .putBoolean(Constants.KEY_IS_PAIRED, true)
             .apply()
         _pairingStatus.value = true
+    }
+
+    /**
+     * Writes pairing data to Firestore under the signed-in user's UID
+     * so other platforms (extension, web) can auto-pair via cloud sync.
+     */
+    private fun syncPairingToCloud(deviceId: String, secret: String) {
+        val uid = auth.currentUser?.uid ?: return
+        // Only sync for non-anonymous (Google sign-in) users
+        if (auth.currentUser?.isAnonymous == true) return
+        try {
+            val syncData = hashMapOf(
+                "deviceId" to deviceId,
+                "secret" to secret,
+                "pairedAt" to com.google.firebase.firestore.FieldValue.serverTimestamp()
+            )
+            db.collection("users").document(uid)
+                .collection("mirroring").document("active")
+                .set(syncData)
+                .addOnSuccessListener { Log.i(TAG, "Cloud sync: pairing data written for UID=$uid") }
+                .addOnFailureListener { Log.w(TAG, "Cloud sync failed", it) }
+        } catch (e: Exception) {
+            Log.w(TAG, "Cloud sync error", e)
+        }
     }
 }
