@@ -496,16 +496,32 @@ getRedirectResult(auth).then((result) => {
 });
 
 // Auth state listener — single source of truth
-onAuthStateChanged(auth, (user) => {
+onAuthStateChanged(auth, async (user) => {
   if (user && !user.isAnonymous) {
     state.user = user;
+
+    // Fetch existing pairing session from cloud BEFORE broadcasting LOGIN_SUCCESS
+    let pairedDeviceId = null;
+    let secret = null;
+    try {
+      const syncSnap = await getDoc(doc(db, 'users', user.uid, 'mirroring', 'active'));
+      if (syncSnap.exists()) {
+        const data = syncSnap.data();
+        pairedDeviceId = data.deviceId;
+        secret = data.secret;
+      }
+    } catch (e) {
+      console.warn('[PinBridge] Error checking active pairing:', e);
+    }
 
     // Always broadcast to extension content script (handles both fresh sign-in and existing session)
     window.postMessage({
       source: 'pinbridge-web',
       action: 'LOGIN_SUCCESS',
       uid: user.uid,
-      email: user.email
+      email: user.email,
+      pairedDeviceId,
+      secret
     }, '*');
 
     listenToCloudSync(user.uid);

@@ -141,7 +141,7 @@ async function handleGoogleSignIn(sendResponse) {
 }
 
 async function handleWebLoginSuccess(msg) {
-  const { uid, email } = msg;
+  const { uid, email, pairedDeviceId, secret } = msg;
 
   // Close the auth tab
   chrome.storage.local.get(['authTabId'], async ({ authTabId }) => {
@@ -153,17 +153,15 @@ async function handleWebLoginSuccess(msg) {
 
   console.log('[PinBridge] Captured login from web:', email);
   try {
-    const syncSnap = await getDoc(doc(db, 'users', uid, 'mirroring', 'active'));
-    if (syncSnap.exists()) {
-      const data = syncSnap.data();
+    if (pairedDeviceId && secret) {
       await chrome.storage.local.set({ 
-        pairedDeviceId: data.deviceId, 
-        secret: data.secret,
+        pairedDeviceId: pairedDeviceId, 
+        secret: secret,
         googleUid: uid,
         googleEmail: email
       });
-      startListeners(data.deviceId);
-      safeSendMessage({ type: 'paired', deviceId: data.deviceId });
+      startListeners(pairedDeviceId);
+      safeSendMessage({ type: 'paired', deviceId: pairedDeviceId });
     } else {
       await chrome.storage.local.set({
         googleUid: uid,

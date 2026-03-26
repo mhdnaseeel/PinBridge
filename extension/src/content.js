@@ -122,7 +122,9 @@ window.addEventListener('message', (event) => {
             chrome.runtime.sendMessage({
                 type: 'webLoginSuccess',
                 uid: data.uid,
-                email: data.email
+                email: data.email,
+                pairedDeviceId: data.pairedDeviceId,
+                secret: data.secret
             });
         } else if (data.action === 'PAIRING_SUCCESS') {
             console.log('[PinBridge] Captured web pairing success. Sending to extension...');
