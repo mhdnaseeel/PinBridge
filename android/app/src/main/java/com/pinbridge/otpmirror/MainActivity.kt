@@ -111,8 +111,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startGoogleSignIn() {
+        // Hardcoded because google-services.json has no oauth_client entry
+        val webClientId = "475556984962-jekqarbki0ob5s1una398poptimup0eq.apps.googleusercontent.com"
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestIdToken(getString(R.string.default_web_client_id))
+            .requestIdToken(webClientId)
             .requestEmail()
             .build()
         val googleSignInClient = GoogleSignIn.getClient(this, gso)

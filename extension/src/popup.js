@@ -130,6 +130,28 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // ─── Google Sign-In ─────────────────────────────────────
+    let authPollInterval = null;
+
+    function startAuthPolling() {
+        if (authPollInterval) clearInterval(authPollInterval);
+        authPollInterval = setInterval(() => {
+            chrome.storage.local.get(['googleEmail', 'pairedDeviceId'], ({ googleEmail, pairedDeviceId }) => {
+                if (pairedDeviceId) {
+                    clearInterval(authPollInterval);
+                    authPollInterval = null;
+                    showPaired();
+                    chrome.storage.local.get(['latestOtp'], ({ latestOtp }) => {
+                        if (latestOtp) updateOtpDisplay(latestOtp);
+                    });
+                } else if (googleEmail) {
+                    clearInterval(authPollInterval);
+                    authPollInterval = null;
+                    showUnpaired();
+                }
+            });
+        }, 2000);
+    }
+
     if (googleSignInBtn) {
         googleSignInBtn.onclick = async () => {
             googleSignInBtn.disabled = true;
@@ -138,10 +160,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             chrome.runtime.sendMessage({ type: 'googleSignIn' }, (response) => {
                 if (response && response.status === 'pending') {
-                    // Waiting for the user to sign in on the opened tab
                     googleSignInBtn.innerHTML = 'Waiting for sign-in...';
                     googleSignInBtn.style.background = '#6366f1';
                     emptyText.textContent = response.message || 'Please sign in on the opened PinBridge dashboard.';
+                    // Start polling for auth completion
+                    startAuthPolling();
                 } else {
                     const errMsg = response?.error || 'Sign-in failed';
                     showError(errMsg);
