@@ -230,7 +230,30 @@ document.addEventListener('DOMContentLoaded', async () => {
         }, 2000);
     };
 
-    // ─── Manual Fetch ───────────────────────────────────────
+    // ─── Manual Fetch Logic ─────────────────────────────────
+    let isFetching = false;
+
+    // Listener to catch successes from either the direct fetch response
+    // or the real-time background listener (most reliable way)
+    chrome.storage.onChanged.addListener((changes, area) => {
+        if (area === 'local' && changes.latestOtp && isFetching) {
+            console.log('[PinBridge Popup] Success detected via storage sync.');
+            onFetchSuccess();
+        }
+    });
+
+    const onFetchSuccess = () => {
+        if (!isFetching) return;
+        isFetching = false;
+        manualFetchBtn.disabled = false;
+        manualFetchBtn.innerText = 'Success!';
+        manualFetchBtn.style.background = '#6366f1';
+        setTimeout(() => {
+            manualFetchBtn.innerText = 'Fetch Latest';
+            manualFetchBtn.style.background = '#10b981';
+        }, 2000);
+    };
+
     manualFetchBtn.addEventListener('click', () => {
         if (!navigator.onLine) {
             manualFetchBtn.innerText = 'No Internet';
@@ -242,23 +265,19 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
+        isFetching = true;
         manualFetchBtn.disabled = true;
         manualFetchBtn.innerText = 'Fetching...';
 
         chrome.runtime.sendMessage({ type: 'manualFetch' }, (response) => {
+            // If isFetching is still true, the storage listener hasn't caught it yet
+            if (!isFetching) return; 
+
+            isFetching = false;
             manualFetchBtn.disabled = false;
+
             if (response && response.status === 'ok') {
-                manualFetchBtn.innerText = 'Success!';
-                manualFetchBtn.style.background = '#6366f1';
-                if (response.otp) {
-                    chrome.storage.local.get(['latestOtp'], ({ latestOtp }) => {
-                        if (latestOtp) updateOtpDisplay(latestOtp);
-                    });
-                }
-                setTimeout(() => {
-                    manualFetchBtn.innerText = 'Fetch Latest';
-                    manualFetchBtn.style.background = '#10b981';
-                }, 2000);
+                onFetchSuccess();
             } else {
                 const errorText = response?.error || 'Failed';
                 if (errorText.includes('Not paired')) {
@@ -266,7 +285,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 } else if (errorText.toLowerCase().includes('timeout') || errorText.toLowerCase().includes('timed out')) {
                     manualFetchBtn.innerText = 'Timed Out';
                 } else {
-                    manualFetchBtn.innerText = 'Fetch Failed';
+                    console.error('[PinBridge Popup] Fetch failed:', errorText);
+                    manualFetchBtn.innerText = 'Retry Later';
                 }
                 manualFetchBtn.style.background = '#ef4444';
                 setTimeout(() => {

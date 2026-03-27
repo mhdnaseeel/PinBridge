@@ -25,12 +25,6 @@ import {
   signInWithPopup,
   signOut as firebaseSignOut
 } from "firebase/auth";
-import { 
-  getDatabase, 
-  ref, 
-  onValue, 
-  off 
-} from "firebase/database";
 import { io } from "socket.io-client";
 
 const SOCKET_SERVER_URL = "https://pinbridge-presence.onrender.com";
@@ -51,7 +45,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-const rtdb = getDatabase(app);
 
 // State
 let state = {
@@ -455,18 +448,41 @@ function startListeners() {
 
     socket.on('presence_update', (data) => {
       if (data.deviceId === state.pairedDeviceId) {
-        state.isOnline = data.status === 'online';
-        state.lastSeen = data.lastSeen;
-        updateUI();
+        checkStaleness(data.status === 'online', data.lastSeen);
       }
     });
 
     socket.on('connect_error', (err) => {
-      console.warn('[PinBridge] Socket connection error:', err.message);
+      console.warn('[PinBridge Web] Socket connection error:', err.message);
     });
   }
 
-  // 2. OTP Mirroring (Firestore)
+  function checkStaleness(online, lastSeen) {
+      const now = Date.now();
+      const STALE_THRESHOLD = 60000;
+      let effectiveOnline = online;
+
+      if (online && lastSeen && (now - lastSeen > STALE_THRESHOLD)) {
+          console.warn('[PinBridge Web] Stale presence detected. Marking as Standby.');
+          effectiveOnline = false;
+      }
+
+      state.isOnline = effectiveOnline;
+      state.lastSeen = lastSeen;
+      updateUI();
+  }
+
+  // 2. Status Listener (Firestore) - Reliable fallback
+  unsubStatus = onSnapshot(doc(db, 'pairings', state.pairedDeviceId), snap => {
+    const data = snap.data();
+    if (!data) return;
+    
+    const online = data.status === 'online';
+    const lastSeen = data.lastOnline ? (data.lastOnline.toMillis ? data.lastOnline.toMillis() : data.lastOnline) : Date.now();
+    checkStaleness(online, lastSeen);
+  });
+
+  // 3. OTP Mirroring (Firestore)
   unsubOtp = onSnapshot(doc(db, 'otps', state.pairedDeviceId), async (snap) => {
     const data = snap.data();
     if (!data) return;

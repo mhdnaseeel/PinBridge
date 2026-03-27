@@ -1,7 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, signInAnonymously, signOut, onAuthStateChanged, GoogleAuthProvider, signInWithCredential } from "firebase/auth";
 import { getFirestore, doc, onSnapshot, getDoc, deleteDoc, updateDoc, setDoc, serverTimestamp } from "firebase/firestore";
-import { getDatabase, ref, onValue, off } from "firebase/database";
 import { decryptOtp } from "./crypto";
 import { io } from "socket.io-client";
 import * as Sentry from "@sentry/browser";
@@ -47,7 +46,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-const rtdb = getDatabase(app);
 
 let unsubscribePairing = null;
 let unsubscribeOtp = null;
@@ -239,11 +237,6 @@ async function handleManualFetch(sendResponse) {
     }
 
     try {
-        const isOnlineObj = await chrome.storage.session.get(['isOnline']);
-        if (!isOnlineObj.isOnline) {
-            console.warn('[PinBridge] Manual fetch triggered while status is Offline. Proceeding anyway.');
-        }
-
         if (!auth.currentUser) {
             console.log('[PinBridge] No active session, signing in anonymously...');
             await signInAnonymously(auth);
@@ -251,39 +244,36 @@ async function handleManualFetch(sendResponse) {
 
         const currentData = await chrome.storage.local.get(['latestOtp']);
         const preFetchUploadTs = currentData.latestOtp ? (currentData.latestOtp.uploadTs || 0) : 0;
-        console.log(`[PinBridge] Starting manual fetch. Pre-fetch uploadTs: ${preFetchUploadTs}`);
+        console.log(`[PinBridge] Manual fetch request. Last uploadTs: ${preFetchUploadTs}`);
 
+        // Update signaling Firestore
         await updateDoc(doc(db, 'pairings', pairedDeviceId), {
             fetchRequested: serverTimestamp()
         });
-        console.log('[PinBridge] Firestore fetchRequested signal sent.');
+        console.log('[PinBridge] Sync signal sent to Firebase.');
 
-        // Wait up to 30 seconds for Android to respond
         let attempts = 0;
-        const maxAttempts = 30;
+        const maxAttempts = 30; // 30 seconds total
         while (attempts < maxAttempts) {
             await new Promise(r => setTimeout(r, 1000));
             
-            // Log if phone appears offline, but don't abort—the request is already out there
-            const statusCheck = await chrome.storage.session.get(['isOnline']);
-            if (!statusCheck.isOnline) {
-                console.debug(`[PinBridge] Fetch poll #${attempts}: Phone appears offline, still waiting...`);
-            }
-
+            // Check for new OTP in storage
             const { latestOtp } = await chrome.storage.local.get(['latestOtp']);
-            if (latestOtp && (latestOtp.uploadTs || 0) > preFetchUploadTs) {
-                console.log(`[PinBridge] Success: New OTP detected (uploadTs: ${latestOtp.uploadTs})`);
+            const currentUploadTs = latestOtp ? (latestOtp.uploadTs || 0) : 0;
+
+            if (latestOtp && currentUploadTs > preFetchUploadTs) {
+                console.log(`[PinBridge] Fetch Success: New OTP found (ts: ${currentUploadTs})`);
                 sendResponse({status: 'ok', otp: latestOtp.otp});
                 return;
             }
             attempts++;
         }
         
-        console.warn(`[PinBridge] Manual fetch timeout after ${maxAttempts}s. No new OTP detected.`);
+        console.warn(`[PinBridge] Fetch Timed Out (${maxAttempts}s)`);
         sendResponse({status: 'error', error: 'Timed out waiting for device'});
     } catch (err) {
-        console.error('[PinBridge] Manual fetch crash:', err);
-        sendResponse({status: 'error', error: err.message});
+        console.error('[PinBridge] Manual fetch logic failed:', err);
+        sendResponse({status: 'error', error: err.message || 'Fetch Logic Error'});
     }
 }
 
@@ -320,13 +310,19 @@ function stopListeners() {
     if (unsubscribePairing) { unsubscribePairing(); unsubscribePairing = null; }
     if (unsubscribeOtp) { unsubscribeOtp(); unsubscribeOtp = null; }
     if (unsubscribeStatus) { unsubscribeStatus(); unsubscribeStatus = null; }
+    if (socket) {
+        console.log('[PinBridge] Disconnecting socket...');
+        socket.disconnect();
+        socket = null;
+    }
 }
 
 function startListeners(deviceId) {
   if (!deviceId) return;
 
-  // 1. Presence (Socket.IO)
+  // 1. Presence (Socket.IO) - Real-time primary
   if (!socket) {
+    console.log('[PinBridge] Connecting to presence server:', SOCKET_SERVER_URL);
     socket = io(SOCKET_SERVER_URL, {
       auth: async (cb) => {
         const token = auth.currentUser ? await auth.currentUser.getIdToken() : null;
@@ -334,12 +330,11 @@ function startListeners(deviceId) {
       }
     });
 
+    socket.on('connect', () => console.log('[PinBridge] Socket connected to presence server'));
+
     socket.on('presence_update', (data) => {
       if (data.deviceId === deviceId) {
-        const isOnline = data.status === 'online';
-        const lastSeen = data.lastSeen;
-        chrome.storage.session.set({ isOnline, lastSeen });
-        safeSendMessage({ type: 'statusUpdate', online: isOnline, lastSeen });
+        validatePresence(data.status === 'online', data.lastSeen);
       }
     });
 
@@ -348,7 +343,35 @@ function startListeners(deviceId) {
     });
   }
 
-  // 2. Pairing Listener – handles pairing/unpairing only
+  // Helper to validate and propagate status
+  function validatePresence(online, lastSeen) {
+      const now = Date.now();
+      const STALE_THRESHOLD = 60000;
+      let effectiveOnline = online;
+      let isStale = false;
+
+      if (online && lastSeen && (now - lastSeen > STALE_THRESHOLD)) {
+          console.warn(`[PinBridge] Stale online status detected (lastSeen: ${now - lastSeen}ms ago). Forcing offline.`);
+          effectiveOnline = false;
+          isStale = true;
+      }
+
+      console.log(`[PinBridge] Presence: ${effectiveOnline ? 'ONLINE' : 'OFFLINE'} ${isStale ? '(STALE)' : ''}`);
+      chrome.storage.session.set({ isOnline: effectiveOnline, lastSeen });
+      safeSendMessage({ type: 'statusUpdate', online: effectiveOnline, lastSeen, isStale });
+  }
+
+  // 2. Status Listener (Firestore) - Reliable fallback
+  unsubscribeStatus = onSnapshot(doc(db, 'pairings', deviceId), snap => {
+    const data = snap.data();
+    if (!data) return;
+    
+    const online = data.status === 'online';
+    const lastSeen = data.lastOnline ? (data.lastOnline.toMillis ? data.lastOnline.toMillis() : data.lastOnline) : Date.now();
+    validatePresence(online, lastSeen);
+  });
+
+  // 3. Pairing Listener – handles unpairing logic
   unsubscribePairing = onSnapshot(doc(db, 'pairings', deviceId), async snap => {
     const data = snap.data();
     if (!data || data.paired === false) {

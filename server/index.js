@@ -60,70 +60,75 @@ io.use(async (socket, next) => {
         socket.clientType = clientType;
         next();
     } catch (err) {
-        console.error("Auth error:", err.message);
+        console.error(`[PinBridge Server] Auth error for device ${deviceId}:`, err.message);
         next(new Error("Authentication error: Invalid token"));
     }
 });
 
+// In-memory watchdog for active devices
+const lastHeartbeatMap = new Map();
+
 io.on('connection', async (socket) => {
     const { deviceId, user, clientType } = socket;
-    console.log(`${clientType === 'device' ? 'Device' : 'Viewer'} connected: ${deviceId} (User: ${user.email})`);
+    console.log(`[PinBridge Server] ${clientType === 'device' ? 'Device' : 'Viewer'} connected: ${deviceId}`);
 
-    // Join a room for this device so Web/Extension can listen specifically
     socket.join(`room:${deviceId}`);
 
     if (clientType === 'device') {
-        // Mark online in Redis with TTL
-        await redis.set(`presence:${deviceId}`, 'online', 'EX', 35); // Slightly longer than heartbeat
-        await redis.set(`lastSeen:${deviceId}`, Date.now().toString());
+        const now = Date.now();
+        lastHeartbeatMap.set(deviceId, now);
+        
+        await redis.set(`presence:${deviceId}`, 'online', 'EX', 35);
+        await redis.set(`lastSeen:${deviceId}`, now.toString());
 
-        // Broadcast immediate online status
         io.to(`room:${deviceId}`).emit('presence_update', {
             deviceId,
             status: 'online',
-            lastSeen: Date.now()
+            lastSeen: now
         });
     } else {
-        // viewer: Send immediate current status from Redis (don't broadcast, just to this socket)
         const status = await redis.get(`presence:${deviceId}`) || 'offline';
-        const lastSeenStr = await redis.get(`lastSeen:${deviceId}`);
-        const lastSeen = lastSeenStr ? parseInt(lastSeenStr) : null;
+        const lastSeen = await redis.get(`lastSeen:${deviceId}`);
         
         socket.emit('presence_update', {
             deviceId,
             status,
-            lastSeen
+            lastSeen: lastSeen ? parseInt(lastSeen) : null
         });
     }
 
-    // Devices emit heartbeat to maintain online status
     socket.on('heartbeat', async () => {
         if (clientType === 'device') {
-            // Refresh TTL
+            const now = Date.now();
+            lastHeartbeatMap.set(deviceId, now);
             await redis.set(`presence:${deviceId}`, 'online', 'EX', 35);
-            await redis.set(`lastSeen:${deviceId}`, Date.now().toString());
+            await redis.set(`lastSeen:${deviceId}`, now.toString());
+            
+            io.to(`room:${deviceId}`).emit('presence_update', {
+                deviceId,
+                status: 'online',
+                lastSeen: now
+            });
         }
     });
 
     socket.on('disconnect', async (reason) => {
-        console.log(`${clientType === 'device' ? 'Device' : 'Viewer'} disconnected: ${deviceId} (${reason})`);
+        console.log(`[PinBridge Server] ${clientType === 'device' ? 'Device' : 'Viewer'} disconnected: ${deviceId} (${reason})`);
         
         if (clientType === 'device') {
-            // Mark offline in Redis
+            lastHeartbeatMap.delete(deviceId);
             await redis.set(`presence:${deviceId}`, 'offline');
             const now = Date.now();
             
-            // Persist to Firestore for long-term lastSeen records
             try {
                 await db.collection('pairings').doc(deviceId).update({
                     lastOnline: admin.firestore.FieldValue.serverTimestamp(),
-                    state: 'offline'
+                    status: 'offline'
                 });
             } catch (e) {
-                console.error("Failed to update Firestore on disconnect:", e.message);
+                console.error("[PinBridge Server] Firestore error:", e.message);
             }
 
-            // Broadcast offline status
             io.to(`room:${deviceId}`).emit('presence_update', {
                 deviceId,
                 status: 'offline',
@@ -132,6 +137,38 @@ io.on('connection', async (socket) => {
         }
     });
 });
+
+/**
+ * Presence Watchdog: Sweep for missed heartbeats (Threshold: 40s)
+ * Catches 'dirty disconnects' where Android app is killed or network drops silently.
+ */
+setInterval(async () => {
+    const now = Date.now();
+    const TIMEOUT_MS = 40000;
+
+    for (const [deviceId, lastSeen] of lastHeartbeatMap.entries()) {
+        if (now - lastSeen > TIMEOUT_MS) {
+            console.log(`[PinBridge Server] Presence Watchdog: Heartbeat timeout for ${deviceId}`);
+            lastHeartbeatMap.delete(deviceId);
+            
+            await redis.set(`presence:${deviceId}`, 'offline');
+            
+            // Push offline status to Firestore & Socket Viewers
+            try {
+                await db.collection('pairings').doc(deviceId).update({
+                    lastOnline: admin.firestore.Timestamp.fromMillis(lastSeen),
+                    status: 'offline'
+                });
+            } catch (e) {}
+
+            io.to(`room:${deviceId}`).emit('presence_update', {
+                deviceId,
+                status: 'offline',
+                lastSeen: lastSeen
+            });
+        }
+    }
+}, 30000); // Check every 30s
 
 // Sentry Express error handler
 Sentry.setupExpressErrorHandler(app);

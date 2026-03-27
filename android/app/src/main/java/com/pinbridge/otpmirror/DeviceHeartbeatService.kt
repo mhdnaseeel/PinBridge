@@ -69,17 +69,16 @@ class DeviceHeartbeatService : Service() {
                     )
                 }
                 
+                Log.d(TAG, "Initiating socket connection to ${Constants.SOCKET_SERVER_URL} with deviceId: $id")
                 socket = IO.socket(Constants.SOCKET_SERVER_URL, opts)
 
                 socket?.on(Socket.EVENT_CONNECT) {
-                    Log.d(TAG, "Socket connected & authenticated via handshake")
-                    // Start heartbeat loop if not already handled by server-side ping/pong
-                    // But here we use a custom heartbeat for Redis TTL
+                    Log.d(TAG, "SUCCESS: Socket connected & authenticated via handshake")
                     startHeartbeatLoop()
                 }
 
                 socket?.on(Socket.EVENT_DISCONNECT) {
-                    Log.d(TAG, "Socket disconnected: $it")
+                    Log.w(TAG, "Socket disconnected! Reason: $it")
                 }
 
                 socket?.on(Socket.EVENT_CONNECT_ERROR) {
@@ -89,19 +88,22 @@ class DeviceHeartbeatService : Service() {
 
                 socket?.connect()
             } catch (e: Exception) {
-                Log.e(TAG, "Error during socket setup: ${e.message}")
+                Log.e(TAG, "Fatal error during socket setup: ${e.message}")
             }
         }
     }
 
     private var heartbeatJob: Job? = null
     private fun startHeartbeatLoop() {
+        Log.d(TAG, "Starting heartbeat loop (15s interval)")
         heartbeatJob?.cancel()
         heartbeatJob = scope.launch {
             while (isActive && socket?.connected() == true) {
+                Log.v(TAG, "Emitting heartbeat to server...")
                 socket?.emit("heartbeat")
-                delay(20000) // Every 20 seconds (Server TTL is 35s)
+                delay(15000) // Every 15 seconds (Server TTL is 35s, Watchdog is 40s)
             }
+            Log.d(TAG, "Heartbeat loop stopped (socket disconnected or job cancelled)")
         }
     }
 

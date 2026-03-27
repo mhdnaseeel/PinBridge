@@ -11,12 +11,9 @@ plugins {
 }
 
 sentry {
-    includeProguardMapping = true
-    autoUploadProguardMapping = true
-    uploadNativeSymbols = true
-    includeNativeSources = true
+    includeSourceContext.set(true)
     tracingInstrumentation {
-        enabled = true
+        enabled.set(true)
     }
 }
 
@@ -142,7 +139,7 @@ dependencies {
     implementation("io.socket:socket.io-client:2.1.0")
 
     // Sentry
-    implementation("io.sentry:sentry-android:7.2.0")
+    implementation("io.sentry:sentry-android:8.37.0")
 }
 
 /**
