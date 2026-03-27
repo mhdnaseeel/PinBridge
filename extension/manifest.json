@@ -27,7 +27,6 @@
     "storage",
     "notifications",
     "sidePanel",
-    "alarms",
     "identity"
   ],
   "host_permissions": [

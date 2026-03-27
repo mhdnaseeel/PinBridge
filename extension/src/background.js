@@ -37,6 +37,7 @@ let unsubscribeOtp = null;
 let unsubscribeStatus = null;
 let isSigningOut = false;
 
+
 async function checkPairingStatus() {
   const { pairedDeviceId } = await chrome.storage.local.get(['pairedDeviceId']);
   if (!pairedDeviceId) return;
@@ -52,19 +53,6 @@ async function checkPairingStatus() {
       performSignOut();
     }
   }
-}
-
-async function checkOnlineStatus() {
-  // Now handled by RTDB onValue listener in startListeners
-  checkPairingStatus(); 
-}
-
-function stopStatusMonitor() {
-    // Alarms no longer needed for primary status
-}
-
-function startStatusMonitor() {
-    // Relying on RTDB listeners
 }
 
 function safeSendMessage(message) {
@@ -311,7 +299,6 @@ async function performSignOut() {
     await chrome.storage.session.remove(['isOnline']);
     
     stopListeners();
-    stopStatusMonitor();
     
     isSigningOut = false;
     console.log('[PinBridge] Local state cleaned');
@@ -329,7 +316,6 @@ function stopListeners() {
 function startListeners(deviceId) {
   if (!deviceId) return;
   stopListeners();
-  startStatusMonitor();
 
   // 1. Pairing Listener – handles pairing/unpairing only
   unsubscribePairing = onSnapshot(doc(db, 'pairings', deviceId), async snap => {
@@ -402,16 +388,10 @@ async function processNewOtp(data) {
     }
 }
 
-chrome.alarms.onAlarm.addListener((alarm) => {
-    if (alarm.name === 'statusCheck') {
-        checkOnlineStatus();
-    }
-});
 
 chrome.runtime.onInstalled.addListener(() => {
     chrome.storage.local.get(['pairedDeviceId'], ({pairedDeviceId}) => {
       if (pairedDeviceId) {
-          startStatusMonitor();
           startListeners(pairedDeviceId);
       }
     });
