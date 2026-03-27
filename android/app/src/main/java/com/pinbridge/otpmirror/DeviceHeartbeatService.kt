@@ -49,42 +49,64 @@ class DeviceHeartbeatService : Service() {
         val id = deviceId ?: return
         if (socket?.connected() == true) return
 
-        try {
-            val opts = IO.Options().apply {
-                forceNew = true
-                reconnection = true
-            }
-            socket = IO.socket(Constants.SOCKET_SERVER_URL, opts)
-
-            socket?.on(Socket.EVENT_CONNECT) {
-                Log.d(TAG, "Socket connected. Authenticating...")
-                scope.launch {
-                    try {
-                        val token = auth.currentUser?.getIdToken(true)?.await()?.token
-                        if (token != null) {
-                            val authData = JSONObject().apply {
-                                put("token", token)
-                                put("deviceId", id)
-                            }
-                            socket?.emit("authenticate", authData)
-                        }
-                    } catch (e: Exception) {
-                        Log.e(TAG, "Failed to get auth token: ${e.message}")
-                    }
+        scope.launch {
+            try {
+                Log.d(TAG, "Fetching auth token for handshake...")
+                val token = auth.currentUser?.getIdToken(true)?.await()?.token
+                if (token == null) {
+                    Log.e(TAG, "No Firebase user or token available")
+                    return@launch
                 }
-            }
 
-            socket?.on(Socket.EVENT_DISCONNECT) {
-                Log.d(TAG, "Socket disconnected")
-            }
+                val opts = IO.Options().apply {
+                    forceNew = true
+                    reconnection = true
+                    // Handshake data
+                    auth = mapOf(
+                        "token" to token,
+                        "deviceId" to id,
+                        "clientType" to "device"
+                    )
+                }
+                
+                socket = IO.socket(Constants.SOCKET_SERVER_URL, opts)
 
-            socket?.connect()
-        } catch (e: Exception) {
-            Log.e(TAG, "Socket connection error: ${e.message}")
+                socket?.on(Socket.EVENT_CONNECT) {
+                    Log.d(TAG, "Socket connected & authenticated via handshake")
+                    // Start heartbeat loop if not already handled by server-side ping/pong
+                    // But here we use a custom heartbeat for Redis TTL
+                    startHeartbeatLoop()
+                }
+
+                socket?.on(Socket.EVENT_DISCONNECT) {
+                    Log.d(TAG, "Socket disconnected: $it")
+                }
+
+                socket?.on(Socket.EVENT_CONNECT_ERROR) {
+                    val err = it?.getOrNull(0)
+                    Log.e(TAG, "Socket connection error: $err")
+                }
+
+                socket?.connect()
+            } catch (e: Exception) {
+                Log.e(TAG, "Error during socket setup: ${e.message}")
+            }
+        }
+    }
+
+    private var heartbeatJob: Job? = null
+    private fun startHeartbeatLoop() {
+        heartbeatJob?.cancel()
+        heartbeatJob = scope.launch {
+            while (isActive && socket?.connected() == true) {
+                socket?.emit("heartbeat")
+                delay(20000) // Every 20 seconds (Server TTL is 35s)
+            }
         }
     }
 
     private fun disconnectSocket() {
+        heartbeatJob?.cancel()
         socket?.disconnect()
         socket = null
     }

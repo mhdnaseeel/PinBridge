@@ -430,9 +430,18 @@ function startListeners() {
   // 1. Presence (Socket.IO)
   if (!socket) {
     socket = io(SOCKET_SERVER_URL, {
-      auth: {
-        token: state.user.accessToken || (async () => await state.user.getIdToken())(),
-        deviceId: state.pairedDeviceId
+      auth: async (cb) => {
+        try {
+          const token = await state.user.getIdToken();
+          cb({ 
+            token, 
+            deviceId: state.pairedDeviceId,
+            clientType: 'viewer'
+          });
+        } catch (e) {
+          console.error('[PinBridge] Failed to get token for socket auth:', e);
+          cb(new Error('Failed to get token'));
+        }
       }
     });
 

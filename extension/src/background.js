@@ -324,9 +324,8 @@ function startListeners(deviceId) {
   if (!socket) {
     socket = io(SOCKET_SERVER_URL, {
       auth: async (cb) => {
-        const { googleUid } = await chrome.storage.local.get(['googleUid']);
         const token = auth.currentUser ? await auth.currentUser.getIdToken() : null;
-        cb({ token, deviceId });
+        cb({ token, deviceId, clientType: "viewer" });
       }
     });
 
