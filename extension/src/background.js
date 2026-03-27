@@ -39,8 +39,7 @@ const firebaseConfig = {
   storageBucket: "pinbridge-61dd4.firebasestorage.app",
   messagingSenderId: "475556984962",
   appId: "1:475556984962:web:87e42b8f4e3b0ce9a89c9b",
-  measurementId: "G-LEDS6BH99B",
-  databaseURL: "https://pinbridge-61dd4-default-rtdb.firebaseio.com/"
+  measurementId: "G-LEDS6BH99B"
 };
 
 const app = initializeApp(firebaseConfig);
