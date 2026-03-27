@@ -1,8 +1,10 @@
+require("./instrument.js");
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const Redis = require('ioredis');
 const admin = require('firebase-admin');
+const Sentry = require("@sentry/node");
 require('dotenv').config();
 
 // Initialize Firebase Admin
@@ -129,6 +131,14 @@ io.on('connection', async (socket) => {
             });
         }
     });
+});
+
+// Sentry Express error handler
+Sentry.setupExpressErrorHandler(app);
+
+// Simple debug route to test Sentry
+app.get("/debug-sentry", function mainHandler(req, res) {
+    throw new Error("Sentry Test Error from PinBridge Server");
 });
 
 const PORT = process.env.PORT || 3001;

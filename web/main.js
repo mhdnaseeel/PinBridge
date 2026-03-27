@@ -1,4 +1,12 @@
 import './style.css';
+import * as Sentry from "@sentry/browser";
+
+// Sentry Initialization
+Sentry.init({
+    dsn: import.meta.env.VITE_SENTRY_DSN || "https://5077a37e69c5a42a4ace47d13cd759ee@o4511118204141568.ingest.us.sentry.io/4511118218297344",
+    tracesSampleRate: 1.0,
+});
+
 import { initializeApp } from "firebase/app";
 import { 
   getFirestore, 

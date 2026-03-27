@@ -1,12 +1,22 @@
-// Global error handlers to prevent Chrome Extension error UI
+import * as Sentry from "@sentry/browser";
+
+// Sentry Initialization
+Sentry.init({
+    dsn: "https://5077a37e69c5a42a4ace47d13cd759ee@o4511118204141568.ingest.us.sentry.io/4511118218297344",
+    tracesSampleRate: 1.0,
+});
+
+// Global error handlers to capture and report errors to Sentry
 const targetScope = typeof self !== 'undefined' ? self : window;
 targetScope.addEventListener('error', (e) => {
+    Sentry.captureException(e.error || e.message);
     e.preventDefault();
-    console.debug('[PinBridge] Suppressed error:', e.error || e.message);
+    console.debug('[PinBridge Popup] Reported error:', e.error || e.message);
 });
 targetScope.addEventListener('unhandledrejection', (e) => {
+    Sentry.captureException(e.reason);
     e.preventDefault();
-    console.debug('[PinBridge] Suppressed unhandled rejection:', e.reason);
+    console.debug('[PinBridge Popup] Reported unhandled rejection:', e.reason);
 });
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -251,7 +261,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }, 2000);
             } else {
                 const errorText = response?.error || 'Failed';
-                manualFetchBtn.innerText = errorText.includes('Not paired') ? 'Not Paired' : 'Fetch Failed';
+                if (errorText.includes('Not paired')) {
+                    manualFetchBtn.innerText = 'Not Paired';
+                } else if (errorText.toLowerCase().includes('timeout') || errorText.toLowerCase().includes('timed out')) {
+                    manualFetchBtn.innerText = 'Timed Out';
+                } else {
+                    manualFetchBtn.innerText = 'Fetch Failed';
+                }
                 manualFetchBtn.style.background = '#ef4444';
                 setTimeout(() => {
                     manualFetchBtn.innerText = 'Fetch Latest';

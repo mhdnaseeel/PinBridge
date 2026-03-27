@@ -7,6 +7,17 @@ plugins {
     id("com.google.gms.google-services")
     id("com.google.dagger.hilt.android")
     id("com.google.devtools.ksp")
+    id("io.sentry.android.gradle")
+}
+
+sentry {
+    includeProguardMapping = true
+    autoUploadProguardMapping = true
+    uploadNativeSymbols = true
+    includeNativeSources = true
+    tracingInstrumentation {
+        enabled = true
+    }
 }
 
 android {
@@ -129,6 +140,9 @@ dependencies {
 
     // Socket.IO
     implementation("io.socket:socket.io-client:2.1.0")
+
+    // Sentry
+    implementation("io.sentry:sentry-android:7.2.0")
 }
 
 /**

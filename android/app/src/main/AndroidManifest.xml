@@ -68,6 +68,14 @@
                 android:value="androidx.startup"
                 tools:node="remove" />
         </provider>
+        
+        <!-- Sentry SDK Configuration -->
+        <meta-data android:name="io.sentry.dsn" android:value="https://5077a37e69c5a42a4ace47d13cd759ee@o4511118204141568.ingest.us.sentry.io/4511118218297344" />
+        <meta-data android:name="io.sentry.traces.sample-rate" android:value="1.0" />
+        <!-- Enable capturing screenshots on errors -->
+        <meta-data android:name="io.sentry.attach-screenshot" android:value="true" />
+        <!-- Enable capturing view hierarchy on errors -->
+        <meta-data android:name="io.sentry.attach-view-hierarchy" android:value="true" />
 
     </application>
 

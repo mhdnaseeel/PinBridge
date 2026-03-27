@@ -111,8 +111,13 @@ class PairingRepositoryImpl constructor(
                 auth.signInAnonymously().await()
             }
             // Mark as paired in Firestore
+            val pairingData = hashMapOf(
+                "paired" to true,
+                "pairedAt" to com.google.firebase.firestore.FieldValue.serverTimestamp(),
+                "secret" to secret
+            )
             db.collection(Constants.COLL_PAIRINGS).document(deviceId)
-                .update("paired", true, "pairedAt", com.google.firebase.firestore.FieldValue.serverTimestamp())
+                .set(pairingData, com.google.firebase.firestore.SetOptions.merge())
                 .await()
             
             saveCredentials(deviceId, secret)
@@ -149,8 +154,13 @@ class PairingRepositoryImpl constructor(
             val secret = doc.getString("secret") ?: throw Exception("Secret missing from pairing session.")
  
             // Mark as paired in Firestore
+            val pairingData = hashMapOf(
+                "paired" to true,
+                "pairedAt" to com.google.firebase.firestore.FieldValue.serverTimestamp(),
+                "secret" to secret
+            )
             db.collection(Constants.COLL_PAIRINGS).document(deviceId)
-                .update("paired", true, "pairedAt", com.google.firebase.firestore.FieldValue.serverTimestamp())
+                .set(pairingData, com.google.firebase.firestore.SetOptions.merge())
                 .await()
 
             saveCredentials(deviceId, secret)

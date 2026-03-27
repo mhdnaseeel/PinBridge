@@ -4,6 +4,7 @@
   "description": "Chrome extension for PinBridge OTP mirroring",
   "main": "background.js",
   "dependencies": {
+    "@sentry/browser": "^10.46.0",
     "firebase": "^10.0.0",
     "qrcode": "^1.5.4",
     "socket.io-client": "^4.8.3"

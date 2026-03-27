@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@sentry/browser": "^10.46.0",
     "firebase": "^10.14.1",
     "socket.io-client": "^4.8.3"
   },

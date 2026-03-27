@@ -4,14 +4,27 @@ import { getFirestore, doc, onSnapshot, getDoc, deleteDoc, updateDoc, setDoc, se
 import { getDatabase, ref, onValue, off } from "firebase/database";
 import { decryptOtp } from "./crypto";
 import { io } from "socket.io-client";
+import * as Sentry from "@sentry/browser";
+
+// Sentry Initialization
+Sentry.init({
+    dsn: "https://5077a37e69c5a42a4ace47d13cd759ee@o4511118204141568.ingest.us.sentry.io/4511118218297344",
+    tracesSampleRate: 1.0,
+});
 
 const SOCKET_SERVER_URL = "https://pinbridge-presence.onrender.com";
 let socket = null;
 
-// Global error handlers to prevent Chrome Extension error UI
+// Global error handlers to capture and report errors to Sentry
 self.addEventListener('error', (e) => {
+    Sentry.captureException(e.error || e.message);
     e.preventDefault();
-    console.debug('[PinBridge] Suppressed error:', e.error || e.message);
+    console.debug('[PinBridge] Reported error:', e.error || e.message);
+});
+self.addEventListener('unhandledrejection', (e) => {
+    Sentry.captureException(e.reason);
+    e.preventDefault();
+    console.debug('[PinBridge] Reported unhandled rejection:', e.reason);
 });
 self.addEventListener('unhandledrejection', (e) => {
     e.preventDefault();
@@ -228,56 +241,48 @@ async function handleManualFetch(sendResponse) {
     try {
         const isOnlineObj = await chrome.storage.session.get(['isOnline']);
         if (!isOnlineObj.isOnline) {
-            console.warn('[PinBridge] Manual fetch triggered while status is Offline. Proceeding with best-effort trigger.');
-            // We proceed anyway to trigger the Firestore signal, in case the heartbeat is just lagging.
+            console.warn('[PinBridge] Manual fetch triggered while status is Offline. Proceeding anyway.');
         }
 
-        // Ensure we are signed in
         if (!auth.currentUser) {
-            console.log('[PinBridge] No active session. Signing in...');
+            console.log('[PinBridge] No active session, signing in anonymously...');
             await signInAnonymously(auth);
         }
 
-        // Save pre-fetch uploadTs to detect when new upload completes
         const currentData = await chrome.storage.local.get(['latestOtp']);
         const preFetchUploadTs = currentData.latestOtp ? (currentData.latestOtp.uploadTs || 0) : 0;
+        console.log(`[PinBridge] Starting manual fetch. Pre-fetch uploadTs: ${preFetchUploadTs}`);
 
-        const pairingDoc = doc(db, 'pairings', pairedDeviceId);
-        await updateDoc(pairingDoc, {
+        await updateDoc(doc(db, 'pairings', pairedDeviceId), {
             fetchRequested: serverTimestamp()
         });
-        console.log('[PinBridge] Remote fetch requested for:', pairedDeviceId);
+        console.log('[PinBridge] Firestore fetchRequested signal sent.');
 
-        // Wait up to 15 seconds for Android to respond
+        // Wait up to 30 seconds for Android to respond
         let attempts = 0;
-        const maxAttempts = 15;
+        const maxAttempts = 30;
         while (attempts < maxAttempts) {
             await new Promise(r => setTimeout(r, 1000));
             
-            // Check if phone went offline during polling (prevents hanging success)
+            // Log if phone appears offline, but don't abort—the request is already out there
             const statusCheck = await chrome.storage.session.get(['isOnline']);
             if (!statusCheck.isOnline) {
-                sendResponse({status: 'error', error: 'Phone went offline'});
-                return;
+                console.debug(`[PinBridge] Fetch poll #${attempts}: Phone appears offline, still waiting...`);
             }
 
             const { latestOtp } = await chrome.storage.local.get(['latestOtp']);
             if (latestOtp && (latestOtp.uploadTs || 0) > preFetchUploadTs) {
-                console.log('[PinBridge] New OTP successfully fetched by device.');
+                console.log(`[PinBridge] Success: New OTP detected (uploadTs: ${latestOtp.uploadTs})`);
                 sendResponse({status: 'ok', otp: latestOtp.otp});
                 return;
             }
             attempts++;
         }
         
-        console.warn('[PinBridge] Manual fetch timeout. No OTP uploaded by device.');
-        sendResponse({status: 'error', error: 'Timeout waiting for phone to upload'});
+        console.warn(`[PinBridge] Manual fetch timeout after ${maxAttempts}s. No new OTP detected.`);
+        sendResponse({status: 'error', error: 'Timed out waiting for device'});
     } catch (err) {
-        console.error('[PinBridge] Manual fetch error details:', {
-            code: err.code,
-            message: err.message,
-            stack: err.stack
-        });
+        console.error('[PinBridge] Manual fetch crash:', err);
         sendResponse({status: 'error', error: err.message});
     }
 }
