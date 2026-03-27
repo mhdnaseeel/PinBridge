@@ -181,12 +181,12 @@ function renderUnpaired() {
               <li>Scan the QR with the <strong>PinBridge Android App</strong></li>
             </ol>
 
-            <div class="signed-in-badge" style="justify-content: center; margin-top: 20px;">
-              <span class="dot dot-online"></span>
-              Signed in as ${state.user?.email || 'User'}
+            <div class="signed-in-badge" style="justify-content: center; margin-top: 20px; max-width: 100%; box-sizing: border-box;">
+              <span class="dot dot-online" style="flex-shrink: 0;"></span>
+              <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Signed in as <strong>${state.user?.email || 'User'}</strong></span>
             </div>
             <p class="locked-hint" style="margin-top: 16px;">This page will update automatically once your extension pairs with a device.</p>
-            <button id="signOutBtn" class="btn-signout" style="margin-top: 10px;">Sign Out</button>
+            <button id="signOutBtn" class="btn-signout" style="margin-top: 16px;">Sign Out</button>
           </div>
         </div>
       </div>
@@ -259,12 +259,12 @@ function renderPaired() {
           </div>
         </div>
 
-        <div style="margin-top: 40px; display: flex; justify-content: space-between; align-items: center;">
-          <div style="color: var(--text-muted); font-size: 12px; display: flex; gap: 20px;">
+        <div class="footer-section" style="margin-top: 40px; display: flex; justify-content: space-between; align-items: center; width: 100%;">
+          <div class="footer-links" style="color: var(--text-muted); font-size: 12px; display: flex; gap: 20px; flex-wrap: wrap;">
             <span>● Secure Channel</span>
             <span>● End-to-End Encrypted</span>
           </div>
-          <button id="signOutBtn" class="btn-signout">Sign Out</button>
+          <button id="signOutBtn" class="btn-signout" style="margin-top: 0;">Sign Out</button>
         </div>
       </main>
     </div>

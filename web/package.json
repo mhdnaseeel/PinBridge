@@ -9,9 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "crypto-js": "^4.2.0",
-    "firebase": "^10.14.1",
-    "qrcode": "^1.5.4"
+    "firebase": "^10.14.1"
   },
   "devDependencies": {
     "vite": "^5.0.0"

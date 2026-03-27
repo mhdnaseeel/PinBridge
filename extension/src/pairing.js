@@ -99,7 +99,7 @@ const db = getFirestore(app);
     const data = snapshot.data();
     if (data && data.paired) {
         console.log('[PinBridge] Pairing confirmed by device!');
-        unsub();
+        if (typeof unsub === 'function') unsub();
         
         // Notify background script to finalize pairing
         chrome.runtime.sendMessage({
@@ -120,5 +120,21 @@ const db = getFirestore(app);
             }
         });
     }
+  }, (error) => {
+    if (error.code === 'permission-denied') {
+       console.log('[PinBridge] Pairing listener stopped (permission denied, likely signed out).');
+       if (typeof unsub === 'function') unsub();
+       window.close(); // Close the pairing window automatically
+    } else {
+       console.error('[PinBridge] Pairing snapshot error:', error);
+    }
+  });
+
+  // 7. Auto-close if user signs out from popup while this tab is open
+  chrome.storage.onChanged.addListener((changes, area) => {
+      if (area === 'local' && changes.pairedDeviceId && !changes.pairedDeviceId.newValue) {
+          if (typeof unsub === 'function') unsub();
+          window.close();
+      }
   });
 })();

@@ -131,7 +131,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
 async function handleGoogleSignIn(sendResponse) {
   try {
-    const clientId = "475556984962-79qjbmccmentkgnkilmu185ej18viotr.apps.googleusercontent.com";
+    const clientId = "475556984962-jekqarbki0ob5s1una398poptimup0eq.apps.googleusercontent.com";
     const redirectUri = chrome.identity.getRedirectURL();
     const scopes = encodeURIComponent("profile email");
     const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&response_type=id_token%20token&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scopes}&nonce=${Math.random().toString(36).substring(2)}`;
