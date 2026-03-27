@@ -14,8 +14,7 @@ import {
   getAuth, 
   onAuthStateChanged,
   GoogleAuthProvider,
-  signInWithRedirect,
-  getRedirectResult,
+  signInWithPopup,
   signOut as firebaseSignOut
 } from "firebase/auth";
 import { 
@@ -316,8 +315,10 @@ async function loginWithGoogle() {
 
   const provider = new GoogleAuthProvider();
   try {
-    // Navigate away to Google auth to bypass popup blockers & COOP issues
-    await signInWithRedirect(auth, provider);
+    // Use popup instead of redirect for a more desktop-friendly experience
+    await signInWithPopup(auth, provider);
+    state.signingIn = false;
+    updateUI();
   } catch (err) {
     console.error('[PinBridge] Google Sign-In Error:', err.code, err.message);
     state.signingIn = false;
@@ -480,20 +481,6 @@ if (!navigator.onLine) offlineBanner.classList.add('active');
 
 // Check URL params before auth
 checkUrlParams();
-
-// Check for redirect result (if coming back from Google Sign-In redirect)
-getRedirectResult(auth).then((result) => {
-  if (result && result.user) {
-    console.log('[PinBridge] Successfully signed in via redirect:', result.user.email);
-    state.signingIn = false;
-    updateUI();
-  }
-}).catch((err) => {
-  console.error('[PinBridge] Redirect sign-in error:', err);
-  state.signingIn = false;
-  state.error = 'Sign-in failed during redirect callback.';
-  updateUI();
-});
 
 // Auth state listener — single source of truth
 onAuthStateChanged(auth, async (user) => {

@@ -158,15 +158,36 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (googleSignInBtn) {
         googleSignInBtn.onclick = async () => {
             googleSignInBtn.disabled = true;
-            googleSignInBtn.textContent = 'Opening dashboard...';
+            googleSignInBtn.textContent = 'Signing in...';
             hideError();
 
+            let hasResponded = false;
+            
+            // Fallback timeout to prevent permanent hanging if SW sleeps or flow is abandoned
+            const signInTimeout = setTimeout(() => {
+                if (!hasResponded) {
+                    hasResponded = true;
+                    showError('Sign-in timed out. Please try again.');
+                    googleSignInBtn.disabled = false;
+                    googleSignInBtn.innerHTML = '<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" alt="Google"> Sign in with Google';
+                }
+            }, 60000); // 60 seconds
+
             chrome.runtime.sendMessage({ type: 'googleSignIn' }, (response) => {
-                if (response && response.status === 'pending') {
+                if (hasResponded) return; // Ignore later responses if timed out
+                hasResponded = true;
+                clearTimeout(signInTimeout);
+
+                if (response && response.status === 'success') {
+                    if (authPollInterval) {
+                        clearInterval(authPollInterval);
+                        authPollInterval = null;
+                    }
+                    showUnpaired();
+                } else if (response && response.status === 'pending') {
                     googleSignInBtn.innerHTML = 'Waiting for sign-in...';
                     googleSignInBtn.style.background = '#6366f1';
-                    emptyText.textContent = response.message || 'Please sign in on the opened PinBridge dashboard.';
-                    // Start polling for auth completion
+                    emptyText.textContent = response.message || 'Please sign in...';
                     startAuthPolling();
                 } else {
                     const errMsg = response?.error || 'Sign-in failed';

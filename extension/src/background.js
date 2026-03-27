@@ -130,14 +130,54 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 });
 
 async function handleGoogleSignIn(sendResponse) {
-  // Use the pre-configured Web Dashboard for zero-setup authentication
-  const webUrl = 'https://pin-bridge.vercel.app/';
-  
-  chrome.tabs.create({ url: webUrl }, (tab) => {
-    chrome.storage.local.set({ authTabId: tab.id });
-  });
+  try {
+    const clientId = "475556984962-79qjbmccmentkgnkilmu185ej18viotr.apps.googleusercontent.com";
+    const redirectUri = chrome.identity.getRedirectURL();
+    const scopes = encodeURIComponent("profile email");
+    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&response_type=id_token%20token&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scopes}&nonce=${Math.random().toString(36).substring(2)}`;
 
-  sendResponse({ status: 'pending', message: 'Please sign in on the opened PinBridge dashboard...' });
+    chrome.identity.launchWebAuthFlow({
+      url: authUrl,
+      interactive: true
+    }, async (redirectUrl) => {
+      if (chrome.runtime.lastError || !redirectUrl) {
+        console.error('[PinBridge] launchWebAuthFlow error:', chrome.runtime.lastError);
+        sendResponse({ status: 'error', error: chrome.runtime.lastError?.message || 'Sign-in cancelled or failed' });
+        return;
+      }
+
+      try {
+        const urlHash = new URL(redirectUrl).hash.substring(1);
+        const params = new URLSearchParams(urlHash);
+        const idToken = params.get('id_token');
+        const accessToken = params.get('access_token');
+
+        if (!idToken && !accessToken) {
+          throw new Error('No tokens returned from Google Auth');
+        }
+
+        const credential = GoogleAuthProvider.credential(idToken, accessToken);
+        const userCredential = await signInWithCredential(auth, credential);
+        const user = userCredential.user;
+
+        await chrome.storage.local.set({
+          googleUid: user.uid,
+          googleEmail: user.email
+        });
+
+        console.log('[PinBridge] Google Sign-In native success:', user.email);
+        sendResponse({ status: 'success', email: user.email, uid: user.uid });
+        safeSendMessage({ type: 'statusUpdate', message: `Signed in as ${user.email}` });
+        safeSendMessage({ type: 'unpaired' });
+      } catch (err) {
+        console.error('[PinBridge] Firebase auth error:', err);
+        sendResponse({ status: 'error', error: err.message });
+      }
+    });
+  } catch (err) {
+    console.error('[PinBridge] setup auth error:', err);
+    sendResponse({ status: 'error', error: err.message });
+  }
 }
 
 async function handleWebLoginSuccess(msg) {
