@@ -23,6 +23,10 @@ import {
   onValue, 
   off 
 } from "firebase/database";
+import { io } from "socket.io-client";
+
+const SOCKET_SERVER_URL = "https://pinbridge-presence.onrender.com";
+let socket = null;
 
 const firebaseConfig = {
   apiKey: "AIzaSyBwBr0MOdVKCwuvoK3oOU6tg5LcS7uqZOE",
@@ -418,23 +422,32 @@ window.addEventListener('message', (e) => {
   }
 });
 
+
 function startListeners() {
   if (!state.pairedDeviceId || !state.user) return;
   stopListeners();
 
-  // 1. Presence (RTDB)
-  const statusRef = ref(rtdb, `status/${state.pairedDeviceId}`);
-  unsubStatus = onValue(statusRef, (snapshot) => {
-    const data = snapshot.val();
-    if (!data) return;
-    const now = Date.now();
-    const lastSeen = data.last_changed || now;
-    state.isOnline = data.state === 'online' || (now - lastSeen < 30000);
-    state.lastSeen = lastSeen;
-    updateUI();
-  }, (err) => {
-    console.warn('[PinBridge] RTDB error:', err);
-  });
+  // 1. Presence (Socket.IO)
+  if (!socket) {
+    socket = io(SOCKET_SERVER_URL, {
+      auth: {
+        token: state.user.accessToken || (async () => await state.user.getIdToken())(),
+        deviceId: state.pairedDeviceId
+      }
+    });
+
+    socket.on('presence_update', (data) => {
+      if (data.deviceId === state.pairedDeviceId) {
+        state.isOnline = data.status === 'online';
+        state.lastSeen = data.lastSeen;
+        updateUI();
+      }
+    });
+
+    socket.on('connect_error', (err) => {
+      console.warn('[PinBridge] Socket connection error:', err.message);
+    });
+  }
 
   // 2. OTP Mirroring (Firestore)
   unsubOtp = onSnapshot(doc(db, 'otps', state.pairedDeviceId), async (snap) => {
@@ -468,6 +481,10 @@ function handleForcedUnpair() {
 function stopListeners() {
   if (unsubOtp) unsubOtp();
   if (unsubStatus) unsubStatus();
+  if (socket) {
+    socket.disconnect();
+    socket = null;
+  }
   unsubOtp = null;
   unsubStatus = null;
 }

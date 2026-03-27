@@ -10,4 +10,6 @@ object Constants {
     // Firestore collection names
     const val COLL_PAIRINGS = "pairings"
     const val COLL_OTPS = "otps"
+    
+    const val SOCKET_SERVER_URL = "https://pinbridge-presence.onrender.com"
 }

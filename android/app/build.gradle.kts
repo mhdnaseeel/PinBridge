@@ -126,6 +126,9 @@ dependencies {
     ksp("com.google.dagger:hilt-compiler:2.59.2")
     implementation("androidx.hilt:hilt-work:1.2.0")
     ksp("androidx.hilt:hilt-compiler:1.2.0")
+
+    // Socket.IO
+    implementation("io.socket:socket.io-client:2.1.0")
 }
 
 /**

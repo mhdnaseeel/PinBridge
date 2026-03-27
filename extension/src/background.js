@@ -3,6 +3,10 @@ import { getAuth, signInAnonymously, signOut, onAuthStateChanged, GoogleAuthProv
 import { getFirestore, doc, onSnapshot, getDoc, deleteDoc, updateDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { getDatabase, ref, onValue, off } from "firebase/database";
 import { decryptOtp } from "./crypto";
+import { io } from "socket.io-client";
+
+const SOCKET_SERVER_URL = "https://pinbridge-presence.onrender.com";
+let socket = null;
 
 // Global error handlers to prevent Chrome Extension error UI
 self.addEventListener('error', (e) => {
@@ -315,9 +319,32 @@ function stopListeners() {
 
 function startListeners(deviceId) {
   if (!deviceId) return;
-  stopListeners();
 
-  // 1. Pairing Listener – handles pairing/unpairing only
+  // 1. Presence (Socket.IO)
+  if (!socket) {
+    socket = io(SOCKET_SERVER_URL, {
+      auth: async (cb) => {
+        const { googleUid } = await chrome.storage.local.get(['googleUid']);
+        const token = auth.currentUser ? await auth.currentUser.getIdToken() : null;
+        cb({ token, deviceId });
+      }
+    });
+
+    socket.on('presence_update', (data) => {
+      if (data.deviceId === deviceId) {
+        const isOnline = data.status === 'online';
+        const lastSeen = data.lastSeen;
+        chrome.storage.session.set({ isOnline, lastSeen });
+        safeSendMessage({ type: 'statusUpdate', online: isOnline, lastSeen });
+      }
+    });
+
+    socket.on('connect_error', (err) => {
+      console.warn('[PinBridge] Socket connection error:', err.message);
+    });
+  }
+
+  // 2. Pairing Listener – handles pairing/unpairing only
   unsubscribePairing = onSnapshot(doc(db, 'pairings', deviceId), async snap => {
     const data = snap.data();
     if (!data || data.paired === false) {
@@ -328,27 +355,7 @@ function startListeners(deviceId) {
     if (err.code === 'permission-denied') performSignOut();
   });
 
-  // 2. Status Listener (RTDB) – handles live presence
-  const statusRef = ref(rtdb, `status/${deviceId}`);
-  unsubscribeStatus = onValue(statusRef, async snapshot => {
-    const data = snapshot.val();
-    if (!data) return;
-
-    const now = Date.now();
-    const lastSeen = data.last_changed || now;
-    
-    // Grace Logic: Even if state is 'offline', treat as online if last_changed is < 30s ago (Heartbeat grace)
-    const isOnline = data.state === 'online' || (now - lastSeen < 30000);
-    
-    const currentStatus = await chrome.storage.session.get(['isOnline']);
-    // Always update session storage with last seen
-    await chrome.storage.session.set({ isOnline, lastSeen });
-    
-    safeSendMessage({ type: 'statusUpdate', online: isOnline, lastSeen });
-    console.log(`[PinBridge] RTDB Presence: ${isOnline ? 'Online' : 'Offline'} (Raw: ${data.state}), Last Seen: ${new Date(lastSeen).toLocaleString()}`);
-  });
-
-  // 2. OTP Listener
+  // 3. OTP Listener
   unsubscribeOtp = onSnapshot(doc(db, 'otps', deviceId), snap => {
     const data = snap.data();
     if (!data) return;
