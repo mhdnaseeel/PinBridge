@@ -36,7 +36,10 @@ const io = new Server(server, {
 });
 
 // Redis setup (Upstash compatible)
-const redis = new Redis(process.env.REDIS_URL);
+const redis = new Redis(process.env.REDIS_URL, {
+    maxRetriesPerRequest: null,
+    tls: { rejectUnauthorized: false }
+});
 
 // Middleware for authentication
 io.use(async (socket, next) => {
