@@ -101,6 +101,10 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     // Sign out from Firebase Auth only — keep pairing data intact
     performSignOutOnly().then(() => sendResponse({status: 'ok'}));
     return true;
+  } else if (msg.type === 'unpairOnly') {
+    // Remove pairing data + Firestore docs but keep auth session
+    performUnpairOnly().then(() => sendResponse({status: 'ok'}));
+    return true;
   } else if (msg.type === 'googleSignIn') {
     handleGoogleSignIn(sendResponse);
     return true;
@@ -269,11 +273,38 @@ async function performSignOutOnly() {
   }
 }
 
+async function performUnpairOnly() {
+  // Remove pairing data from Firestore and local storage, but keep Firebase Auth session
+  const { pairedDeviceId, googleUid } = await chrome.storage.local.get(['pairedDeviceId', 'googleUid']);
+  try {
+    if (pairedDeviceId) {
+      console.log('[PinBridge] Cleaning up Firestore pairing for:', pairedDeviceId);
+      await Promise.all([
+        deleteDoc(doc(db, 'pairings', pairedDeviceId)),
+        deleteDoc(doc(db, 'otps', pairedDeviceId))
+      ]).catch(e => console.warn('[PinBridge] Partial Firestore cleanup:', e));
+    }
+    // Also clean up cloud sync doc so web dashboard reflects the unpaired state
+    if (googleUid) {
+      await deleteDoc(doc(db, 'users', googleUid, 'mirroring', 'active'))
+        .catch(e => console.warn('[PinBridge] Cloud sync cleanup:', e));
+    }
+  } catch (err) {
+    console.error('[PinBridge] Unpair cleanup failed:', err);
+  } finally {
+    await chrome.storage.local.remove(['pairedDeviceId', 'secret', 'latestOtp', 'isOnline']);
+    stopListeners();
+    console.log('[PinBridge] Unpaired (auth preserved)');
+    safeSendMessage({ type: 'statusUpdate', online: false, lastSeen: Date.now() });
+    safeSendMessage({ type: 'unpaired' });
+  }
+}
+
 async function performSignOut() {
   if (isSigningOut) return;
   isSigningOut = true;
   
-  const { pairedDeviceId } = await chrome.storage.local.get(['pairedDeviceId']);
+  const { pairedDeviceId, googleUid } = await chrome.storage.local.get(['pairedDeviceId', 'googleUid']);
   try {
     if (pairedDeviceId) {
       console.log('[PinBridge] Cleaning up Firestore for:', pairedDeviceId);
@@ -282,11 +313,16 @@ async function performSignOut() {
         deleteDoc(doc(db, 'otps', pairedDeviceId))
       ]).catch(e => console.warn('[PinBridge] Partial Firestore cleanup:', e));
     }
+    // Also clean up cloud sync doc
+    if (googleUid) {
+      await deleteDoc(doc(db, 'users', googleUid, 'mirroring', 'active'))
+        .catch(e => console.warn('[PinBridge] Cloud sync cleanup:', e));
+    }
   } catch (err) {
     console.error('[PinBridge] Sign out cleanup failed:', err);
   } finally {
     await signOut(auth).catch(() => {});
-    await chrome.storage.local.remove(['pairedDeviceId', 'secret', 'latestOtp']);
+    await chrome.storage.local.remove(['pairedDeviceId', 'secret', 'latestOtp', 'googleUid', 'googleEmail']);
     await chrome.storage.local.remove(['isOnline']);
     
     stopListeners();

@@ -98,10 +98,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     captchaConfirm.addEventListener('click', () => {
         if (captchaInput.value === currentCaptchaCode) {
-            // Correct — perform unpair
+            // Correct — perform unpair (keeps auth session intact)
             hideCaptchaModal();
-            chrome.runtime.sendMessage({ type: 'signOut' }); // signOut performs full unpair + cleanup
-            chrome.storage.local.remove(['googleUid', 'googleEmail']);
+            chrome.runtime.sendMessage({ type: 'unpairOnly' });
             showUnpaired();
         } else {
             captchaError.textContent = 'Incorrect code. Please try again.';

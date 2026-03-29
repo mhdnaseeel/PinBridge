@@ -661,6 +661,18 @@ onAuthStateChanged(auth, async (user) => {
       console.warn('[PinBridge] Error checking active pairing:', e);
     }
 
+    // Update local state with the fetched pairing data
+    if (pairedDeviceId && secret) {
+      state.pairedDeviceId = pairedDeviceId;
+      state.secret = secret;
+      localStorage.setItem('pairedDeviceId', pairedDeviceId);
+      localStorage.setItem('secret', secret);
+      startListeners();
+    }
+
+    // Update UI immediately so user sees the transition
+    updateUI();
+
     // Always broadcast to extension content script (handles both fresh sign-in and existing session)
     window.postMessage({
       source: 'pinbridge-web',
@@ -671,6 +683,7 @@ onAuthStateChanged(auth, async (user) => {
       secret
     }, '*');
 
+    // Listen for future pairing changes
     listenToCloudSync(user.uid);
   } else {
     state.user = null;
