@@ -42,7 +42,6 @@ import com.pinbridge.otpmirror.OtpUploader
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import androidx.lifecycle.lifecycleScope
-import io.sentry.Sentry
 import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.ClearCredentialStateRequest
@@ -174,16 +173,6 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-    // waiting for view to draw to better represent a captured error with a screenshot
-    findViewById<android.view.View>(android.R.id.content).viewTreeObserver.addOnGlobalLayoutListener {
-      try {
-        throw Exception("This app uses Sentry! :)")
-      } catch (e: Exception) {
-        Sentry.captureException(e)
-      }
-    }
-
-        
         setContent {
             PinBridgeTheme {
                 MainScreen()

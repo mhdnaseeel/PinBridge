@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, signInAnonymously, signOut, onAuthStateChanged, GoogleAuthProvider, signInWithCredential } from "firebase/auth";
-import { getFirestore, doc, onSnapshot, getDoc, deleteDoc, updateDoc, setDoc, serverTimestamp } from "firebase/firestore";
+import { getFirestore, doc, onSnapshot, deleteDoc, updateDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { decryptOtp } from "./crypto";
 import { io } from "socket.io-client";
 import * as Sentry from "@sentry/browser";
@@ -27,11 +27,6 @@ self.addEventListener('unhandledrejection', (e) => {
     e.preventDefault();
     console.debug('[PinBridge] Reported unhandled rejection:', e.reason);
 });
-self.addEventListener('unhandledrejection', (e) => {
-    e.preventDefault();
-    console.debug('[PinBridge] Suppressed unhandled rejection:', e.reason);
-});
-
 chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch((error) => console.error(error));
 
 const firebaseConfig = {
@@ -52,24 +47,6 @@ let unsubscribePairing = null;
 let unsubscribeOtp = null;
 let unsubscribeStatus = null;
 let isSigningOut = false;
-
-
-async function checkPairingStatus() {
-  const { pairedDeviceId } = await chrome.storage.local.get(['pairedDeviceId']);
-  if (!pairedDeviceId) return;
-
-  try {
-    const pairingDoc = await getDoc(doc(db, 'pairings', pairedDeviceId));
-    if (!pairingDoc.exists() || pairingDoc.data().paired === false) {
-      console.log('[PinBridge] Pairing no longer valid on server. Signing out...');
-      performSignOut();
-    }
-  } catch (err) {
-    if (err.code === 'permission-denied') {
-      performSignOut();
-    }
-  }
-}
 
 function safeSendMessage(message) {
   try {
