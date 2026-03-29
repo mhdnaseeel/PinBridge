@@ -7,9 +7,17 @@ import * as Sentry from "@sentry/browser";
 
 // Sentry Initialization
 Sentry.init({
-    dsn: "https://5077a37e69c5a42a4ace47d13cd759ee@o4511118204141568.ingest.us.sentry.io/4511118218297344",
+    dsn: "https://3457c2e95d532379d40e4152fc7642c1@o4511118204141568.ingest.us.sentry.io/4511118399635456",
     tracesSampleRate: 1.0,
+    sendDefaultPii: true
 });
+
+// Verification - remove after testing
+try {
+    myUndefinedFunction();
+} catch (e) {
+    Sentry.captureException(e);
+}
 
 const SOCKET_SERVER_URL = "https://pinbridge-presence.onrender.com";
 let socket = null;
@@ -103,14 +111,13 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       .catch(err => sendResponse({status: 'error', error: err.message}));
     return true;
   } else if (msg.type === 'getStatus') {
-    chrome.storage.local.get(['pairedDeviceId'], ({pairedDeviceId}) => {
-       chrome.storage.session.get(['isOnline'], ({isOnline}) => {
-         sendResponse({
-           status: pairedDeviceId ? 'paired' : 'unpaired', 
-           deviceId: pairedDeviceId,
-           isOnline: !!isOnline
-         });
-       });
+    chrome.storage.local.get(['pairedDeviceId', 'isOnline', 'lastSeen'], ({pairedDeviceId, isOnline, lastSeen}) => {
+      sendResponse({
+        status: pairedDeviceId ? 'paired' : 'unpaired', 
+        deviceId: pairedDeviceId,
+        isOnline: !!isOnline,
+        lastSeen: lastSeen || null
+      });
     });
     return true;
   } else if (msg.type === 'signOut') {
@@ -294,7 +301,7 @@ async function performSignOut() {
   } finally {
     await signOut(auth).catch(() => {});
     await chrome.storage.local.remove(['pairedDeviceId', 'secret', 'latestOtp']);
-    await chrome.storage.session.remove(['isOnline']);
+    await chrome.storage.local.remove(['isOnline']);
     
     stopListeners();
     
@@ -356,17 +363,21 @@ function startListeners(deviceId) {
       }
 
       console.log(`[PinBridge] Presence: ${effectiveOnline ? 'ONLINE' : 'OFFLINE'} ${isStale ? '(STALE)' : ''}`);
-      chrome.storage.session.set({ isOnline: effectiveOnline, lastSeen });
+      chrome.storage.local.set({ isOnline: effectiveOnline, lastSeen });
       safeSendMessage({ type: 'statusUpdate', online: effectiveOnline, lastSeen, isStale });
   }
 
-  // 2. Status Listener (Firestore) - Reliable fallback
+  // 2. Status Listener (Firestore) - Reliable source of truth
+  // No local deduplication — service worker restarts clear JS state,
+  // so we always propagate what Firestore says.
   unsubscribeStatus = onSnapshot(doc(db, 'pairings', deviceId), snap => {
     const data = snap.data();
     if (!data) return;
     
     const online = data.status === 'online';
-    const lastSeen = data.lastOnline ? (data.lastOnline.toMillis ? data.lastOnline.toMillis() : data.lastOnline) : Date.now();
+    const lastSeen = data.lastOnline ? (data.lastOnline.toMillis ? data.lastOnline.toMillis() : data.lastOnline) : null;
+    
+    console.log(`[PinBridge] Firestore status update: ${online ? 'online' : 'offline'}, lastSeen: ${lastSeen}`);
     validatePresence(online, lastSeen);
   });
 

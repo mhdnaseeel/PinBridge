@@ -9,8 +9,7 @@ import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.compose.setContent
-import androidx.activity.result.ActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
+import kotlinx.coroutines.tasks.await
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -34,8 +33,6 @@ import android.content.Context
 import android.widget.Toast
 import androidx.compose.material.icons.filled.Refresh
 import kotlinx.coroutines.launch
-import com.google.android.gms.auth.api.signin.GoogleSignIn
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.firestore.FirebaseFirestore
@@ -44,6 +41,13 @@ import com.pinbridge.otpmirror.OtpUploader
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import androidx.lifecycle.lifecycleScope
+import io.sentry.Sentry
+import androidx.credentials.CredentialManager
+import androidx.credentials.GetCredentialRequest
+import androidx.credentials.ClearCredentialStateRequest
+import androidx.credentials.exceptions.GetCredentialException
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
@@ -56,30 +60,9 @@ class MainActivity : AppCompatActivity() {
     private val firebaseAuth by lazy { FirebaseAuth.getInstance() }
     private val firestore by lazy { FirebaseFirestore.getInstance() }
 
-    // Google Sign-in launcher
-    private val googleSignInLauncher = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) { result: ActivityResult ->
-        val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
-        try {
-            val account = task.getResult(Exception::class.java)
-            val idToken = account?.idToken
-            if (idToken != null) {
-                val credential = GoogleAuthProvider.getCredential(idToken, null)
-                firebaseAuth.signInWithCredential(credential).addOnCompleteListener(this) { authTask ->
-                    if (authTask.isSuccessful) {
-                        val uid = firebaseAuth.currentUser?.uid ?: return@addOnCompleteListener
-                        checkCloudSync(uid)
-                    } else {
-                        Toast.makeText(this, "Google Sign-In failed", Toast.LENGTH_SHORT).show()
-                    }
-                }
-            }
-        } catch (e: Exception) {
-            Log.e("MainActivity", "Google Sign-In error", e)
-            Toast.makeText(this, "Sign-in cancelled", Toast.LENGTH_SHORT).show()
-        }
-    }
+    private val credentialManager by lazy { CredentialManager.create(this) }
+
+    private val WEB_CLIENT_ID = "475556984962-jekqarbki0ob5s1una398poptimup0eq.apps.googleusercontent.com"
 
     private fun checkCloudSync(uid: String) {
         firestore.collection("users").document(uid)
@@ -90,14 +73,35 @@ class MainActivity : AppCompatActivity() {
                     val deviceId = doc.getString("deviceId")
                     val secret = doc.getString("secret")
                     if (deviceId != null && secret != null) {
-                        lifecycleScope.launch {
-                            try {
-                                pairingRepository.pairWithQr(deviceId, secret)
-                                Toast.makeText(this@MainActivity, "Cloud Sync activated! Device paired.", Toast.LENGTH_LONG).show()
-                            } catch (e: Exception) {
-                                Toast.makeText(this@MainActivity, "Pairing failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                        // Validate that the pairing is still active in Firestore before auto-pairing
+                        firestore.collection(Constants.COLL_PAIRINGS).document(deviceId)
+                            .get()
+                            .addOnSuccessListener { pairingDoc ->
+                                if (pairingDoc.exists() && pairingDoc.getBoolean("paired") == true) {
+                                    // Pairing is still valid on the server — auto-pair
+                                    lifecycleScope.launch {
+                                        try {
+                                            pairingRepository.pairWithQr(deviceId, secret)
+                                            Toast.makeText(this@MainActivity, "Cloud Sync activated! Device paired.", Toast.LENGTH_LONG).show()
+                                        } catch (e: Exception) {
+                                            Toast.makeText(this@MainActivity, "Pairing failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                                        }
+                                    }
+                                } else {
+                                    // Stale cloud sync data — the pairing no longer exists on the server
+                                    Log.w("MainActivity", "Cloud sync data is stale (pairing doc missing or unpaired). Cleaning up.")
+                                    firestore.collection("users").document(uid)
+                                        .collection("mirroring").document("active")
+                                        .delete()
+                                        .addOnSuccessListener { Log.i("MainActivity", "Stale cloud sync document cleaned up.") }
+                                        .addOnFailureListener { Log.w("MainActivity", "Failed to clean up stale cloud sync.", it) }
+                                    Toast.makeText(this@MainActivity, "Previous pairing expired. Please pair again.", Toast.LENGTH_LONG).show()
+                                }
                             }
-                        }
+                            .addOnFailureListener {
+                                Log.w("MainActivity", "Failed to validate pairing document.", it)
+                                Toast.makeText(this@MainActivity, "Could not verify pairing status.", Toast.LENGTH_SHORT).show()
+                            }
                     } else {
                         Toast.makeText(this, "Cloud Sync data incomplete.", Toast.LENGTH_SHORT).show()
                     }
@@ -111,15 +115,42 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startGoogleSignIn() {
-        // Hardcoded because google-services.json has no oauth_client entry
-        val webClientId = "475556984962-jekqarbki0ob5s1una398poptimup0eq.apps.googleusercontent.com"
-        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestIdToken(webClientId)
-            .requestEmail()
-            .build()
-        val googleSignInClient = GoogleSignIn.getClient(this, gso)
-        googleSignInClient.signOut().addOnCompleteListener {
-            googleSignInLauncher.launch(googleSignInClient.signInIntent)
+        lifecycleScope.launch {
+            try {
+                val googleIdOption = GetGoogleIdOption.Builder()
+                    .setServerClientId(WEB_CLIENT_ID)
+                    .setFilterByAuthorizedAccounts(false)
+                    .setAutoSelectEnabled(false)
+                    .build()
+
+                val request = GetCredentialRequest.Builder()
+                    .addCredentialOption(googleIdOption)
+                    .build()
+
+                val result = credentialManager.getCredential(
+                    context = this@MainActivity,
+                    request = request
+                )
+
+                val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(result.credential.data)
+                val idToken = googleIdTokenCredential.idToken
+
+                val firebaseCredential = GoogleAuthProvider.getCredential(idToken, null)
+                val authResult = firebaseAuth.signInWithCredential(firebaseCredential).await()
+                
+                if (authResult.user != null) {
+                    val uid = authResult.user!!.uid
+                    checkCloudSync(uid)
+                } else {
+                    Toast.makeText(this@MainActivity, "Google Sign-In failed", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: GetCredentialException) {
+                Log.e("MainActivity", "Credential Manager error", e)
+                Toast.makeText(this@MainActivity, "Sign-in cancelled or failed", Toast.LENGTH_SHORT).show()
+            } catch (e: Exception) {
+                Log.e("MainActivity", "Google Sign-In error", e)
+                Toast.makeText(this@MainActivity, "Sign-in failed: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
@@ -142,6 +173,15 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+    // waiting for view to draw to better represent a captured error with a screenshot
+    findViewById<android.view.View>(android.R.id.content).viewTreeObserver.addOnGlobalLayoutListener {
+      try {
+        throw Exception("This app uses Sentry! :)")
+      } catch (e: Exception) {
+        Sentry.captureException(e)
+      }
+    }
+
         
         setContent {
             PinBridgeTheme {
@@ -415,9 +455,12 @@ class MainActivity : AppCompatActivity() {
 
     private fun signOut() {
         firebaseAuth.signOut()
-        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN).build()
-        GoogleSignIn.getClient(this, gso).signOut()
         lifecycleScope.launch {
+            try {
+                credentialManager.clearCredentialState(ClearCredentialStateRequest())
+            } catch (e: Exception) {
+                Log.w("MainActivity", "Failed to clear credential state", e)
+            }
             pairingRepository.unpair()
         }
     }

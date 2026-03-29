@@ -3,15 +3,26 @@ import { getAuth, signInAnonymously } from "firebase/auth";
 import { getFirestore, doc, setDoc, serverTimestamp, onSnapshot } from "firebase/firestore";
 import QRCode from 'qrcode';
 
+import * as Sentry from "@sentry/browser";
+
+// Sentry Initialization
+Sentry.init({
+    dsn: "https://3457c2e95d532379d40e4152fc7642c1@o4511118204141568.ingest.us.sentry.io/4511118399635456",
+    tracesSampleRate: 1.0,
+    sendDefaultPii: true
+});
+
 // Global error handlers to prevent Chrome Extension error UI
 const targetScope = typeof self !== 'undefined' ? self : window;
 targetScope.addEventListener('error', (e) => {
+    Sentry.captureException(e.error || e.message);
     e.preventDefault();
-    console.debug('[PinBridge] Suppressed error:', e.error || e.message);
+    console.debug('[PinBridge] Reported error:', e.error || e.message);
 });
 targetScope.addEventListener('unhandledrejection', (e) => {
+    Sentry.captureException(e.reason);
     e.preventDefault();
-    console.debug('[PinBridge] Suppressed unhandled rejection:', e.reason);
+    console.debug('[PinBridge] Reported unhandled rejection:', e.reason);
 });
 
 const firebaseConfig = {

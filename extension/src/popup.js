@@ -2,8 +2,9 @@ import * as Sentry from "@sentry/browser";
 
 // Sentry Initialization
 Sentry.init({
-    dsn: "https://5077a37e69c5a42a4ace47d13cd759ee@o4511118204141568.ingest.us.sentry.io/4511118218297344",
+    dsn: "https://3457c2e95d532379d40e4152fc7642c1@o4511118204141568.ingest.us.sentry.io/4511118399635456",
     tracesSampleRate: 1.0,
+    sendDefaultPii: true
 });
 
 // Global error handlers to capture and report errors to Sentry
@@ -55,9 +56,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     chrome.runtime.sendMessage({ type: 'getStatus' }, (response) => {
         if (response && response.status === 'paired') {
             showPaired();
-            chrome.storage.session.get(['lastSeen'], ({lastSeen}) => {
-                updateConnectionStatus(response.isOnline, lastSeen || Date.now());
-            });
+            updateConnectionStatus(response.isOnline, response.lastSeen);
         } else {
             showUnpaired();
         }
@@ -125,7 +124,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             statusText.style.color = '#10b981';
         } else {
             statusDot.className = 'dot dot-offline';
-            const timeStr = lastSeen ? new Date(lastSeen).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Unknown';
+            let timeStr = 'Unknown';
+            if (lastSeen && typeof lastSeen === 'number' && lastSeen > 0) {
+                timeStr = new Date(lastSeen).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            }
             statusText.textContent = `Offline (${timeStr})`;
             statusText.style.color = '#f59e0b';
         }
@@ -270,29 +272,37 @@ document.addEventListener('DOMContentLoaded', async () => {
         manualFetchBtn.innerText = 'Fetching...';
 
         chrome.runtime.sendMessage({ type: 'manualFetch' }, (response) => {
-            // If isFetching is still true, the storage listener hasn't caught it yet
+            // Success might have been detected already via the storage listener (chrome.storage.onChanged)
             if (!isFetching) return; 
-
-            isFetching = false;
-            manualFetchBtn.disabled = false;
 
             if (response && response.status === 'ok') {
                 onFetchSuccess();
             } else {
+                // If it's an error (like a timeout), allow a small grace period (5s) for a late-arriving OTP
+                // to still be caught by the storage listener before we finalize the UI error state.
                 const errorText = response?.error || 'Failed';
-                if (errorText.includes('Not paired')) {
-                    manualFetchBtn.innerText = 'Not Paired';
-                } else if (errorText.toLowerCase().includes('timeout') || errorText.toLowerCase().includes('timed out')) {
-                    manualFetchBtn.innerText = 'Timed Out';
-                } else {
-                    console.error('[PinBridge Popup] Fetch failed:', errorText);
-                    manualFetchBtn.innerText = 'Retry Later';
-                }
-                manualFetchBtn.style.background = '#ef4444';
+                console.warn(`[PinBridge Popup] Manual fetch background error: ${errorText}. Waiting for late arrival...`);
+
                 setTimeout(() => {
-                    manualFetchBtn.innerText = 'Fetch Latest';
-                    manualFetchBtn.style.background = '#10b981';
-                }, 3000);
+                    if (!isFetching) return; // Caught by late arrival listener in the meantime!
+                    
+                    isFetching = false;
+                    manualFetchBtn.disabled = false;
+                    
+                    if (errorText.includes('Not paired')) {
+                        manualFetchBtn.innerText = 'Not Paired';
+                    } else if (errorText.toLowerCase().includes('timeout') || errorText.toLowerCase().includes('timed out')) {
+                        manualFetchBtn.innerText = 'Timed Out';
+                    } else {
+                        console.error('[PinBridge Popup] Fetch failed (final):', errorText);
+                        manualFetchBtn.innerText = 'Retry Later';
+                    }
+                    manualFetchBtn.style.background = '#ef4444';
+                    setTimeout(() => {
+                        manualFetchBtn.innerText = 'Fetch Latest';
+                        manualFetchBtn.style.background = '#10b981';
+                    }, 3000);
+                }, 5000); // 5s grace period
             }
         });
     });
@@ -320,6 +330,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (msg.type === 'newOtp') {
             showPaired();
             updateOtpDisplay({ otp: msg.otp, ts: msg.ts });
+            // If a manual fetch is in progress, mark it as successful
+            if (isFetching) {
+                console.log('[PinBridge Popup] Success detected via newOtp message.');
+                onFetchSuccess();
+            }
         } else if (msg.type === 'statusUpdate') {
             updateConnectionStatus(msg.online, msg.lastSeen);
         } else if (msg.type === 'unpaired' || msg.type === 'signOut') {

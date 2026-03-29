@@ -46,6 +46,7 @@ class PairingRepositoryImpl constructor(
     override val remoteFetchRequest = _remoteFetchRequest.asSharedFlow()
 
     private var statusListener: com.google.firebase.firestore.ListenerRegistration? = null
+    private var lastFetchRequested: com.google.firebase.Timestamp? = null
 
     init {
         startStatusListener()
@@ -84,9 +85,15 @@ class PairingRepositoryImpl constructor(
                         clearLocalCredentials()
                     }
                 } else if (snapshot.contains("fetchRequested")) {
-                    Log.i(TAG, "Remote fetch request signal received.")
-                    CoroutineScope(Dispatchers.Main).launch {
-                        _remoteFetchRequest.emit(Unit)
+                    val newTs = snapshot.getTimestamp("fetchRequested")
+                    if (newTs != null && (lastFetchRequested == null || newTs.compareTo(lastFetchRequested!!) > 0)) {
+                        lastFetchRequested = newTs
+                        Log.i(TAG, "Remote fetch request signal received (new timestamp).")
+                        CoroutineScope(Dispatchers.Main).launch {
+                            _remoteFetchRequest.emit(Unit)
+                        }
+                    } else {
+                        Log.d(TAG, "fetchRequested field exists but has not changed or is in the past. Ignoring.")
                     }
                 }
             }

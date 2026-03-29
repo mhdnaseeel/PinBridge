@@ -3,9 +3,17 @@ import * as Sentry from "@sentry/browser";
 
 // Sentry Initialization
 Sentry.init({
-    dsn: import.meta.env.VITE_SENTRY_DSN || "https://5077a37e69c5a42a4ace47d13cd759ee@o4511118204141568.ingest.us.sentry.io/4511118218297344",
+    dsn: "https://3457c2e95d532379d40e4152fc7642c1@o4511118204141568.ingest.us.sentry.io/4511118399635456",
     tracesSampleRate: 1.0,
+    sendDefaultPii: true
 });
+
+// Verification - remove after testing
+try {
+    myUndefinedFunction();
+} catch (e) {
+    Sentry.captureException(e);
+}
 
 import { initializeApp } from "firebase/app";
 import { 
@@ -343,25 +351,58 @@ let unsubCloudSync = null;
 function listenToCloudSync(uid) {
   if (unsubCloudSync) unsubCloudSync();
   
-  unsubCloudSync = onSnapshot(doc(db, 'users', uid, 'mirroring', 'active'), (syncSnap) => {
+  unsubCloudSync = onSnapshot(doc(db, 'users', uid, 'mirroring', 'active'), async (syncSnap) => {
     if (syncSnap.exists()) {
       const data = syncSnap.data();
-      console.log('[PinBridge] Cloud Sync active!');
-      state.pairedDeviceId = data.deviceId;
-      state.secret = data.secret;
-      localStorage.setItem('pairedDeviceId', data.deviceId);
-      localStorage.setItem('secret', data.secret);
-      
-      // Notify extension content script that pairing succeeded (if extension is active)
-      window.postMessage({
-        source: 'pinbridge-web',
-        action: 'PAIRING_SUCCESS',
-        deviceId: data.deviceId,
-        secret: data.secret
-      }, '*');
+      const deviceId = data.deviceId;
+      const secret = data.secret;
 
-      startListeners();
-      updateUI();
+      if (!deviceId || !secret) {
+        console.warn('[PinBridge] Cloud sync data incomplete.');
+        updateUI();
+        return;
+      }
+
+      // Validate that the pairing is still active in Firestore before auto-pairing
+      try {
+        const pairingSnap = await getDoc(doc(db, 'pairings', deviceId));
+        if (pairingSnap.exists() && pairingSnap.data()?.paired === true) {
+          // Pairing is still valid — proceed
+          console.log('[PinBridge] Cloud Sync active! Pairing validated.');
+          state.pairedDeviceId = deviceId;
+          state.secret = secret;
+          localStorage.setItem('pairedDeviceId', deviceId);
+          localStorage.setItem('secret', secret);
+          
+          // Notify extension content script that pairing succeeded (if extension is active)
+          window.postMessage({
+            source: 'pinbridge-web',
+            action: 'PAIRING_SUCCESS',
+            deviceId: deviceId,
+            secret: secret
+          }, '*');
+
+          startListeners();
+          updateUI();
+        } else {
+          // Stale cloud sync data — clean up
+          console.warn('[PinBridge] Cloud sync data is stale (pairing doc missing or unpaired). Cleaning up.');
+          try {
+            await deleteDoc(doc(db, 'users', uid, 'mirroring', 'active'));
+            console.log('[PinBridge] Stale cloud sync document cleaned up.');
+          } catch (e) {
+            console.warn('[PinBridge] Failed to clean up stale cloud sync:', e);
+          }
+          if (state.pairedDeviceId) {
+            handleForcedUnpair();
+          } else {
+            updateUI();
+          }
+        }
+      } catch (e) {
+        console.warn('[PinBridge] Failed to validate pairing document:', e);
+        updateUI();
+      }
     } else {
       console.log('[PinBridge] No cloud sync found. Awaiting pairing.');
       if (state.pairedDeviceId) {
@@ -477,7 +518,7 @@ function startListeners() {
     if (!data) return;
     
     const online = data.status === 'online';
-    const lastSeen = data.lastOnline ? (data.lastOnline.toMillis ? data.lastOnline.toMillis() : data.lastOnline) : Date.now();
+    const lastSeen = data.lastOnline ? (data.lastOnline.toMillis ? data.lastOnline.toMillis() : data.lastOnline) : null;
     checkStaleness(online, lastSeen);
   });
 
@@ -543,8 +584,17 @@ onAuthStateChanged(auth, async (user) => {
       const syncSnap = await getDoc(doc(db, 'users', user.uid, 'mirroring', 'active'));
       if (syncSnap.exists()) {
         const data = syncSnap.data();
-        pairedDeviceId = data.deviceId;
-        secret = data.secret;
+        if (data.deviceId && data.secret) {
+          // Validate that the pairing is still active before passing it to the extension
+          const pairingSnap = await getDoc(doc(db, 'pairings', data.deviceId));
+          if (pairingSnap.exists() && pairingSnap.data()?.paired === true) {
+            pairedDeviceId = data.deviceId;
+            secret = data.secret;
+          } else {
+            console.warn('[PinBridge] Stale cloud sync detected during auth. Cleaning up.');
+            await deleteDoc(doc(db, 'users', user.uid, 'mirroring', 'active')).catch(() => {});
+          }
+        }
       }
     } catch (e) {
       console.warn('[PinBridge] Error checking active pairing:', e);

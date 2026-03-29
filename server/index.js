@@ -67,6 +67,9 @@ io.use(async (socket, next) => {
 
 // In-memory watchdog for active devices
 const lastHeartbeatMap = new Map();
+// Throttle Firestore writes to avoid excessive updates
+const lastFirestoreSyncMap = new Map();
+const FIRESTORE_SYNC_INTERVAL = 60000; // Sync to Firestore at most once per 60s
 
 io.on('connection', async (socket) => {
     const { deviceId, user, clientType } = socket;
@@ -80,6 +83,17 @@ io.on('connection', async (socket) => {
         
         await redis.set(`presence:${deviceId}`, 'online', 'EX', 35);
         await redis.set(`lastSeen:${deviceId}`, now.toString());
+
+        // Write online status to Firestore on connect (always)
+        try {
+            await db.collection('pairings').doc(deviceId).update({
+                lastOnline: admin.firestore.FieldValue.serverTimestamp(),
+                status: 'online'
+            });
+            lastFirestoreSyncMap.set(deviceId, now);
+        } catch (e) {
+            console.error('[PinBridge Server] Firestore online write error:', e.message);
+        }
 
         io.to(`room:${deviceId}`).emit('presence_update', {
             deviceId,
@@ -104,6 +118,20 @@ io.on('connection', async (socket) => {
             await redis.set(`presence:${deviceId}`, 'online', 'EX', 35);
             await redis.set(`lastSeen:${deviceId}`, now.toString());
             
+            // Periodically sync online status to Firestore (throttled)
+            const lastSync = lastFirestoreSyncMap.get(deviceId) || 0;
+            if (now - lastSync > FIRESTORE_SYNC_INTERVAL) {
+                try {
+                    await db.collection('pairings').doc(deviceId).update({
+                        lastOnline: admin.firestore.FieldValue.serverTimestamp(),
+                        status: 'online'
+                    });
+                    lastFirestoreSyncMap.set(deviceId, now);
+                } catch (e) {
+                    console.error('[PinBridge Server] Firestore heartbeat sync error:', e.message);
+                }
+            }
+
             io.to(`room:${deviceId}`).emit('presence_update', {
                 deviceId,
                 status: 'online',
@@ -117,6 +145,7 @@ io.on('connection', async (socket) => {
         
         if (clientType === 'device') {
             lastHeartbeatMap.delete(deviceId);
+            lastFirestoreSyncMap.delete(deviceId);
             await redis.set(`presence:${deviceId}`, 'offline');
             const now = Date.now();
             

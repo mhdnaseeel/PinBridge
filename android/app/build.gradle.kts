@@ -20,7 +20,7 @@ sentry {
 
 android {
     namespace = "com.pinbridge.otpmirror"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.pinbridge.otpmirror"
@@ -100,6 +100,10 @@ dependencies {
     implementation("com.google.firebase:firebase-database")
     implementation("com.google.firebase:firebase-functions")
     implementation("com.google.android.gms:play-services-auth:21.0.0")
+    // Credential Manager (modern Google Sign-In replacement)
+    implementation("androidx.credentials:credentials:1.5.0-rc01")
+    implementation("androidx.credentials:credentials-play-services-auth:1.5.0-rc01")
+    implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
     
     // Encryption
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
