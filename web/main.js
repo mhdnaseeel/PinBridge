@@ -8,12 +8,6 @@ Sentry.init({
     sendDefaultPii: true
 });
 
-// Verification - remove after testing
-try {
-    myUndefinedFunction();
-} catch (e) {
-    Sentry.captureException(e);
-}
 
 import { initializeApp } from "firebase/app";
 import { 
@@ -112,9 +106,61 @@ function updateUI() {
   if (!state.user) {
     renderSignIn();
   } else if (state.pairedDeviceId) {
-    renderPaired();
+    // If paired view is already rendered, just update the dynamic parts
+    const connIndicator = document.getElementById('connectionIndicator');
+    if (connIndicator) {
+      updateConnectionIndicator();
+      // Also update OTP display if changed
+      const otpEl = document.getElementById('otpValue');
+      const otpMetaEl = document.getElementById('otpMeta');
+      if (otpEl && state.latestOtp?.otp) {
+        otpEl.textContent = state.latestOtp.otp;
+        const time = new Date(state.latestOtp.ts).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+        otpMetaEl.textContent = `Received at ${time}`;
+      }
+    } else {
+      renderPaired();
+    }
   } else {
     renderUnpaired();
+  }
+}
+
+/** Update only the connection indicator without full re-render */
+function updateConnectionIndicator() {
+  const dot = document.getElementById('connDot');
+  const statusText = document.getElementById('connStatus');
+  const detailText = document.getElementById('connDetail');
+  const sidebarDot = document.getElementById('sidebarDeviceDot');
+  const sidebarStatus = document.getElementById('sidebarDeviceStatus');
+  const sidebarLastSeen = document.getElementById('sidebarLastSeen');
+  
+  if (!dot) return;
+  
+  if (state.isOnline) {
+    dot.className = 'dot dot-online';
+    statusText.textContent = 'Online';
+    statusText.style.color = '#10b981';
+    detailText.textContent = 'Device is connected and active';
+  } else {
+    dot.className = 'dot dot-offline';
+    statusText.textContent = 'Offline';
+    statusText.style.color = '#f59e0b';
+    if (state.lastSeen && typeof state.lastSeen === 'number' && state.lastSeen > 0) {
+      const timeStr = new Date(state.lastSeen).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      detailText.textContent = `Last seen at ${timeStr}`;
+    } else {
+      detailText.textContent = 'Device connection unknown';
+    }
+  }
+  
+  // Update sidebar too
+  if (sidebarDot) {
+    sidebarDot.className = `dot ${state.isOnline ? 'dot-online' : 'dot-offline'}`;
+    sidebarStatus.textContent = state.isOnline ? 'Online' : 'Offline';
+  }
+  if (sidebarLastSeen) {
+    sidebarLastSeen.textContent = state.lastSeen ? new Date(state.lastSeen).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : 'Never';
   }
 }
 
@@ -213,6 +259,12 @@ function renderPaired() {
   const otp = state.latestOtp?.otp || '------';
   const time = state.latestOtp?.ts ? new Date(state.latestOtp.ts).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'}) : 'Waiting for signal...';
   
+  const statusColor = state.isOnline ? '#10b981' : '#f59e0b';
+  const statusLabel = state.isOnline ? 'Online' : 'Offline';
+  const lastSeenStr = state.lastSeen ? new Date(state.lastSeen).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : 'Never';
+  const connDetail = state.isOnline ? 'Device is connected and active' : 
+    (state.lastSeen && state.lastSeen > 0 ? `Last seen at ${lastSeenStr}` : 'Device connection unknown');
+  
   appDiv.innerHTML = `
     <div class="dashboard-layout">
       <aside class="sidebar">
@@ -227,16 +279,16 @@ function renderPaired() {
             <span class="status-value" style="font-size: 11px;">${state.user?.email || 'Signed In'}</span>
           </div>
           <div class="status-item">
-            <span class="status-label">Device Status</span>
-            <span class="status-value">
-              <span class="dot ${state.isOnline ? 'dot-online' : 'dot-offline'}"></span>
-              ${state.isOnline ? 'Active' : 'Standby'}
+            <span class="status-label">Device</span>
+            <span id="sidebarDeviceStatus" class="status-value">
+              <span id="sidebarDeviceDot" class="dot ${state.isOnline ? 'dot-online' : 'dot-offline'}"></span>
+              ${statusLabel}
             </span>
           </div>
           <div class="status-item">
             <span class="status-label">Last Seen</span>
-            <span class="status-value" style="font-size: 11px;">
-              ${state.lastSeen ? new Date(state.lastSeen).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : 'Never'}
+            <span id="sidebarLastSeen" class="status-value" style="font-size: 11px;">
+              ${lastSeenStr}
             </span>
           </div>
           <div class="status-item">
@@ -249,14 +301,22 @@ function renderPaired() {
       <main class="main-stage">
         <header class="view-header">
           <h1 class="view-title">Security Terminal</h1>
-          <p class="view-subtitle">Real-time OTP mirroring from synchronized device <strong>${state.pairedDeviceId.slice(0,8)}...</strong></p>
+          <p class="view-subtitle">Real-time OTP mirroring from device <strong>${state.pairedDeviceId.slice(0,8)}...</strong></p>
         </header>
+
+        <div id="connectionIndicator" class="connection-indicator">
+          <span id="connDot" class="dot ${state.isOnline ? 'dot-online' : 'dot-offline'}"></span>
+          <div class="conn-text">
+            <span id="connStatus" class="conn-status" style="color: ${statusColor};">${statusLabel}</span>
+            <span id="connDetail" class="conn-detail">${connDetail}</span>
+          </div>
+        </div>
 
         <div class="premium-card">
           <div class="otp-section">
             <div class="otp-label">Active Verification Code</div>
             <div id="otpValue" class="otp-value">${otp}</div>
-            <div class="otp-meta">Received at ${time}</div>
+            <div id="otpMeta" class="otp-meta">Received at ${time}</div>
           </div>
           
           <div class="btn-group">
@@ -275,6 +335,7 @@ function renderPaired() {
           <div class="footer-links" style="color: var(--text-muted); font-size: 12px; display: flex; gap: 20px; flex-wrap: wrap;">
             <span>● Secure Channel</span>
             <span>● End-to-End Encrypted</span>
+            <span>● Auto-Push Active</span>
           </div>
           <button id="signOutBtn" class="btn-signout" style="margin-top: 0;">Sign Out</button>
         </div>
