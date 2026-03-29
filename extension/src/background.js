@@ -12,12 +12,6 @@ Sentry.init({
     sendDefaultPii: true
 });
 
-// Verification - remove after testing
-try {
-    myUndefinedFunction();
-} catch (e) {
-    Sentry.captureException(e);
-}
 
 const SOCKET_SERVER_URL = "https://pinbridge-presence.onrender.com";
 let socket = null;

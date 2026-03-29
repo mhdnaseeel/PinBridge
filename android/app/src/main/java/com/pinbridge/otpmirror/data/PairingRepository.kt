@@ -117,6 +117,18 @@ class PairingRepositoryImpl constructor(
             if (auth.currentUser == null) {
                 auth.signInAnonymously().await()
             }
+
+            // Validate Google account match
+            val pairingDoc = db.collection(Constants.COLL_PAIRINGS).document(deviceId).get().await()
+            val extensionGoogleUid = pairingDoc.getString("googleUid")
+            val myGoogleUid = auth.currentUser?.uid
+            // Check if there's a Google-signed-in user (non-anonymous) — use the Google UID for matching
+            val googleUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
+            val isGoogleSignedIn = googleUser != null && googleUser.isAnonymous == false
+            if (extensionGoogleUid != null && isGoogleSignedIn && extensionGoogleUid != googleUser?.uid) {
+                throw Exception("Account mismatch. The extension is signed in with a different Google account. Please use the same account on both devices.")
+            }
+
             // Mark as paired in Firestore
             val pairingData = hashMapOf(
                 "paired" to true,
@@ -159,6 +171,14 @@ class PairingRepositoryImpl constructor(
             val doc = query.documents[0]
             val deviceId = doc.id
             val secret = doc.getString("secret") ?: throw Exception("Secret missing from pairing session.")
+
+            // Validate Google account match
+            val extensionGoogleUid = doc.getString("googleUid")
+            val googleUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
+            val isGoogleSignedIn = googleUser != null && googleUser.isAnonymous == false
+            if (extensionGoogleUid != null && isGoogleSignedIn && extensionGoogleUid != googleUser?.uid) {
+                throw Exception("Account mismatch. The extension is signed in with a different Google account. Please use the same account on both devices.")
+            }
  
             // Mark as paired in Firestore
             val pairingData = hashMapOf(

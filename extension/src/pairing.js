@@ -60,14 +60,22 @@ const db = getFirestore(app);
 
   console.log('[PinBridge] Generating pairing session:', { deviceId, pairingCode });
 
+  // Read the signed-in Google UID to embed in the pairing session
+  const { googleUid } = await chrome.storage.local.get(['googleUid']);
+  if (!googleUid) {
+    alert('You must sign in with Google before pairing. Please close this window and sign in first.');
+    return;
+  }
+
   // 1. Initialize via direct Firestore write (Functionless Spark Plan)
   try {
     await setDoc(doc(db, 'pairings', deviceId), {
       secret: secretB64,
       pairingCode: pairingCode,
+      googleUid: googleUid,
       createdAt: serverTimestamp()
     });
-    console.log('[PinBridge] Pairing session initialized in Firestore');
+    console.log('[PinBridge] Pairing session initialized in Firestore with googleUid:', googleUid);
   } catch (e) {
     console.error('[PinBridge] Failed to initialize pairing session:', e);
     alert(`Failed to initialize pairing session: ${e.message}\n\nPlease check your Firebase project setup.`);

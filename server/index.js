@@ -199,6 +199,11 @@ setInterval(async () => {
     }
 }, 30000); // Check every 30s
 
+// Health check endpoint
+app.get("/", (req, res) => {
+    res.json({ status: "ok", service: "PinBridge Presence Server", uptime: process.uptime() });
+});
+
 // Sentry Express error handler
 Sentry.setupExpressErrorHandler(app);
 
