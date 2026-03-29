@@ -156,7 +156,12 @@ class DeviceHeartbeatService : Service() {
         startForeground(NOTIFICATION_ID, createNotification())
 
         val intentDeviceId = intent?.getStringExtra("deviceId")
-        if (intentDeviceId != null) {
+        if (intentDeviceId != null && intentDeviceId != deviceId) {
+            Log.i(TAG, "Device ID changed from $deviceId to $intentDeviceId — reconnecting socket")
+            deviceId = intentDeviceId
+            // Force disconnect old socket so connectSocket() creates a new one with the new deviceId
+            disconnectSocket()
+        } else if (intentDeviceId != null) {
             deviceId = intentDeviceId
         }
         
