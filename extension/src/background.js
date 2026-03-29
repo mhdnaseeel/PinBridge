@@ -120,6 +120,10 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   } else if (msg.type === 'manualFetch') {
     handleManualFetch(sendResponse);
     return true;
+  } else if (msg.type === 'signOutOnly') {
+    // Sign out from Firebase Auth only — keep pairing data intact
+    performSignOutOnly().then(() => sendResponse({status: 'ok'}));
+    return true;
   } else if (msg.type === 'googleSignIn') {
     handleGoogleSignIn(sendResponse);
     return true;
@@ -275,6 +279,17 @@ async function handleManualFetch(sendResponse) {
         console.error('[PinBridge] Manual fetch logic failed:', err);
         sendResponse({status: 'error', error: err.message || 'Fetch Logic Error'});
     }
+}
+
+async function performSignOutOnly() {
+  // Only sign out from Firebase Auth — pairing data stays intact
+  try {
+    await signOut(auth).catch(() => {});
+    console.log('[PinBridge] Signed out (auth only), pairing preserved.');
+    safeSendMessage({ type: 'unpaired' });
+  } catch (err) {
+    console.error('[PinBridge] Sign out (auth only) failed:', err);
+  }
 }
 
 async function performSignOut() {

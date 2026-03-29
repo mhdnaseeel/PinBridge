@@ -181,6 +181,18 @@
 
     .btn-ghost:hover {
       background: rgba(0, 0, 0, 0.05);
+      color: var(--text-muted);
+    }
+
+    .btn-ghost-danger {
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 12px;
+      padding: 8px;
+    }
+
+    .btn-ghost-danger:hover {
+      background: rgba(239, 68, 68, 0.08);
       color: #ef4444;
     }
 
@@ -294,6 +306,176 @@
     }
 
     .btn-main.copied::after { opacity: 1; }
+
+    /* Separator row for Sign Out / Unpair */
+    .bottom-actions {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      margin-top: 4px;
+    }
+
+    .bottom-actions .separator {
+      color: #d1d5db;
+      font-size: 12px;
+      user-select: none;
+    }
+
+    /* ─── CAPTCHA Modal ─────────────────────────────────── */
+    .captcha-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.55);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+      animation: overlayIn 0.2s ease-out;
+    }
+
+    @keyframes overlayIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .captcha-card {
+      background: #fff;
+      border-radius: 20px;
+      padding: 28px 24px;
+      width: 290px;
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.2);
+      text-align: center;
+      animation: cardIn 0.25s ease-out;
+    }
+
+    @keyframes cardIn {
+      from { opacity: 0; transform: scale(0.92) translateY(10px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    .captcha-card .captcha-icon {
+      font-size: 32px;
+      margin-bottom: 10px;
+    }
+
+    .captcha-card .captcha-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 6px;
+    }
+
+    .captcha-card .captcha-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+
+    .captcha-code-display {
+      font-size: 32px;
+      font-weight: 800;
+      letter-spacing: 10px;
+      color: var(--primary);
+      background: linear-gradient(135deg, #eef2ff, #e8e0f7);
+      border-radius: 12px;
+      padding: 12px 20px;
+      margin-bottom: 16px;
+      font-variant-numeric: tabular-nums;
+      user-select: none;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Subtle line decoration on CAPTCHA display */
+    .captcha-code-display::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: rgba(99, 102, 241, 0.15);
+    }
+
+    .captcha-input {
+      width: 100%;
+      font-size: 22px;
+      font-weight: 700;
+      text-align: center;
+      letter-spacing: 8px;
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 10px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      font-family: 'Inter', sans-serif;
+      color: var(--text-main);
+    }
+
+    .captcha-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+    }
+
+    .captcha-input.shake {
+      animation: shake 0.4s ease;
+      border-color: #ef4444;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-6px); }
+      40%, 80% { transform: translateX(6px); }
+    }
+
+    .captcha-error {
+      font-size: 11px;
+      color: #ef4444;
+      margin-top: 8px;
+      min-height: 16px;
+      font-weight: 500;
+    }
+
+    .captcha-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .captcha-actions button {
+      flex: 1;
+      padding: 10px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .captcha-cancel {
+      background: #f1f5f9;
+      color: var(--text-muted);
+    }
+
+    .captcha-cancel:hover {
+      background: #e2e8f0;
+    }
+
+    .captcha-confirm {
+      background: #ef4444;
+      color: white;
+    }
+
+    .captcha-confirm:hover {
+      background: #dc2626;
+    }
+
+    .captcha-confirm:disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
   </style>
 </head>
 <body>
@@ -330,7 +512,11 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
             Fetch Latest
           </button>
-          <button id="signOutBtn" class="btn-ghost">Sign Out & Unpair</button>
+          <div class="bottom-actions">
+            <button id="signOutBtn" class="btn-ghost">Sign Out</button>
+            <span class="separator">|</span>
+            <button id="unpairBtn" class="btn-ghost-danger">Unpair</button>
+          </div>
         </div>
       </div>
     </div>
@@ -360,6 +546,22 @@
         </div>
       </div>
     </div>
+
+  <!-- CAPTCHA Modal (hidden by default) -->
+  <div id="captchaModal" class="captcha-overlay hidden">
+    <div class="captcha-card">
+      <div class="captcha-icon">🔓</div>
+      <div class="captcha-title">Confirm Unpair</div>
+      <div class="captcha-desc">Enter the 4-digit code below to confirm you want to unpair this device.</div>
+      <div id="captchaCode" class="captcha-code-display">----</div>
+      <input id="captchaInput" class="captcha-input" type="text" maxlength="4" inputmode="numeric" placeholder="····" autocomplete="off">
+      <div id="captchaError" class="captcha-error"></div>
+      <div class="captcha-actions">
+        <button id="captchaCancel" class="captcha-cancel">Cancel</button>
+        <button id="captchaConfirm" class="captcha-confirm" disabled>Unpair</button>
+      </div>
+    </div>
+  </div>
 
   <script src="dist/popup.js"></script>
 </body>

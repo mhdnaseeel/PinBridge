@@ -29,6 +29,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const otpTime = document.getElementById('otpTime');
     const copyBtn = document.getElementById('copyBtn');
     const signOutBtn = document.getElementById('signOutBtn');
+    const unpairBtn = document.getElementById('unpairBtn');
     const manualFetchBtn = document.getElementById('manualFetchBtn');
     const connectionIndicator = document.getElementById('connectionIndicator');
     const statusDot = document.getElementById('statusDot');
@@ -39,6 +40,77 @@ document.addEventListener('DOMContentLoaded', async () => {
     const emptyText = document.getElementById('emptyText');
     const errorMsg = document.getElementById('errorMsg');
     const unpairedSignOutBtn = document.getElementById('unpairedSignOutBtn');
+
+    // CAPTCHA elements
+    const captchaModal = document.getElementById('captchaModal');
+    const captchaCode = document.getElementById('captchaCode');
+    const captchaInput = document.getElementById('captchaInput');
+    const captchaError = document.getElementById('captchaError');
+    const captchaCancel = document.getElementById('captchaCancel');
+    const captchaConfirm = document.getElementById('captchaConfirm');
+
+    let currentCaptchaCode = '';
+
+    // ─── CAPTCHA Helpers ────────────────────────────────
+    function generateCaptcha() {
+        return String(Math.floor(1000 + Math.random() * 9000)); // 4-digit number, never starts with 0
+    }
+
+    function showCaptchaModal() {
+        currentCaptchaCode = generateCaptcha();
+        captchaCode.textContent = currentCaptchaCode;
+        captchaInput.value = '';
+        captchaError.textContent = '';
+        captchaConfirm.disabled = true;
+        captchaModal.classList.remove('hidden');
+        setTimeout(() => captchaInput.focus(), 100);
+    }
+
+    function hideCaptchaModal() {
+        captchaModal.classList.add('hidden');
+        captchaInput.value = '';
+        captchaError.textContent = '';
+        currentCaptchaCode = '';
+    }
+
+    // Enable confirm button only when 4 digits entered
+    captchaInput.addEventListener('input', () => {
+        // Strip non-numeric characters
+        captchaInput.value = captchaInput.value.replace(/[^0-9]/g, '');
+        captchaConfirm.disabled = captchaInput.value.length !== 4;
+        captchaError.textContent = '';
+        captchaInput.classList.remove('shake');
+    });
+
+    // Allow Enter key to confirm
+    captchaInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && captchaInput.value.length === 4) {
+            captchaConfirm.click();
+        }
+    });
+
+    captchaCancel.addEventListener('click', hideCaptchaModal);
+
+    // Close on overlay click (outside the card)
+    captchaModal.addEventListener('click', (e) => {
+        if (e.target === captchaModal) hideCaptchaModal();
+    });
+
+    captchaConfirm.addEventListener('click', () => {
+        if (captchaInput.value === currentCaptchaCode) {
+            // Correct — perform unpair
+            hideCaptchaModal();
+            chrome.runtime.sendMessage({ type: 'signOut' }); // signOut performs full unpair + cleanup
+            chrome.storage.local.remove(['googleUid', 'googleEmail']);
+            showUnpaired();
+        } else {
+            captchaError.textContent = 'Incorrect code. Please try again.';
+            captchaInput.classList.add('shake');
+            captchaInput.value = '';
+            captchaConfirm.disabled = true;
+            setTimeout(() => captchaInput.focus(), 100);
+        }
+    });
 
     // ─── Browser Online/Offline ─────────────────────────────
     function updateBrowserStatus() {
@@ -307,19 +379,24 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     });
 
-    // ─── Sign Out (paired view) ─────────────────────────────
+    // ─── Sign Out (paired view) — only signs out, keeps pairing ──
     signOutBtn.onclick = () => {
-        if (confirm('Sign out and unpair this device?')) {
-            chrome.runtime.sendMessage({ type: 'signOut' });
+        if (confirm('Sign out of your Google account? Your pairing will remain active.')) {
+            chrome.runtime.sendMessage({ type: 'signOutOnly' });
             chrome.storage.local.remove(['googleUid', 'googleEmail']);
             showUnpaired();
         }
     };
 
+    // ─── Unpair (paired view) — shows CAPTCHA first ─────────────
+    unpairBtn.onclick = () => {
+        showCaptchaModal();
+    };
+
     // ─── Sign Out (unpaired view) ───────────────────────────
     if (unpairedSignOutBtn) {
         unpairedSignOutBtn.onclick = () => {
-            chrome.runtime.sendMessage({ type: 'signOut' });
+            chrome.runtime.sendMessage({ type: 'signOutOnly' });
             chrome.storage.local.remove(['googleUid', 'googleEmail']);
             showUnpaired();
         };
