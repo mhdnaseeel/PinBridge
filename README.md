@@ -6,6 +6,21 @@ PinBridge mirrors one-time passwords (OTPs) received via SMS on your Android dev
 
 ---
 
+## 💡 Why PinBridge?
+
+Many users rely on a secondary phone for SIM-based OTPs, which creates real friction — especially when the device isn't nearby during urgent authentication.
+
+> *Carrying a second phone just for OTPs is frustrating.*
+> *I used to forget mine all the time — and only realize it when I urgently needed an OTP.*
+>
+> *So I built PinBridge.*
+
+Now, OTPs from my secondary phone show up instantly on my laptop via a browser extension and web app.
+
+**No switching devices. No interruptions. No stress. Just seamless authentication.**
+
+---
+
 ## ✨ Features
 
 - 🔄 **Real-Time OTP Sync** — OTPs appear on your browser within seconds of being received on your phone
