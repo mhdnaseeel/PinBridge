@@ -46,7 +46,9 @@ import androidx.lifecycle.lifecycleScope
 import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.ClearCredentialStateRequest
+import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.credentials.exceptions.GetCredentialException
+import androidx.credentials.exceptions.NoCredentialException
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 
@@ -57,6 +59,7 @@ class MainActivity : AppCompatActivity() {
     lateinit var pairingRepository: PairingRepository
 
     private var isExplicitPermissionCheck = false
+    private var isSigningIn = false
 
     private val firebaseAuth by lazy { FirebaseAuth.getInstance() }
     private val firestore by lazy { FirebaseFirestore.getInstance() }
@@ -130,42 +133,70 @@ class MainActivity : AppCompatActivity() {
             }
     }
 
+    private suspend fun attemptGoogleSignIn(filterByAuthorized: Boolean): Boolean {
+        val googleIdOption = GetGoogleIdOption.Builder()
+            .setServerClientId(WEB_CLIENT_ID)
+            .setFilterByAuthorizedAccounts(filterByAuthorized)
+            .setAutoSelectEnabled(filterByAuthorized) // auto-select only when filtering by authorized
+            .build()
+
+        val request = GetCredentialRequest.Builder()
+            .addCredentialOption(googleIdOption)
+            .build()
+
+        val result = credentialManager.getCredential(
+            context = this@MainActivity,
+            request = request
+        )
+
+        val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(result.credential.data)
+        val idToken = googleIdTokenCredential.idToken
+
+        val firebaseCredential = GoogleAuthProvider.getCredential(idToken, null)
+        val authResult = firebaseAuth.signInWithCredential(firebaseCredential).await()
+
+        if (authResult.user != null) {
+            val uid = authResult.user!!.uid
+            checkCloudSync(uid)
+            return true
+        }
+        return false
+    }
+
     private fun startGoogleSignIn() {
+        if (isSigningIn) return // Prevent double-tap
+        isSigningIn = true
         lifecycleScope.launch {
             try {
-                val googleIdOption = GetGoogleIdOption.Builder()
-                    .setServerClientId(WEB_CLIENT_ID)
-                    .setFilterByAuthorizedAccounts(false)
-                    .setAutoSelectEnabled(false)
-                    .build()
+                // Step 1: Try with previously authorized accounts first (faster, less UI)
+                try {
+                    if (attemptGoogleSignIn(filterByAuthorized = true)) return@launch
+                } catch (e: NoCredentialException) {
+                    // No previously authorized account — fall through to show full picker
+                    Log.i("MainActivity", "No previously authorized account, showing full account picker")
+                } catch (e: GetCredentialCancellationException) {
+                    // User cancelled auto-select — fall through to show full picker
+                    Log.i("MainActivity", "Auto-select cancelled, showing full account picker")
+                }
 
-                val request = GetCredentialRequest.Builder()
-                    .addCredentialOption(googleIdOption)
-                    .build()
-
-                val result = credentialManager.getCredential(
-                    context = this@MainActivity,
-                    request = request
-                )
-
-                val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(result.credential.data)
-                val idToken = googleIdTokenCredential.idToken
-
-                val firebaseCredential = GoogleAuthProvider.getCredential(idToken, null)
-                val authResult = firebaseAuth.signInWithCredential(firebaseCredential).await()
-                
-                if (authResult.user != null) {
-                    val uid = authResult.user!!.uid
-                    checkCloudSync(uid)
-                } else {
+                // Step 2: Show full account picker
+                if (!attemptGoogleSignIn(filterByAuthorized = false)) {
                     Toast.makeText(this@MainActivity, "Google Sign-In failed", Toast.LENGTH_SHORT).show()
                 }
+            } catch (e: GetCredentialCancellationException) {
+                Log.i("MainActivity", "User cancelled sign-in")
+                Toast.makeText(this@MainActivity, "Sign-in cancelled", Toast.LENGTH_SHORT).show()
+            } catch (e: NoCredentialException) {
+                Log.e("MainActivity", "No credentials available", e)
+                Toast.makeText(this@MainActivity, "No Google accounts found. Please add a Google account in Settings.", Toast.LENGTH_LONG).show()
             } catch (e: GetCredentialException) {
-                Log.e("MainActivity", "Credential Manager error", e)
-                Toast.makeText(this@MainActivity, "Sign-in cancelled or failed", Toast.LENGTH_SHORT).show()
+                Log.e("MainActivity", "Credential Manager error: type=${e.type}, message=${e.message}", e)
+                Toast.makeText(this@MainActivity, "Sign-in failed. Please try again.", Toast.LENGTH_SHORT).show()
             } catch (e: Exception) {
-                Log.e("MainActivity", "Google Sign-In error", e)
+                Log.e("MainActivity", "Google Sign-In error: class=${e::class.qualifiedName}, message=${e.message}", e)
                 Toast.makeText(this@MainActivity, "Sign-in failed: ${e.message}", Toast.LENGTH_SHORT).show()
+            } finally {
+                isSigningIn = false
             }
         }
     }
