@@ -231,7 +231,14 @@ class DeviceHeartbeatService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        startForeground(NOTIFICATION_ID, createNotification())
+        val notification = createNotification()
+        startForeground(NOTIFICATION_ID, notification)
+        // Detach the notification from the foreground service so the user can swipe it away.
+        // The service continues running as a background service with START_STICKY.
+        stopForeground(STOP_FOREGROUND_DETACH)
+        // Re-post the same notification as a regular (dismissible) notification
+        val nm = getSystemService(NotificationManager::class.java)
+        nm?.notify(NOTIFICATION_ID, notification)
 
         val intentDeviceId = intent?.getStringExtra("deviceId")
         if (intentDeviceId != null && intentDeviceId != deviceId) {

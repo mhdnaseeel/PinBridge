@@ -407,11 +407,11 @@ function startListeners(deviceId) {
   unsubscribePairing = onSnapshot(doc(db, 'pairings', deviceId), async snap => {
     const data = snap.data();
     if (!data || data.paired === false) {
-      performSignOut();
+      performUnpairOnly();
       return;
     }
   }, err => {
-    if (err.code === 'permission-denied') performSignOut();
+    if (err.code === 'permission-denied') performUnpairOnly();
   });
 
   // 3. OTP Listener
@@ -420,7 +420,7 @@ function startListeners(deviceId) {
     if (!data) return;
     processNewOtp(data);
   }, err => {
-    if (err.code === 'permission-denied') performSignOut();
+    if (err.code === 'permission-denied') performUnpairOnly();
   });
 }
 
