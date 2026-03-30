@@ -330,7 +330,7 @@ class DeviceHeartbeatService : Service() {
             .setContentText("Securely syncing OTPs in the background")
             .setSmallIcon(android.R.drawable.stat_notify_sync)
             .setPriority(NotificationCompat.PRIORITY_MIN) // Lowest priority — no popup
-            .setOngoing(true) // Persistent — can't be swiped away
+            .setOngoing(false) // Dismissible — user can swipe it away
             .setShowWhen(false) // No timestamp
             .setCategory(NotificationCompat.CATEGORY_SERVICE) // System knows it's a service
             .setContentIntent(pendingTapIntent) // Open app on tap
