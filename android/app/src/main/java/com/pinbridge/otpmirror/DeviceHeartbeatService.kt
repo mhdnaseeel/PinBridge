@@ -297,6 +297,9 @@ class DeviceHeartbeatService : Service() {
         super.onDestroy()
         disconnectSocket()
         releaseWakeLock()
+        // Cancel the detached notification so it doesn't linger after service stops
+        val nm = getSystemService(NotificationManager::class.java)
+        nm?.cancel(NOTIFICATION_ID)
         val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         connectivityManager.unregisterNetworkCallback(networkCallback)
         scope.cancel()

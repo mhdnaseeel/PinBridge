@@ -103,6 +103,8 @@ class PairingRepositoryImpl constructor(
         Log.i(TAG, "Clearing local credentials and stopping listeners.")
         statusListener?.remove()
         statusListener = null
+        // Stop the heartbeat service — device is no longer paired
+        DeviceHeartbeatService.stop(context)
         prefs.edit()
             .remove(Constants.KEY_DEVICE_ID)
             .remove(Constants.KEY_SECRET)
