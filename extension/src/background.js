@@ -27,7 +27,11 @@ self.addEventListener('unhandledrejection', (e) => {
     e.preventDefault();
     console.debug('[PinBridge] Reported unhandled rejection:', e.reason);
 });
-chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch((error) => console.error(error));
+try {
+  chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(() => {});
+} catch (e) {
+  // sidePanel API may not be available during service worker restart
+}
 
 const firebaseConfig = {
   apiKey: "AIzaSyBwBr0MOdVKCwuvoK3oOU6tg5LcS7uqZOE",
