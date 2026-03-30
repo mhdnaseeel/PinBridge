@@ -73,7 +73,22 @@ class MainActivity : AppCompatActivity() {
                     val deviceId = doc.getString("deviceId")
                     val secret = doc.getString("secret")
                     if (deviceId != null && secret != null) {
-                        // Validate that the pairing is still active in Firestore before auto-pairing
+                        // Fresh install check: if the device has no local pairing data,
+                        // don't silently auto-pair from stale cloud sync data.
+                        // The user likely uninstalled-and-reinstalled and should pair fresh.
+                        val localDeviceId = pairingRepository.getDeviceId()
+                        if (localDeviceId == null) {
+                            Log.i("MainActivity", "Fresh install detected — cloud sync data exists but no local pairing. Cleaning up stale cloud sync.")
+                            firestore.collection("users").document(uid)
+                                .collection("mirroring").document("active")
+                                .delete()
+                                .addOnSuccessListener { Log.i("MainActivity", "Stale cloud sync document cleaned up on fresh install.") }
+                                .addOnFailureListener { Log.w("MainActivity", "Failed to clean up stale cloud sync.", it) }
+                            Toast.makeText(this@MainActivity, "Signed in! Please pair your browser extension.", Toast.LENGTH_LONG).show()
+                            return@addOnSuccessListener
+                        }
+
+                        // Existing install: validate that the pairing is still active in Firestore before auto-pairing
                         firestore.collection(Constants.COLL_PAIRINGS).document(deviceId)
                             .get()
                             .addOnSuccessListener { pairingDoc ->

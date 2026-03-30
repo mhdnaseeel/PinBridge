@@ -210,6 +210,8 @@ class PairingRepositoryImpl constructor(
             // Remove from Firestore
             db.collection(Constants.COLL_PAIRINGS).document(deviceId).delete().await()
             db.collection(Constants.COLL_OTPS).document(deviceId).delete().await()
+            // Remove cloud sync document so reinstalling won't auto-pair from stale data
+            deleteCloudSyncDoc()
             Log.i(TAG, "Unpaired from Firestore: $deviceId")
         } catch (e: Exception) {
             Log.e(TAG, "Error unpairing from Firestore", e)
@@ -260,6 +262,24 @@ class PairingRepositoryImpl constructor(
                 .addOnFailureListener { Log.w(TAG, "Cloud sync failed", it) }
         } catch (e: Exception) {
             Log.w(TAG, "Cloud sync error", e)
+        }
+    }
+
+    /**
+     * Deletes the cloud sync document so reinstalling the app with the same
+     * Google account won't auto-pair from stale data.
+     */
+    private fun deleteCloudSyncDoc() {
+        val uid = auth.currentUser?.uid ?: return
+        if (auth.currentUser?.isAnonymous == true) return
+        try {
+            db.collection("users").document(uid)
+                .collection("mirroring").document("active")
+                .delete()
+                .addOnSuccessListener { Log.i(TAG, "Cloud sync doc deleted for UID=$uid") }
+                .addOnFailureListener { Log.w(TAG, "Failed to delete cloud sync doc", it) }
+        } catch (e: Exception) {
+            Log.w(TAG, "Error deleting cloud sync doc", e)
         }
     }
 }
