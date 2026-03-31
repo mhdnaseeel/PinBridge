@@ -12,6 +12,7 @@ import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
+import android.os.BatteryManager
 import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
@@ -26,6 +27,7 @@ import io.socket.client.IO
 import io.socket.client.Socket
 import kotlinx.coroutines.*
 import kotlinx.coroutines.tasks.await
+import org.json.JSONObject
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -68,6 +70,17 @@ class DeviceHeartbeatService : Service() {
 
     private fun resetReconnectBackoff() {
         reconnectAttempt = 0
+    }
+
+    /**
+     * Reads current battery level (0-100) and charging status from BatteryManager.
+     * Uses the system service API (no BroadcastReceiver needed).
+     */
+    private fun getBatteryInfo(): Pair<Int, Boolean> {
+        val bm = getSystemService(Context.BATTERY_SERVICE) as BatteryManager
+        val level = bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
+        val isCharging = bm.isCharging
+        return Pair(level, isCharging)
     }
 
     private fun acquireWakeLock() {
@@ -128,6 +141,18 @@ class DeviceHeartbeatService : Service() {
                 socket?.on(Socket.EVENT_CONNECT) {
                     Log.d(TAG, "SUCCESS: Socket connected & authenticated via handshake")
                     resetReconnectBackoff()
+                    // Send initial battery info on connect
+                    try {
+                        val (level, charging) = getBatteryInfo()
+                        val payload = JSONObject().apply {
+                            put("batteryLevel", level)
+                            put("isCharging", charging)
+                        }
+                        socket?.emit("heartbeat", payload)
+                        Log.d(TAG, "Initial battery info sent: level=$level, charging=$charging")
+                    } catch (e: Exception) {
+                        Log.w(TAG, "Failed to send initial battery info", e)
+                    }
                     startHeartbeatLoop()
                 }
 
@@ -174,8 +199,18 @@ class DeviceHeartbeatService : Service() {
         heartbeatJob = scope.launch {
             while (isActive && socket?.connected() == true) {
                 acquireWakeLock()
-                Log.v(TAG, "Emitting heartbeat to server...")
-                socket?.emit("heartbeat")
+                try {
+                    val (level, charging) = getBatteryInfo()
+                    val payload = JSONObject().apply {
+                        put("batteryLevel", level)
+                        put("isCharging", charging)
+                    }
+                    Log.v(TAG, "Emitting heartbeat with battery: level=$level, charging=$charging")
+                    socket?.emit("heartbeat", payload)
+                } catch (e: Exception) {
+                    Log.w(TAG, "Failed to read battery info, emitting plain heartbeat", e)
+                    socket?.emit("heartbeat")
+                }
                 delay(15000) // Every 15 seconds (Server TTL is 35s, Watchdog is 40s)
             }
             Log.d(TAG, "Heartbeat loop stopped (socket disconnected or job cancelled)")

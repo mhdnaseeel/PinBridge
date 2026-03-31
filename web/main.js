@@ -54,6 +54,8 @@ let state = {
   secret: localStorage.getItem('secret'),
   isOnline: false,
   lastSeen: null,
+  batteryLevel: null,
+  isCharging: false,
   latestOtp: JSON.parse(localStorage.getItem('latestOtp') || 'null'),
   signingIn: false,
   error: null
@@ -134,6 +136,8 @@ function updateConnectionIndicator() {
   const sidebarDot = document.getElementById('sidebarDeviceDot');
   const sidebarStatus = document.getElementById('sidebarDeviceStatus');
   const sidebarLastSeen = document.getElementById('sidebarLastSeen');
+  const batteryEl = document.getElementById('batteryDisplay');
+  const sidebarBatteryEl = document.getElementById('sidebarBattery');
   
   if (!dot) return;
   
@@ -153,14 +157,39 @@ function updateConnectionIndicator() {
       detailText.textContent = 'Device connection unknown';
     }
   }
+
+  // Update battery display
+  if (batteryEl) {
+    if (state.batteryLevel != null && state.batteryLevel >= 0) {
+      let batteryHtml = `🔋 ${state.batteryLevel}%`;
+      if (state.isCharging) {
+        batteryHtml += ' <span class="charging-badge">⚡ Charging</span>';
+      }
+      batteryEl.innerHTML = batteryHtml;
+      batteryEl.style.display = 'flex';
+    } else {
+      batteryEl.style.display = 'none';
+    }
+  }
   
-  // Update sidebar too
+  // Update sidebar
   if (sidebarDot) {
     sidebarDot.className = `dot ${state.isOnline ? 'dot-online' : 'dot-offline'}`;
     sidebarStatus.textContent = state.isOnline ? 'Online' : 'Offline';
   }
   if (sidebarLastSeen) {
     sidebarLastSeen.textContent = state.lastSeen ? new Date(state.lastSeen).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : 'Never';
+  }
+  if (sidebarBatteryEl) {
+    if (state.batteryLevel != null && state.batteryLevel >= 0) {
+      let sidebarBatteryHtml = `${state.batteryLevel}%`;
+      if (state.isCharging) {
+        sidebarBatteryHtml += ' ⚡';
+      }
+      sidebarBatteryEl.textContent = sidebarBatteryHtml;
+    } else {
+      sidebarBatteryEl.textContent = '--';
+    }
   }
 }
 
@@ -265,6 +294,17 @@ function renderPaired() {
   const connDetail = state.isOnline ? 'Device is connected and active' : 
     (state.lastSeen && state.lastSeen > 0 ? `Last seen at ${lastSeenStr}` : 'Device connection unknown');
   
+  // Battery display strings
+  const batteryAvailable = state.batteryLevel != null && state.batteryLevel >= 0;
+  const sidebarBatteryStr = batteryAvailable ? `${state.batteryLevel}%${state.isCharging ? ' ⚡' : ''}` : '--';
+  let batteryHtml = '';
+  if (batteryAvailable) {
+    batteryHtml = `🔋 ${state.batteryLevel}%`;
+    if (state.isCharging) {
+      batteryHtml += ' <span class="charging-badge">⚡ Charging</span>';
+    }
+  }
+  
   appDiv.innerHTML = `
     <div class="dashboard-layout">
       <aside class="sidebar">
@@ -292,6 +332,12 @@ function renderPaired() {
             </span>
           </div>
           <div class="status-item">
+            <span class="status-label">Battery</span>
+            <span id="sidebarBattery" class="status-value" style="font-size: 11px;">
+              ${sidebarBatteryStr}
+            </span>
+          </div>
+          <div class="status-item">
             <span class="status-label">Encryption</span>
             <span class="status-value" style="color: var(--primary);">AES-256</span>
           </div>
@@ -310,6 +356,10 @@ function renderPaired() {
             <span id="connStatus" class="conn-status" style="color: ${statusColor};">${statusLabel}</span>
             <span id="connDetail" class="conn-detail">${connDetail}</span>
           </div>
+        </div>
+
+        <div id="batteryDisplay" class="battery-display" style="display: ${batteryAvailable ? 'flex' : 'none'};">
+          ${batteryHtml}
         </div>
 
         <div class="premium-card">
@@ -549,7 +599,7 @@ function startListeners() {
 
     socket.on('presence_update', (data) => {
       if (data.deviceId === state.pairedDeviceId) {
-        checkStaleness(data.status === 'online', data.lastSeen);
+        checkStaleness(data.status === 'online', data.lastSeen, data.batteryLevel, data.isCharging);
       }
     });
 
@@ -558,7 +608,7 @@ function startListeners() {
     });
   }
 
-  function checkStaleness(online, lastSeen) {
+  function checkStaleness(online, lastSeen, batteryLevel, isCharging) {
       const now = Date.now();
       const STALE_THRESHOLD = 60000;
       let effectiveOnline = online;
@@ -570,6 +620,10 @@ function startListeners() {
 
       state.isOnline = effectiveOnline;
       state.lastSeen = lastSeen;
+      if (batteryLevel != null) {
+          state.batteryLevel = batteryLevel;
+          state.isCharging = !!isCharging;
+      }
       updateUI();
   }
 
@@ -580,7 +634,9 @@ function startListeners() {
     
     const online = data.status === 'online';
     const lastSeen = data.lastOnline ? (data.lastOnline.toMillis ? data.lastOnline.toMillis() : data.lastOnline) : null;
-    checkStaleness(online, lastSeen);
+    const batteryLevel = data.batteryLevel != null ? data.batteryLevel : null;
+    const isCharging = !!data.isCharging;
+    checkStaleness(online, lastSeen, batteryLevel, isCharging);
   });
 
   // 3. OTP Mirroring (Firestore)

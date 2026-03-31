@@ -40,6 +40,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const emptyText = document.getElementById('emptyText');
     const errorMsg = document.getElementById('errorMsg');
     const unpairedSignOutBtn = document.getElementById('unpairedSignOutBtn');
+    const batteryIndicator = document.getElementById('batteryIndicator');
+    const batteryText = document.getElementById('batteryText');
 
     // CAPTCHA elements
     const captchaModal = document.getElementById('captchaModal');
@@ -128,6 +130,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (response && response.status === 'paired') {
             showPaired();
             updateConnectionStatus(response.isOnline, response.lastSeen);
+            updateBatteryDisplay(response.batteryLevel, response.isCharging);
         } else {
             showUnpaired();
         }
@@ -147,6 +150,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         otpView.classList.remove('hidden');
         unpairedView.classList.add('hidden');
         connectionIndicator.classList.remove('hidden');
+        batteryIndicator.classList.remove('hidden');
     }
 
     function showUnpaired() {
@@ -155,6 +159,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         otpView.classList.add('hidden');
         unpairedView.classList.remove('hidden');
         connectionIndicator.classList.add('hidden');
+        batteryIndicator.classList.add('hidden');
         
         chrome.storage.local.get(['googleEmail'], ({ googleEmail }) => {
             if (googleEmail) {
@@ -202,6 +207,20 @@ document.addEventListener('DOMContentLoaded', async () => {
             statusText.textContent = `Offline (${timeStr})`;
             statusText.style.color = '#f59e0b';
         }
+    }
+
+    // ─── Battery Display ────────────────────────────────────
+    function updateBatteryDisplay(level, isCharging) {
+        if (level == null || level < 0) {
+            batteryIndicator.classList.add('hidden');
+            return;
+        }
+        batteryIndicator.classList.remove('hidden');
+        let html = `${level}%`;
+        if (isCharging) {
+            html += ' <span class="charging-badge">⚡ Charging</span>';
+        }
+        batteryText.innerHTML = html;
     }
 
     // ─── OTP Display ────────────────────────────────────────
@@ -413,6 +432,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         } else if (msg.type === 'statusUpdate') {
             updateConnectionStatus(msg.online, msg.lastSeen);
+            if (msg.batteryLevel != null) {
+                updateBatteryDisplay(msg.batteryLevel, msg.isCharging);
+            }
         } else if (msg.type === 'unpaired' || msg.type === 'signOut') {
             showUnpaired();
         } else if (msg.type === 'paired') {

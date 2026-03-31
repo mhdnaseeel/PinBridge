@@ -103,29 +103,52 @@ io.on('connection', async (socket) => {
     } else {
         const status = await redis.get(`presence:${deviceId}`) || 'offline';
         const lastSeen = await redis.get(`lastSeen:${deviceId}`);
+        const batteryRaw = await redis.get(`battery:${deviceId}`);
+        const battery = batteryRaw ? JSON.parse(batteryRaw) : null;
         
         socket.emit('presence_update', {
             deviceId,
             status,
-            lastSeen: lastSeen ? parseInt(lastSeen) : null
+            lastSeen: lastSeen ? parseInt(lastSeen) : null,
+            batteryLevel: battery ? battery.level : null,
+            isCharging: battery ? battery.isCharging : false
         });
     }
 
-    socket.on('heartbeat', async () => {
+    socket.on('heartbeat', async (data) => {
         if (clientType === 'device') {
             const now = Date.now();
             lastHeartbeatMap.set(deviceId, now);
             await redis.set(`presence:${deviceId}`, 'online', 'EX', 35);
             await redis.set(`lastSeen:${deviceId}`, now.toString());
+
+            // Parse battery info from heartbeat payload
+            let batteryLevel = null;
+            let isCharging = false;
+            if (data && typeof data === 'object') {
+                batteryLevel = typeof data.batteryLevel === 'number' ? data.batteryLevel : null;
+                isCharging = !!data.isCharging;
+            }
+
+            // Store battery info in Redis
+            if (batteryLevel !== null) {
+                await redis.set(`battery:${deviceId}`, JSON.stringify({ level: batteryLevel, isCharging }));
+            }
             
             // Periodically sync online status to Firestore (throttled)
             const lastSync = lastFirestoreSyncMap.get(deviceId) || 0;
             if (now - lastSync > FIRESTORE_SYNC_INTERVAL) {
                 try {
-                    await db.collection('pairings').doc(deviceId).update({
+                    const updateData = {
                         lastOnline: admin.firestore.FieldValue.serverTimestamp(),
                         status: 'online'
-                    });
+                    };
+                    if (batteryLevel !== null) {
+                        updateData.batteryLevel = batteryLevel;
+                        updateData.isCharging = isCharging;
+                        updateData.batteryUpdatedAt = admin.firestore.FieldValue.serverTimestamp();
+                    }
+                    await db.collection('pairings').doc(deviceId).update(updateData);
                     lastFirestoreSyncMap.set(deviceId, now);
                 } catch (e) {
                     console.error('[PinBridge Server] Firestore heartbeat sync error:', e.message);
@@ -135,7 +158,9 @@ io.on('connection', async (socket) => {
             io.to(`room:${deviceId}`).emit('presence_update', {
                 deviceId,
                 status: 'online',
-                lastSeen: now
+                lastSeen: now,
+                batteryLevel,
+                isCharging
             });
         }
     });
@@ -148,6 +173,16 @@ io.on('connection', async (socket) => {
             lastFirestoreSyncMap.delete(deviceId);
             await redis.set(`presence:${deviceId}`, 'offline');
             const now = Date.now();
+
+            // Get last known battery info for the disconnect broadcast
+            let batteryLevel = null;
+            let isCharging = false;
+            const batteryRaw = await redis.get(`battery:${deviceId}`);
+            if (batteryRaw) {
+                const battery = JSON.parse(batteryRaw);
+                batteryLevel = battery.level;
+                isCharging = battery.isCharging;
+            }
             
             try {
                 await db.collection('pairings').doc(deviceId).update({
@@ -161,7 +196,9 @@ io.on('connection', async (socket) => {
             io.to(`room:${deviceId}`).emit('presence_update', {
                 deviceId,
                 status: 'offline',
-                lastSeen: now
+                lastSeen: now,
+                batteryLevel,
+                isCharging
             });
         }
     });
@@ -181,6 +218,16 @@ setInterval(async () => {
             lastHeartbeatMap.delete(deviceId);
             
             await redis.set(`presence:${deviceId}`, 'offline');
+
+            // Get last known battery info
+            let batteryLevel = null;
+            let isCharging = false;
+            const batteryRaw = await redis.get(`battery:${deviceId}`);
+            if (batteryRaw) {
+                const battery = JSON.parse(batteryRaw);
+                batteryLevel = battery.level;
+                isCharging = battery.isCharging;
+            }
             
             // Push offline status to Firestore & Socket Viewers
             try {
@@ -193,7 +240,9 @@ setInterval(async () => {
             io.to(`room:${deviceId}`).emit('presence_update', {
                 deviceId,
                 status: 'offline',
-                lastSeen: lastSeen
+                lastSeen: lastSeen,
+                batteryLevel,
+                isCharging
             });
         }
     }

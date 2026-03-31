@@ -86,12 +86,14 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       .catch(err => sendResponse({status: 'error', error: err.message}));
     return true;
   } else if (msg.type === 'getStatus') {
-    chrome.storage.local.get(['pairedDeviceId', 'isOnline', 'lastSeen'], ({pairedDeviceId, isOnline, lastSeen}) => {
+    chrome.storage.local.get(['pairedDeviceId', 'isOnline', 'lastSeen', 'batteryLevel', 'isCharging'], ({pairedDeviceId, isOnline, lastSeen, batteryLevel, isCharging}) => {
       sendResponse({
         status: pairedDeviceId ? 'paired' : 'unpaired', 
         deviceId: pairedDeviceId,
         isOnline: !!isOnline,
-        lastSeen: lastSeen || null
+        lastSeen: lastSeen || null,
+        batteryLevel: batteryLevel != null ? batteryLevel : null,
+        isCharging: !!isCharging
       });
     });
     return true;
@@ -296,7 +298,7 @@ async function performUnpairOnly() {
   } catch (err) {
     console.error('[PinBridge] Unpair cleanup failed:', err);
   } finally {
-    await chrome.storage.local.remove(['pairedDeviceId', 'secret', 'latestOtp', 'isOnline']);
+    await chrome.storage.local.remove(['pairedDeviceId', 'secret', 'latestOtp', 'isOnline', 'batteryLevel', 'isCharging']);
     stopListeners();
     console.log('[PinBridge] Unpaired (auth preserved)');
     safeSendMessage({ type: 'statusUpdate', online: false, lastSeen: Date.now() });
@@ -327,7 +329,7 @@ async function performSignOut() {
   } finally {
     await signOut(auth).catch(() => {});
     await chrome.storage.local.remove(['pairedDeviceId', 'secret', 'latestOtp', 'googleUid', 'googleEmail']);
-    await chrome.storage.local.remove(['isOnline']);
+    await chrome.storage.local.remove(['isOnline', 'batteryLevel', 'isCharging']);
     
     stopListeners();
     
@@ -366,7 +368,7 @@ function startListeners(deviceId) {
 
     socket.on('presence_update', (data) => {
       if (data.deviceId === deviceId) {
-        validatePresence(data.status === 'online', data.lastSeen);
+        validatePresence(data.status === 'online', data.lastSeen, data.batteryLevel, data.isCharging);
       }
     });
 
@@ -376,7 +378,7 @@ function startListeners(deviceId) {
   }
 
   // Helper to validate and propagate status
-  function validatePresence(online, lastSeen) {
+  function validatePresence(online, lastSeen, batteryLevel, isCharging) {
       const now = Date.now();
       const STALE_THRESHOLD = 60000;
       let effectiveOnline = online;
@@ -388,9 +390,14 @@ function startListeners(deviceId) {
           isStale = true;
       }
 
-      console.log(`[PinBridge] Presence: ${effectiveOnline ? 'ONLINE' : 'OFFLINE'} ${isStale ? '(STALE)' : ''}`);
-      chrome.storage.local.set({ isOnline: effectiveOnline, lastSeen });
-      safeSendMessage({ type: 'statusUpdate', online: effectiveOnline, lastSeen, isStale });
+      console.log(`[PinBridge] Presence: ${effectiveOnline ? 'ONLINE' : 'OFFLINE'} ${isStale ? '(STALE)' : ''} Battery: ${batteryLevel}% ${isCharging ? '(Charging)' : ''}`);
+      const storageData = { isOnline: effectiveOnline, lastSeen };
+      if (batteryLevel != null) {
+          storageData.batteryLevel = batteryLevel;
+          storageData.isCharging = !!isCharging;
+      }
+      chrome.storage.local.set(storageData);
+      safeSendMessage({ type: 'statusUpdate', online: effectiveOnline, lastSeen, isStale, batteryLevel: batteryLevel != null ? batteryLevel : undefined, isCharging: !!isCharging });
   }
 
   // 2. Status Listener (Firestore) - Reliable source of truth
@@ -402,9 +409,11 @@ function startListeners(deviceId) {
     
     const online = data.status === 'online';
     const lastSeen = data.lastOnline ? (data.lastOnline.toMillis ? data.lastOnline.toMillis() : data.lastOnline) : null;
+    const batteryLevel = data.batteryLevel != null ? data.batteryLevel : null;
+    const isCharging = !!data.isCharging;
     
-    console.log(`[PinBridge] Firestore status update: ${online ? 'online' : 'offline'}, lastSeen: ${lastSeen}`);
-    validatePresence(online, lastSeen);
+    console.log(`[PinBridge] Firestore status update: ${online ? 'online' : 'offline'}, lastSeen: ${lastSeen}, battery: ${batteryLevel}%`);
+    validatePresence(online, lastSeen, batteryLevel, isCharging);
   });
 
   // 3. Pairing Listener – handles unpairing logic
