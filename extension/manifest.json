@@ -33,7 +33,7 @@
     "https://*.firebaseio.com/*",
     "https://*.firebaseapp.com/*",
     "https://*.cloudfunctions.net/*",
-    "https://pin-bridge.vercel.app/*"
+    "https://*.web.app/*"
   ],
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self'"
