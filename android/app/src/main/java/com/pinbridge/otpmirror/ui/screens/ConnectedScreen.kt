@@ -172,7 +172,7 @@ fun ConnectedView(
                     )
                 ) {
                     Text("Unpair", fontWeight = FontWeight.SemiBold)
-                },
+                }
             },
             dismissButton = {
                 TextButton(
