@@ -27,6 +27,7 @@ import {
   signInWithPopup,
   signOut as firebaseSignOut
 } from "firebase/auth";
+import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
 import { io } from "socket.io-client";
 
 const SOCKET_SERVER_URL = "https://pinbridge-presence.onrender.com";
@@ -44,6 +45,14 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
+
+// Initialize App Check (P0 - Security)
+// IMPORTANT: Replace 'YOUR_RECAPTCHA_SITE_KEY' with your actual reCAPTCHA v3 site key from the Google Cloud Console.
+const appCheck = initializeAppCheck(app, {
+  provider: new ReCaptchaV3Provider('YOUR_RECAPTCHA_SITE_KEY'),
+  isTokenAutoRefreshEnabled: true
+});
+
 const auth = getAuth(app);
 const db = getFirestore(app);
 
@@ -109,6 +118,31 @@ async function decryptOtp(data, b64Secret) {
     const key = await crypto.subtle.importKey("raw", secret, "AES-GCM", false, ["decrypt"]);
     const decrypted = await crypto.subtle.decrypt({ name: "AES-GCM", iv: iv }, key, cipherText);
     return new TextDecoder().decode(decrypted);
+}
+
+// ─── DOM HELPER ─────────────────────────────────────────────────
+function el(tag, attrs = {}, ...children) {
+  const element = document.createElement(tag);
+  for (const [key, value] of Object.entries(attrs)) {
+    if (key.startsWith('on')) {
+      element.addEventListener(key.slice(2).toLowerCase(), value);
+    } else if (key === 'className') {
+      element.className = value;
+    } else if (key === 'id') {
+      element.id = value;
+    } else if (value !== undefined && value !== null) {
+      element.setAttribute(key, value);
+    }
+  }
+  for (const child of children) {
+    if (!child) continue;
+    if (typeof child === 'string' || typeof child === 'number') {
+      element.appendChild(document.createTextNode(child));
+    } else if (child instanceof Node) {
+      element.appendChild(child);
+    }
+  }
+  return element;
 }
 
 // ─── UI RENDERING ───────────────────────────────────────────────
@@ -211,42 +245,50 @@ function updateConnectionIndicator() {
 }
 
 /** Screen 1: Not signed in — show Google Sign-In */
+/** Screen 1: Not signed in — show Google Sign-In */
 function renderSignIn() {
-  appDiv.innerHTML = `
-    <div class="dashboard-layout">
-      <div class="sidebar">
-        <div class="logo-area">
-          <img src="/logo.png" class="logo-icon-img" alt="Logo">
-          <span class="logo-text">PinBridge</span>
-        </div>
-        <div class="status-group">
-          <div class="status-item">
-            <span class="status-label">Environment</span>
-            <span class="status-value">Secure Cloud</span>
-          </div>
-        </div>
-      </div>
-      <div class="main-stage">
-        <div class="locked-view">
-          <div class="lock-icon">🔒</div>
-          <h1 class="view-title">Dashboard Locked</h1>
-          <p class="view-subtitle">Sign in with your Google account to access your OTP dashboard.</p>
+  appDiv.innerHTML = ''; // Clear DOM safely
 
-          <div class="premium-card locked-card">
-            <button id="googleLoginBtn" class="google-signin-btn" ${state.signingIn ? 'disabled' : ''}>
-              <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20" alt="Google">
-              ${state.signingIn ? 'Signing in...' : 'Sign in with Google'}
-            </button>
-            ${state.error ? `<p class="auth-error">${escapeHtml(state.error)}</p>` : ''}
-            <p class="locked-hint">Your credentials are synced securely via AES-256 encryption.</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  `;
-  
-  const googleBtn = document.getElementById('googleLoginBtn');
-  if (googleBtn) googleBtn.onclick = loginWithGoogle;
+  const loginBtn = el('button', { 
+    id: 'googleLoginBtn', 
+    className: 'google-signin-btn',
+    disabled: state.signingIn ? 'disabled' : null,
+  }, 
+    el('img', { src: 'https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg', width: '20', alt: 'Google' }),
+    state.signingIn ? ' Signing in...' : ' Sign in with Google'
+  );
+  loginBtn.onclick = loginWithGoogle;
+
+  const errorEl = state.error ? el('p', { className: 'auth-error' }, String(state.error)) : undefined;
+
+  appDiv.appendChild(
+    el('div', { className: 'dashboard-layout' },
+      el('div', { className: 'sidebar' },
+        el('div', { className: 'logo-area' },
+          el('img', { src: '/logo.png', className: 'logo-icon-img', alt: 'Logo' }),
+          el('span', { className: 'logo-text' }, 'PinBridge')
+        ),
+        el('div', { className: 'status-group' },
+          el('div', { className: 'status-item' },
+            el('span', { className: 'status-label' }, 'Environment'),
+            el('span', { className: 'status-value' }, 'Secure Cloud')
+          )
+        )
+      ),
+      el('div', { className: 'main-stage' },
+        el('div', { className: 'locked-view' },
+          el('div', { className: 'lock-icon' }, '🔒'),
+          el('h1', { className: 'view-title' }, 'Dashboard Locked'),
+          el('p', { className: 'view-subtitle' }, 'Sign in with your Google account to access your OTP dashboard.'),
+          el('div', { className: 'premium-card locked-card' },
+            loginBtn,
+            errorEl,
+            el('p', { className: 'locked-hint' }, 'Your credentials are synced securely via AES-256 encryption.')
+          )
+        )
+      )
+    )
+  );
 }
 
 /** Screen 2: Signed in but no device paired — passive waiting */

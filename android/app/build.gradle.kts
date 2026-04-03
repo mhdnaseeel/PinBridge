@@ -98,6 +98,8 @@ dependencies {
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-firestore")
     implementation("com.google.firebase:firebase-functions")
+    implementation("com.google.firebase:firebase-appcheck-playintegrity")
+    implementation("com.google.firebase:firebase-appcheck-ktx")
     implementation("com.google.android.gms:play-services-auth:21.0.0")
     // Credential Manager (modern Google Sign-In replacement)
     implementation("androidx.credentials:credentials:1.5.0-rc01")
