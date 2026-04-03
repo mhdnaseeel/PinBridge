@@ -25,9 +25,13 @@ firebase-debug.log*
 firestore-debug.log*
 ui-debug.log*
 
+# Secrets — NEVER commit
+client_secret_*.json
+pinbridge-*-firebase-adminsdk-*.json
+*.pem
+
 # Extension
 *.log
 .DS_Store
 Thumbs.db
-pinbridge-61dd4-firebase-adminsdk-fbsvc-0a40b49b05.json
 sentry.properties

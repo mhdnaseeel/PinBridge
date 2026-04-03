@@ -1,10 +1,11 @@
 import * as Sentry from "@sentry/browser";
+import { SENTRY_DSN } from "./config";
 
 // Sentry Initialization
 Sentry.init({
-    dsn: "https://3457c2e95d532379d40e4152fc7642c1@o4511118204141568.ingest.us.sentry.io/4511118399635456",
-    tracesSampleRate: 1.0,
-    sendDefaultPii: true
+    dsn: SENTRY_DSN,
+    tracesSampleRate: 0.2,
+    sendDefaultPii: false
 });
 
 // Global error handlers to capture and report errors to Sentry
@@ -129,7 +130,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     chrome.runtime.sendMessage({ type: 'getStatus' }, (response) => {
         if (response && response.status === 'paired') {
             showPaired();
-            updateConnectionStatus(response.isOnline, response.lastSeen);
+            if (response.isOnline !== undefined) {
+                updateConnectionStatus(response.isOnline, response.lastSeen);
+            } else {
+                // P1-4: Show "Connecting..." during initial Socket.IO cold-start
+                showConnectingStatus();
+            }
             updateBatteryDisplay(response.batteryLevel, response.isCharging);
         } else {
             showUnpaired();
@@ -165,7 +171,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (googleEmail) {
                 if (googleSignInBtn) googleSignInBtn.classList.add('hidden');
                 if (startPairingBtn) startPairingBtn.classList.remove('hidden');
-                emptyText.innerHTML = `Signed in as <strong>${googleEmail}</strong>.<br>Start pairing to configure your Android device.`;
+                // Escape email to prevent innerHTML XSS (V-07)
+                const safeEmail = googleEmail.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+                emptyText.innerHTML = `Signed in as <strong>${safeEmail}</strong>.<br>Start pairing to configure your Android device.`;
                 if (unpairedSignOutBtn) unpairedSignOutBtn.classList.remove('hidden');
             } else {
                 if (googleSignInBtn) {
@@ -193,6 +201,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // ─── Connection Status ──────────────────────────────────
+    function showConnectingStatus() {
+        statusDot.className = 'dot dot-connecting';
+        statusText.textContent = 'Connecting...';
+        statusText.style.color = '#6366f1';
+    }
+
     function updateConnectionStatus(online, lastSeen) {
         if (online) {
             statusDot.className = 'dot dot-online';

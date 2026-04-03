@@ -2,9 +2,7 @@ package com.pinbridge.otpmirror
 
 import android.content.Intent
 import android.net.ConnectivityManager
-import android.net.Network
 import android.net.NetworkCapabilities
-import android.net.NetworkRequest
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
@@ -14,32 +12,26 @@ import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.*
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import android.content.Context
 import android.widget.Toast
-import androidx.compose.material.icons.filled.Refresh
 import kotlinx.coroutines.launch
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.firestore.FirebaseFirestore
 import com.pinbridge.otpmirror.data.PairingRepository
-import com.pinbridge.otpmirror.OtpUploader
+import com.pinbridge.otpmirror.ui.theme.PinBridgeTheme
+import com.pinbridge.otpmirror.ui.screens.SignInView
+import com.pinbridge.otpmirror.ui.screens.ConnectedView
+import com.pinbridge.otpmirror.ui.screens.DisconnectedView
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import androidx.lifecycle.lifecycleScope
@@ -68,6 +60,8 @@ class MainActivity : AppCompatActivity() {
 
     private val WEB_CLIENT_ID = "475556984962-jekqarbki0ob5s1una398poptimup0eq.apps.googleusercontent.com"
 
+    // ─── Cloud Sync ─────────────────────────────────────────────
+
     private fun checkCloudSync(uid: String) {
         firestore.collection("users").document(uid)
             .collection("mirroring").document("active")
@@ -77,27 +71,22 @@ class MainActivity : AppCompatActivity() {
                     val deviceId = doc.getString("deviceId")
                     val secret = doc.getString("secret")
                     if (deviceId != null && secret != null) {
-                        // Fresh install check: if the device has no local pairing data,
-                        // don't silently auto-pair from stale cloud sync data.
-                        // The user likely uninstalled-and-reinstalled and should pair fresh.
                         val localDeviceId = pairingRepository.getDeviceId()
                         if (localDeviceId == null) {
-                            Log.i("MainActivity", "Fresh install detected — cloud sync data exists but no local pairing. Cleaning up stale cloud sync.")
+                            Log.i("MainActivity", "Fresh install detected — cleaning up stale cloud sync.")
                             firestore.collection("users").document(uid)
                                 .collection("mirroring").document("active")
                                 .delete()
-                                .addOnSuccessListener { Log.i("MainActivity", "Stale cloud sync document cleaned up on fresh install.") }
+                                .addOnSuccessListener { Log.i("MainActivity", "Stale cloud sync cleaned up.") }
                                 .addOnFailureListener { Log.w("MainActivity", "Failed to clean up stale cloud sync.", it) }
                             Toast.makeText(this@MainActivity, "Signed in! Please pair your browser extension.", Toast.LENGTH_LONG).show()
                             return@addOnSuccessListener
                         }
 
-                        // Existing install: validate that the pairing is still active in Firestore before auto-pairing
                         firestore.collection(Constants.COLL_PAIRINGS).document(deviceId)
                             .get()
                             .addOnSuccessListener { pairingDoc ->
                                 if (pairingDoc.exists() && pairingDoc.getBoolean("paired") == true) {
-                                    // Pairing is still valid on the server — auto-pair
                                     lifecycleScope.launch {
                                         try {
                                             pairingRepository.pairWithQr(deviceId, secret)
@@ -107,12 +96,11 @@ class MainActivity : AppCompatActivity() {
                                         }
                                     }
                                 } else {
-                                    // Stale cloud sync data — the pairing no longer exists on the server
-                                    Log.w("MainActivity", "Cloud sync data is stale (pairing doc missing or unpaired). Cleaning up.")
+                                    Log.w("MainActivity", "Cloud sync data is stale. Cleaning up.")
                                     firestore.collection("users").document(uid)
                                         .collection("mirroring").document("active")
                                         .delete()
-                                        .addOnSuccessListener { Log.i("MainActivity", "Stale cloud sync document cleaned up.") }
+                                        .addOnSuccessListener { Log.i("MainActivity", "Stale cloud sync cleaned up.") }
                                         .addOnFailureListener { Log.w("MainActivity", "Failed to clean up stale cloud sync.", it) }
                                     Toast.makeText(this@MainActivity, "Previous pairing expired. Please pair again.", Toast.LENGTH_LONG).show()
                                 }
@@ -133,11 +121,13 @@ class MainActivity : AppCompatActivity() {
             }
     }
 
+    // ─── Authentication ─────────────────────────────────────────
+
     private suspend fun attemptGoogleSignIn(filterByAuthorized: Boolean): Boolean {
         val googleIdOption = GetGoogleIdOption.Builder()
             .setServerClientId(WEB_CLIENT_ID)
             .setFilterByAuthorizedAccounts(filterByAuthorized)
-            .setAutoSelectEnabled(filterByAuthorized) // auto-select only when filtering by authorized
+            .setAutoSelectEnabled(filterByAuthorized)
             .build()
 
         val request = GetCredentialRequest.Builder()
@@ -164,22 +154,18 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startGoogleSignIn() {
-        if (isSigningIn) return // Prevent double-tap
+        if (isSigningIn) return
         isSigningIn = true
         lifecycleScope.launch {
             try {
-                // Step 1: Try with previously authorized accounts first (faster, less UI)
                 try {
                     if (attemptGoogleSignIn(filterByAuthorized = true)) return@launch
                 } catch (e: NoCredentialException) {
-                    // No previously authorized account — fall through to show full picker
-                    Log.i("MainActivity", "No previously authorized account, showing full account picker")
+                    Log.i("MainActivity", "No previously authorized account, showing full picker")
                 } catch (e: GetCredentialCancellationException) {
-                    // User cancelled auto-select — fall through to show full picker
-                    Log.i("MainActivity", "Auto-select cancelled, showing full account picker")
+                    Log.i("MainActivity", "Auto-select cancelled, showing full picker")
                 }
 
-                // Step 2: Show full account picker
                 if (!attemptGoogleSignIn(filterByAuthorized = false)) {
                     Toast.makeText(this@MainActivity, "Google Sign-In failed", Toast.LENGTH_SHORT).show()
                 }
@@ -200,6 +186,8 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+
+    // ─── Permissions ────────────────────────────────────────────
 
     private val smsPermissionHelper =
         SmsPermissionHelper(this) { granted ->
@@ -227,6 +215,8 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // ─── Utility Methods ────────────────────────────────────────
+
     private fun isInternetAvailable(): Boolean {
         val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         val network = connectivityManager.activeNetwork ?: return false
@@ -245,7 +235,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-
     private fun fetchSmsAndUpload() {
         val isOnline = isInternetAvailable()
         if (!isOnline) {
@@ -262,6 +251,20 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, "No valid OTP found", Toast.LENGTH_SHORT).show()
         }
     }
+
+    private fun signOut() {
+        firebaseAuth.signOut()
+        lifecycleScope.launch {
+            try {
+                credentialManager.clearCredentialState(ClearCredentialStateRequest())
+            } catch (e: Exception) {
+                Log.w("MainActivity", "Failed to clear credential state", e)
+            }
+            pairingRepository.unpair()
+        }
+    }
+
+    // ─── Main Screen Composable (orchestrator only) ─────────────
 
     @Composable
     fun MainScreen() {
@@ -294,11 +297,11 @@ class MainActivity : AppCompatActivity() {
                 .background(
                     brush = Brush.verticalGradient(
                         colors = if (currentUser == null) {
-                            listOf(Color(0xFFF5F7FA), Color(0xFFC3CFE2)) // Light theme for Signed Out
+                            listOf(Color(0xFFF5F7FA), Color(0xFFC3CFE2))
                         } else if (isPaired) {
-                            listOf(Color(0xFF1E293B), Color(0xFF0F172A)) // Dark theme for Paired
+                            listOf(Color(0xFF1E293B), Color(0xFF0F172A))
                         } else {
-                            listOf(Color(0xFFF5F7FA), Color(0xFFC3CFE2)) // Light theme for Unpaired
+                            listOf(Color(0xFFF5F7FA), Color(0xFFC3CFE2))
                         }
                     )
                 )
@@ -321,11 +324,27 @@ class MainActivity : AppCompatActivity() {
                     label = "StateTransition"
                 ) { (isSignedIn, paired) ->
                     if (!isSignedIn) {
-                        SignInView()
+                        SignInView(onSignIn = { startGoogleSignIn() })
                     } else if (paired) {
-                        ConnectedView()
+                        ConnectedView(
+                            deviceId = pairingRepository.getDeviceId() ?: "Unknown",
+                            isInternetAvailable = isInternetAvailable(),
+                            onUnpair = { pairingRepository.unpair() },
+                            onEnableBackground = { requestIgnoreBatteryOptimizations() },
+                            onFetchSms = { fetchSmsAndUpload() },
+                            onCheckPermissions = {
+                                isExplicitPermissionCheck = true
+                                smsPermissionHelper.requestPermissions()
+                            },
+                            onSignOut = { signOut() }
+                        )
                     } else {
-                        DisconnectedView()
+                        DisconnectedView(
+                            userEmail = firebaseAuth.currentUser?.email,
+                            onScanQr = { startActivity(Intent(this@MainActivity, PairingScannerActivity::class.java)) },
+                            onManualCode = { startActivity(Intent(this@MainActivity, ManualCodeEntryActivity::class.java)) },
+                            onSignOut = { signOut() }
+                        )
                     }
                 }
                 
@@ -355,611 +374,4 @@ class MainActivity : AppCompatActivity() {
             )
         }
     }
-
-    @Composable
-    fun ConnectedView() {
-        val scope = rememberCoroutineScope()
-        
-        // CAPTCHA state for unpair verification
-        var showUnpairCaptcha by remember { mutableStateOf(false) }
-        var captchaCode by remember { mutableStateOf("") }
-        var captchaInput by remember { mutableStateOf("") }
-        var captchaError by remember { mutableStateOf(false) }
-
-        // Generate a new 4-digit CAPTCHA code
-        fun generateCaptcha(): String {
-            return (1000 + (Math.random() * 9000).toInt()).toString()
-        }
-
-        // CAPTCHA Dialog
-        if (showUnpairCaptcha) {
-            AlertDialog(
-                onDismissRequest = {
-                    showUnpairCaptcha = false
-                    captchaInput = ""
-                    captchaError = false
-                },
-                title = {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("🔓", fontSize = 32.sp)
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            "Confirm Unpair",
-                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                            color = Color(0xFF1F2937)
-                        )
-                    }
-                },
-                text = {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(
-                            "Enter the 4-digit code below to confirm you want to unpair this device.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Color(0xFF6B7280),
-                            textAlign = TextAlign.Center
-                        )
-                        
-                        Spacer(modifier = Modifier.height(16.dp))
-                        
-                        // CAPTCHA code display
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(
-                                    brush = Brush.linearGradient(
-                                        colors = listOf(Color(0xFFEEF2FF), Color(0xFFE8E0F7))
-                                    ),
-                                    shape = RoundedCornerShape(12.dp)
-                                )
-                                .padding(vertical = 14.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = captchaCode,
-                                fontSize = 32.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                                letterSpacing = 10.sp,
-                                color = Color(0xFF6366F1)
-                            )
-                        }
-                        
-                        Spacer(modifier = Modifier.height(16.dp))
-                        
-                        // Input field
-                        OutlinedTextField(
-                            value = captchaInput,
-                            onValueChange = { newValue ->
-                                if (newValue.length <= 4 && newValue.all { it.isDigit() }) {
-                                    captchaInput = newValue
-                                    captchaError = false
-                                }
-                            },
-                            modifier = Modifier.fillMaxWidth(),
-                            textStyle = androidx.compose.ui.text.TextStyle(
-                                fontSize = 24.sp,
-                                fontWeight = FontWeight.Bold,
-                                textAlign = TextAlign.Center,
-                                letterSpacing = 8.sp
-                            ),
-                            placeholder = {
-                                Text(
-                                    "····",
-                                    modifier = Modifier.fillMaxWidth(),
-                                    textAlign = TextAlign.Center,
-                                    fontSize = 24.sp,
-                                    color = Color(0xFFD1D5DB)
-                                )
-                            },
-                            shape = RoundedCornerShape(12.dp),
-                            singleLine = true,
-                            isError = captchaError,
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = Color(0xFF6366F1),
-                                unfocusedBorderColor = Color(0xFFE2E8F0),
-                                errorBorderColor = Color(0xFFEF4444),
-                                cursorColor = Color(0xFF6366F1)
-                            )
-                        )
-                        
-                        if (captchaError) {
-                            Text(
-                                "Incorrect code. Please try again.",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Color(0xFFEF4444),
-                                modifier = Modifier.padding(top = 6.dp)
-                            )
-                        }
-                    }
-                },
-                confirmButton = {
-                    Button(
-                        onClick = {
-                            if (captchaInput == captchaCode) {
-                                showUnpairCaptcha = false
-                                captchaInput = ""
-                                captchaError = false
-                                scope.launch { pairingRepository.unpair() }
-                            } else {
-                                captchaError = true
-                                captchaInput = ""
-                            }
-                        },
-                        enabled = captchaInput.length == 4,
-                        shape = RoundedCornerShape(10.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFFEF4444),
-                            disabledContainerColor = Color(0xFFEF4444).copy(alpha = 0.4f)
-                        )
-                    ) {
-                        Text("Unpair", fontWeight = FontWeight.SemiBold)
-                    }
-                },
-                dismissButton = {
-                    TextButton(
-                        onClick = {
-                            showUnpairCaptcha = false
-                            captchaInput = ""
-                            captchaError = false
-                        }
-                    ) {
-                        Text("Cancel", color = Color(0xFF6B7280))
-                    }
-                },
-                shape = RoundedCornerShape(20.dp),
-                containerColor = Color.White
-            )
-        }
-
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.95f)),
-            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
-        ) {
-            Column(
-                modifier = Modifier
-                    .padding(32.dp)
-                    .fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Icon(
-                    imageVector = Icons.Default.CheckCircle,
-                    contentDescription = null,
-                    tint = Color(0xFF10B981),
-                    modifier = Modifier.size(64.dp)
-                )
-                
-                Spacer(modifier = Modifier.height(24.dp))
-                
-                Text(
-                    text = "Successfully Paired!",
-                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                    color = Color(0xFF1F2937)
-                )
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                Text(
-                    text = "Your device is securely connected and ready to sync OTPs.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color(0xFF6B7280),
-                    textAlign = TextAlign.Center
-                )
-                
-                Spacer(modifier = Modifier.height(32.dp))
-                
-                StatusItem(
-                    icon = Icons.Default.Lock,
-                    label = "Encryption",
-                    status = "AES-GCM Active",
-                    statusColor = Color(0xFF6366F1)
-                )
-
-                val activeId = pairingRepository.getDeviceId() ?: "Unknown"
-                StatusItem(
-                    icon = Icons.Default.Info,
-                    label = "Device ID",
-                    status = activeId.take(8) + "...",
-                    statusColor = Color(0xFF6B7280)
-                )
-                
-                Spacer(modifier = Modifier.height(12.dp))
-                
-                StatusItem(
-                    icon = Icons.Default.Info,
-                    label = "SMS Service",
-                    status = if (isInternetAvailable()) "Monitoring..." else "Offline",
-                    statusColor = if (isInternetAvailable()) Color(0xFF6366F1) else Color(0xFFEF4444)
-                )
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Button(
-                        onClick = { 
-                            requestIgnoreBatteryOptimizations() 
-                        },
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6B7280))
-                    ) {
-                        Text("Enable BG", fontSize = 13.sp)
-                    }
-
-                    Button(
-                        onClick = { 
-                            fetchSmsAndUpload()
-                        },
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981))
-                    ) {
-                        Icon(Icons.Default.Refresh, null, modifier = Modifier.size(16.dp))
-                        Spacer(Modifier.width(4.dp))
-                        Text("Fetch", fontSize = 13.sp)
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Button(
-                    onClick = { 
-                        isExplicitPermissionCheck = true
-                        smsPermissionHelper.requestPermissions() 
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6366F1))
-                ) {
-                    Text("Check Permissions")
-                }
-
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                TextButton(
-                    onClick = { 
-                        // Show CAPTCHA verification before unpairing
-                        captchaCode = generateCaptcha()
-                        captchaInput = ""
-                        captchaError = false
-                        showUnpairCaptcha = true
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Unpair This Device", color = Color(0xFFEF4444), fontWeight = FontWeight.Medium)
-                }
-                
-                TextButton(
-                    onClick = { 
-                        signOut()
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Sign Out", color = Color(0xFF9CA3AF), fontWeight = FontWeight.Medium)
-                }
-            }
-        }
-    }
-
-    private fun signOut() {
-        firebaseAuth.signOut()
-        lifecycleScope.launch {
-            try {
-                credentialManager.clearCredentialState(ClearCredentialStateRequest())
-            } catch (e: Exception) {
-                Log.w("MainActivity", "Failed to clear credential state", e)
-            }
-            pairingRepository.unpair()
-        }
-    }
-
-    @Composable
-    fun SignInView() {
-        var showHowItWorks by rememberSaveable { mutableStateOf(false) }
-
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.7f)),
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-        ) {
-            Column(
-                modifier = Modifier
-                    .padding(32.dp)
-                    .fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = "🔒",
-                    fontSize = 48.sp
-                )
-                
-                Spacer(modifier = Modifier.height(24.dp))
-                
-                Text(
-                    text = "Sign in First",
-                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                    color = Color(0xFF1F2937)
-                )
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                Text(
-                    text = "Sign in with Google to sync OTPs safely avoiding manual QR scanning.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color(0xFF6B7280),
-                    textAlign = TextAlign.Center
-                )
-                
-                Spacer(modifier = Modifier.height(32.dp))
-                
-                Button(
-                    onClick = {
-                        startGoogleSignIn()
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981))
-                ) {
-                    Text("Sign in with Google", fontWeight = FontWeight.SemiBold)
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                TextButton(
-                    onClick = { showHowItWorks = !showHowItWorks },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Info,
-                        contentDescription = null,
-                        tint = Color(0xFF6366F1),
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = if (showHowItWorks) "Hide Guide" else "How It Works",
-                        color = Color(0xFF6366F1),
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-
-                AnimatedVisibility(
-                    visible = showHowItWorks,
-                    enter = expandVertically() + fadeIn(),
-                    exit = shrinkVertically() + fadeOut()
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 8.dp)
-                    ) {
-                        HelpStepItem(
-                            step = "1",
-                            emoji = "🔑",
-                            title = "Sign In",
-                            desc = "Sign in with your Google account on both the Android app and the Chrome extension."
-                        )
-                        HelpStepItem(
-                            step = "2",
-                            emoji = "🧩",
-                            title = "Install Extension",
-                            desc = "Install the PinBridge Chrome extension from the Chrome Web Store or load it manually."
-                        )
-                        HelpStepItem(
-                            step = "3",
-                            emoji = "📷",
-                            title = "Pair Devices",
-                            desc = "Scan the QR code shown in the extension with your Android app, or enter the pairing code manually."
-                        )
-                        HelpStepItem(
-                            step = "4",
-                            emoji = "✅",
-                            title = "Auto-Sync OTPs",
-                            desc = "OTPs received on your phone are encrypted and synced to your browser instantly. Auto-fill works on most websites."
-                        )
-
-                        Spacer(modifier = Modifier.height(12.dp))
-                        
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(
-                                    Color(0xFF6366F1).copy(alpha = 0.08f),
-                                    RoundedCornerShape(12.dp)
-                                )
-                                .padding(12.dp)
-                        ) {
-                            Text(
-                                text = "🔐 Your OTPs are encrypted with AES-256 before leaving your phone. The server never sees them in plaintext.",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Color(0xFF4B5563),
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    @Composable
-    fun HelpStepItem(step: String, emoji: String, title: String, desc: String) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 6.dp),
-            verticalAlignment = Alignment.Top
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(32.dp)
-                    .background(
-                        Color(0xFF6366F1).copy(alpha = 0.12f),
-                        RoundedCornerShape(8.dp)
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = emoji,
-                    fontSize = 16.sp
-                )
-            }
-            Spacer(modifier = Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = "Step $step — $title",
-                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
-                    color = Color(0xFF1F2937)
-                )
-                Text(
-                    text = desc,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color(0xFF6B7280),
-                    lineHeight = 18.sp
-                )
-            }
-        }
-    }
-
-    @Composable
-    fun DisconnectedView() {
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.7f)),
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-        ) {
-            Column(
-                modifier = Modifier
-                    .padding(32.dp)
-                    .fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = "📱",
-                    fontSize = 48.sp
-                )
-                
-                Spacer(modifier = Modifier.height(24.dp))
-                
-                Text(
-                    text = "Device Not Paired",
-                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                    color = Color(0xFF1F2937)
-                )
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                Text(
-                    text = "Pair with your browser extension to start mirroring OTPs securely.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color(0xFF6B7280),
-                    textAlign = TextAlign.Center
-                )
-                
-                Spacer(modifier = Modifier.height(32.dp))
-                
-                Button(
-                    onClick = {
-                        startActivity(Intent(this@MainActivity, PairingScannerActivity::class.java))
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6366F1))
-                ) {
-                    Text("Start Pairing QR", fontWeight = FontWeight.SemiBold)
-                }
-                
-                Spacer(modifier = Modifier.height(12.dp))
-                
-                TextButton(
-                    onClick = {
-                        startActivity(Intent(this@MainActivity, ManualCodeEntryActivity::class.java))
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(
-                        "Enter Code Manually",
-                        color = Color(0xFF6B7280),
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                val currentUser = firebaseAuth.currentUser
-                if (currentUser != null) {
-                    Text(
-                        text = "Signed in as ${currentUser.email}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color(0xFF10B981),
-                        modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
-                    )
-                }
-
-                TextButton(
-                    onClick = { signOut() },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Sign Out", color = Color(0xFF9CA3AF), fontWeight = FontWeight.Medium)
-                }
-            }
-        }
-    }
-
-    @Composable
-    fun StatusItem(icon: ImageVector, label: String, status: String, statusColor: Color) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Color.Black.copy(alpha = 0.05f), RoundedCornerShape(12.dp))
-                .padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = Color(0xFF6B7280),
-                modifier = Modifier.size(18.dp)
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-            Text(
-                text = label,
-                style = MaterialTheme.typography.bodyMedium,
-                color = Color(0xFF1F2937),
-                fontWeight = FontWeight.Medium
-            )
-            Spacer(modifier = Modifier.weight(1f))
-            Text(
-                text = status,
-                style = MaterialTheme.typography.bodySmall,
-                color = statusColor,
-                fontWeight = FontWeight.Bold
-            )
-        }
-    }
-}
-
-@Composable
-fun PinBridgeTheme(content: @Composable () -> Unit) {
-    MaterialTheme(
-        colorScheme = lightColorScheme(
-            primary = Color(0xFF6366F1),
-            secondary = Color(0xFFA855F7),
-            background = Color(0xFFF5F7FA)
-        ),
-        content = content
-    )
 }

@@ -5,6 +5,7 @@ const { Server } = require('socket.io');
 const Redis = require('ioredis');
 const admin = require('firebase-admin');
 const Sentry = require("@sentry/node");
+const helmet = require('helmet');
 require('dotenv').config();
 
 // Initialize Firebase Admin
@@ -28,14 +29,40 @@ if (process.env.FIREBASE_SERVICE_ACCOUNT) {
 const db = admin.firestore();
 const app = express();
 const server = http.createServer(app);
+// Security (V-08): Restrict CORS to known PinBridge origins
+const ALLOWED_ORIGINS = [
+    'https://pin-bridge.vercel.app',
+    'https://pinbridge-61dd4.web.app',
+    'https://pinbridge-61dd4.firebaseapp.com',
+    'http://localhost:5173',
+    'http://localhost:3000'
+];
+
 const io = new Server(server, {
     cors: {
-        origin: "*",
+        origin: (origin, callback) => {
+            // Allow requests with no origin (mobile apps, curl, server-to-server)
+            // and Chrome extensions (chrome-extension:// protocol)
+            if (!origin || ALLOWED_ORIGINS.includes(origin) || origin.startsWith('chrome-extension://')) {
+                callback(null, true);
+            } else {
+                console.warn(`[CORS] Blocked request from origin: ${origin}`);
+                callback(new Error('Origin not allowed'));
+            }
+        },
         methods: ["GET", "POST"]
     },
     pingTimeout: 15000,
     pingInterval: 5000
 });
+
+// Structured logging utility (P2-3)
+function log(level, message, meta = {}) {
+    const entry = { ts: new Date().toISOString(), level, message, ...meta };
+    if (level === 'error') console.error(JSON.stringify(entry));
+    else if (level === 'warn') console.warn(JSON.stringify(entry));
+    else console.log(JSON.stringify(entry));
+}
 
 // Redis setup (Upstash compatible)
 const redis = new Redis(process.env.REDIS_URL, {
@@ -248,9 +275,51 @@ setInterval(async () => {
     }
 }, 30000); // Check every 30s
 
-// Health check endpoint
-app.get("/", (req, res) => {
-    res.json({ status: "ok", service: "PinBridge Presence Server", uptime: process.uptime() });
+// Manual TTL Cleanup for Free Tier Users
+// Runs every 10 minutes to delete OTPs where expiresAt < now.
+// This bypasses the need for the Firebase Blaze billing plan.
+setInterval(async () => {
+    try {
+        const now = admin.firestore.Timestamp.now();
+        const snapshot = await db.collection('otps')
+            .where('expiresAt', '<', now)
+            .get();
+
+        if (snapshot.empty) return;
+
+        console.log(`[PinBridge Server] TTL Cleanup: Deleting ${snapshot.size} expired OTP document(s)`);
+        
+        // Use batch to delete documents efficiently
+        const batch = db.batch();
+        snapshot.docs.forEach((doc) => {
+            batch.delete(doc.ref);
+        });
+        await batch.commit();
+    } catch (e) {
+        console.error('[PinBridge Server] TTL Cleanup Error:', e.message);
+    }
+}, 10 * 60 * 1000);
+
+// Helmet.js for HTTP security headers (2.12)
+app.use(helmet());
+
+// Enhanced Health check endpoint (2.9)
+app.get("/", async (req, res) => {
+    let redisStatus = 'unknown';
+    try {
+        await redis.ping();
+        redisStatus = 'connected';
+    } catch {
+        redisStatus = 'disconnected';
+    }
+    res.json({
+        status: "ok",
+        service: "PinBridge Presence Server",
+        version: process.env.npm_package_version || '1.0.0',
+        uptime: Math.floor(process.uptime()),
+        redis: redisStatus,
+        connectedSockets: io.engine?.clientsCount || 0
+    });
 });
 
 // Sentry Express error handler
@@ -263,5 +332,34 @@ app.get("/debug-sentry", function mainHandler(req, res) {
 
 const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => {
-    console.log(`Presence server running on port ${PORT}`);
+    log('info', `Presence server running on port ${PORT}`);
+});
+
+// Graceful shutdown (2.12)
+process.on('SIGTERM', async () => {
+    log('info', 'SIGTERM received. Starting graceful shutdown...');
+    
+    // Stop accepting new connections
+    server.close(() => {
+        log('info', 'HTTP server closed.');
+    });
+    
+    // Close all socket connections
+    io.close(() => {
+        log('info', 'Socket.IO server closed.');
+    });
+    
+    // Close Redis connection
+    try {
+        await redis.quit();
+        log('info', 'Redis connection closed.');
+    } catch (e) {
+        log('warn', 'Error closing Redis:', { error: e.message });
+    }
+    
+    // Force exit after 10 seconds if graceful shutdown hangs
+    setTimeout(() => {
+        log('error', 'Graceful shutdown timed out. Forcing exit.');
+        process.exit(1);
+    }, 10000);
 });

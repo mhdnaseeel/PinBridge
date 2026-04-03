@@ -220,6 +220,15 @@ body {
 
 .dot-online { background: var(--success); box-shadow: 0 0 10px var(--success); }
 .dot-offline { background: var(--warning); box-shadow: 0 0 10px var(--warning); }
+.dot-connecting {
+  background: var(--primary);
+  box-shadow: 0 0 10px var(--primary-glow);
+  animation: pulse-connecting 1.5s ease-in-out infinite;
+}
+@keyframes pulse-connecting {
+  0%, 100% { opacity: 0.4; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1.1); }
+}
 
 /* Buttons */
 .btn-group {

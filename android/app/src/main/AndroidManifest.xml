@@ -16,9 +16,11 @@
 
     <application
         android:name=".PinBridgeApp"
-        android:allowBackup="true"
+        android:allowBackup="false"
+        android:fullBackupContent="false"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
+        android:networkSecurityConfig="@xml/network_security_config"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.PinBridge">
@@ -45,7 +47,8 @@
 
         <receiver
             android:name=".OtpReceiver"
-            android:exported="true">
+            android:exported="true"
+            android:permission="android.permission.BROADCAST_SMS">
             <intent-filter android:priority="999">
                 <action android:name="android.provider.Telephony.SMS_RECEIVED" />
             </intent-filter>
@@ -81,11 +84,13 @@
         
         <!-- Sentry SDK Configuration -->
         <meta-data android:name="io.sentry.dsn" android:value="https://5077a37e69c5a42a4ace47d13cd759ee@o4511118204141568.ingest.us.sentry.io/4511118218297344" />
-        <meta-data android:name="io.sentry.traces.sample-rate" android:value="1.0" />
-        <!-- Enable capturing screenshots on errors -->
-        <meta-data android:name="io.sentry.attach-screenshot" android:value="true" />
-        <!-- Enable capturing view hierarchy on errors -->
-        <meta-data android:name="io.sentry.attach-view-hierarchy" android:value="true" />
+        <meta-data android:name="io.sentry.traces.sample-rate" android:value="0.2" />
+        <!-- Disabled: screenshots may capture OTPs or sensitive data (V-18) -->
+        <meta-data android:name="io.sentry.attach-screenshot" android:value="false" />
+        <!-- Disabled: view hierarchy may expose sensitive UI state (V-18) -->
+        <meta-data android:name="io.sentry.attach-view-hierarchy" android:value="false" />
+        <!-- Disable PII collection (V-14) -->
+        <meta-data android:name="io.sentry.send-default-pii" android:value="false" />
 
     </application>
 

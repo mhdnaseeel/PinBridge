@@ -56,6 +56,10 @@ class DeviceHeartbeatService : Service() {
     private var reconnectAttempt = 0
     private val maxReconnectDelay = 60_000L // 60 seconds max
 
+    // Periodic token refresh to prevent auth expiry on long sessions (Fix REL-3)
+    private var tokenRefreshJob: Job? = null
+    private val TOKEN_REFRESH_INTERVAL = 45 * 60 * 1000L // 45 minutes
+
     private fun getReconnectDelay(): Long {
         val delay = when (reconnectAttempt) {
             0 -> 3_000L
@@ -83,6 +87,10 @@ class DeviceHeartbeatService : Service() {
         return Pair(level, isCharging)
     }
 
+    /**
+     * Acquire WakeLock briefly for a single heartbeat emission.
+     * Timeout of 30 seconds — released immediately after heartbeat in the loop.
+     */
     private fun acquireWakeLock() {
         if (wakeLock == null) {
             val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
@@ -94,9 +102,8 @@ class DeviceHeartbeatService : Service() {
             }
         }
         if (wakeLock?.isHeld != true) {
-            // Acquire for 10 minutes max — will re-acquire on each heartbeat cycle
-            wakeLock?.acquire(10 * 60 * 1000L)
-            Log.d(TAG, "WakeLock acquired")
+            // Acquire briefly — released after each heartbeat emission (PERF-5 fix)
+            wakeLock?.acquire(30_000L)
         }
     }
 
@@ -154,10 +161,12 @@ class DeviceHeartbeatService : Service() {
                         Log.w(TAG, "Failed to send initial battery info", e)
                     }
                     startHeartbeatLoop()
+                    startTokenRefreshLoop()
                 }
 
                 socket?.on(Socket.EVENT_DISCONNECT) {
                     Log.w(TAG, "Socket disconnected! Reason: $it")
+                    stopTokenRefreshLoop()
                     scheduleReconnect()
                 }
 
@@ -192,12 +201,42 @@ class DeviceHeartbeatService : Service() {
         }
     }
 
+    /**
+     * Periodically refreshes the Firebase ID token (every 45 min) to prevent
+     * auth expiry on long-running sessions. Reconnects socket with the new token.
+     * (Fix REL-3)
+     */
+    private fun startTokenRefreshLoop() {
+        tokenRefreshJob?.cancel()
+        tokenRefreshJob = scope.launch {
+            while (isActive) {
+                delay(TOKEN_REFRESH_INTERVAL)
+                try {
+                    val newToken = auth.currentUser?.getIdToken(true)?.await()?.token
+                    if (newToken != null) {
+                        Log.i(TAG, "Token refreshed successfully — reconnecting socket with new token")
+                        disconnectSocket()
+                        connectSocket()
+                    }
+                } catch (e: Exception) {
+                    Log.w(TAG, "Token refresh failed, will retry next cycle", e)
+                }
+            }
+        }
+    }
+
+    private fun stopTokenRefreshLoop() {
+        tokenRefreshJob?.cancel()
+        tokenRefreshJob = null
+    }
+
     private var heartbeatJob: Job? = null
     private fun startHeartbeatLoop() {
         Log.d(TAG, "Starting heartbeat loop (15s interval)")
         heartbeatJob?.cancel()
         heartbeatJob = scope.launch {
             while (isActive && socket?.connected() == true) {
+                // Acquire WakeLock briefly for emission, release immediately after (PERF-5)
                 acquireWakeLock()
                 try {
                     val (level, charging) = getBatteryInfo()
@@ -210,6 +249,8 @@ class DeviceHeartbeatService : Service() {
                 } catch (e: Exception) {
                     Log.w(TAG, "Failed to read battery info, emitting plain heartbeat", e)
                     socket?.emit("heartbeat")
+                } finally {
+                    releaseWakeLock()
                 }
                 delay(15000) // Every 15 seconds (Server TTL is 35s, Watchdog is 40s)
             }
@@ -220,6 +261,7 @@ class DeviceHeartbeatService : Service() {
     private fun disconnectSocket() {
         heartbeatJob?.cancel()
         reconnectJob?.cancel()
+        stopTokenRefreshLoop()
         socket?.off() // Remove all listeners to prevent leak
         socket?.disconnect()
         socket = null

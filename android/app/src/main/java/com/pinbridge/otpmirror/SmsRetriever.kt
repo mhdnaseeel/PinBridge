@@ -3,7 +3,6 @@ package com.pinbridge.otpmirror
 import android.content.Context
 import android.net.Uri
 import android.util.Log
-import java.util.regex.Pattern
 
 object SmsRetriever {
     private const val TAG = "SmsRetriever"
@@ -17,26 +16,27 @@ object SmsRetriever {
             )
 
             cursor?.use {
-                // Heuristic for finding OTPs: 4 to 8 digits
-                val otpPattern = Pattern.compile("\\b\\d{4,8}\\b")
-                
+                var bestMatch: Pair<String, Long>? = null
+
                 while (it.moveToNext()) {
                     val body = it.getString(0) ?: continue
                     val timestamp = it.getLong(1)
-                    val matcher = otpPattern.matcher(body)
-                    if (matcher.find()) {
-                        val otp = matcher.group()
-                        Log.d(TAG, "Found potential OTP (${otp.length} digits)")
-                        
-                        // Specific priority for 6-digit codes
-                        if (otp.length == 6) {
-                            return Pair(otp, timestamp)
+
+                    // Use the shared OtpExtractor for consistent extraction logic
+                    val otp = OtpExtractor.extractOtp(body)
+                    if (otp != null) {
+                        // Return the first high-confidence match (messages are ordered by date DESC)
+                        Log.d(TAG, "OTP candidate found: ${otp.length} digits from message")
+                        if (bestMatch == null) {
+                            bestMatch = Pair(otp, timestamp)
                         }
-                        
-                        // Fallback to first found match if no 6-digit code found in this message
-                        return Pair(otp, timestamp)
                     }
                 }
+
+                if (bestMatch != null) {
+                    Log.d(TAG, "Best OTP candidate: ${bestMatch!!.first.length} digits")
+                }
+                return bestMatch
             }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to query SMS: ${e.message}", e)

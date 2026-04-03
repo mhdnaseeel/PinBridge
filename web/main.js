@@ -4,8 +4,8 @@ import * as Sentry from "@sentry/browser";
 // Sentry Initialization
 Sentry.init({
     dsn: "https://3457c2e95d532379d40e4152fc7642c1@o4511118204141568.ingest.us.sentry.io/4511118399635456",
-    tracesSampleRate: 1.0,
-    sendDefaultPii: true
+    tracesSampleRate: 0.2,
+    sendDefaultPii: false
 });
 
 
@@ -48,11 +48,14 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 // State
+// Security (V-01): secret is kept in-memory ONLY — never persisted to localStorage.
+// On page refresh, it is re-fetched from the Firestore cloud sync document.
 let state = {
   user: null, // Firebase user object
   pairedDeviceId: localStorage.getItem('pairedDeviceId'),
-  secret: localStorage.getItem('secret'),
+  secret: null, // In-memory only — never localStorage (V-01)
   isOnline: false,
+  isConnecting: false, // P1-4: Intermediate state during Socket.IO cold-start
   lastSeen: null,
   batteryLevel: null,
   isCharging: false,
@@ -60,6 +63,12 @@ let state = {
   signingIn: false,
   error: null
 };
+
+// HTML escaping utility (V-07)
+function escapeHtml(str) {
+  if (!str) return '';
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
 
 // DOM Elements
 const appDiv = document.getElementById('app');
@@ -80,9 +89,9 @@ function checkUrlParams() {
   if (d && s) {
     console.log('[PinBridge] Initializing pairing from URL parameters');
     state.pairedDeviceId = d;
-    state.secret = s;
+    state.secret = s; // In-memory only (V-01)
     localStorage.setItem('pairedDeviceId', d);
-    localStorage.setItem('secret', s);
+    // Security (V-01): Do NOT persist secret to localStorage
     window.history.replaceState({}, document.title, window.location.pathname);
     return true;
   }
@@ -141,7 +150,13 @@ function updateConnectionIndicator() {
   
   if (!dot) return;
   
-  if (state.isOnline) {
+  if (state.isConnecting && !state.isOnline) {
+    // P1-4: Show "Connecting..." during initial Socket.IO connection
+    dot.className = 'dot dot-connecting';
+    statusText.textContent = 'Connecting...';
+    statusText.style.color = '#6366f1';
+    detailText.textContent = 'Establishing connection to device';
+  } else if (state.isOnline) {
     dot.className = 'dot dot-online';
     statusText.textContent = 'Online';
     statusText.style.color = '#10b981';
@@ -174,8 +189,10 @@ function updateConnectionIndicator() {
   
   // Update sidebar
   if (sidebarDot) {
-    sidebarDot.className = `dot ${state.isOnline ? 'dot-online' : 'dot-offline'}`;
-    sidebarStatus.textContent = state.isOnline ? 'Online' : 'Offline';
+    const sidebarDotClass = state.isConnecting ? 'dot-connecting' : (state.isOnline ? 'dot-online' : 'dot-offline');
+    const sidebarLabel = state.isConnecting ? 'Connecting...' : (state.isOnline ? 'Online' : 'Offline');
+    sidebarDot.className = `dot ${sidebarDotClass}`;
+    sidebarStatus.textContent = sidebarLabel;
   }
   if (sidebarLastSeen) {
     sidebarLastSeen.textContent = state.lastSeen ? new Date(state.lastSeen).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : 'Never';
@@ -220,7 +237,7 @@ function renderSignIn() {
               <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20" alt="Google">
               ${state.signingIn ? 'Signing in...' : 'Sign in with Google'}
             </button>
-            ${state.error ? `<p class="auth-error">${state.error}</p>` : ''}
+            ${state.error ? `<p class="auth-error">${escapeHtml(state.error)}</p>` : ''}
             <p class="locked-hint">Your credentials are synced securely via AES-256 encryption.</p>
           </div>
         </div>
@@ -244,7 +261,7 @@ function renderUnpaired() {
         <div class="status-group">
           <div class="status-item">
             <span class="status-label">Account</span>
-            <span class="status-value" style="font-size: 11px;">${state.user?.email || 'Signed In'}</span>
+            <span class="status-value" style="font-size: 11px;">${escapeHtml(state.user?.email) || 'Signed In'}</span>
           </div>
           <div class="status-item">
             <span class="status-label">Environment</span>
@@ -270,7 +287,7 @@ function renderUnpaired() {
 
             <div class="signed-in-badge" style="justify-content: center; margin-top: 20px; max-width: 100%; box-sizing: border-box;">
               <span class="dot dot-online" style="flex-shrink: 0;"></span>
-              <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Signed in as <strong>${state.user?.email || 'User'}</strong></span>
+              <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Signed in as <strong>${escapeHtml(state.user?.email) || 'User'}</strong></span>
             </div>
             <p class="locked-hint" style="margin-top: 16px;">This page will update automatically once your extension pairs with a device.</p>
             <button id="signOutBtn" class="btn-signout" style="margin-top: 16px;">Sign Out</button>
@@ -288,11 +305,13 @@ function renderPaired() {
   const otp = state.latestOtp?.otp || '------';
   const time = state.latestOtp?.ts ? new Date(state.latestOtp.ts).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'}) : 'Waiting for signal...';
   
-  const statusColor = state.isOnline ? '#10b981' : '#f59e0b';
-  const statusLabel = state.isOnline ? 'Online' : 'Offline';
+  const statusColor = state.isConnecting ? '#6366f1' : (state.isOnline ? '#10b981' : '#f59e0b');
+  const statusLabel = state.isConnecting ? 'Connecting...' : (state.isOnline ? 'Online' : 'Offline');
+  const dotClass = state.isConnecting ? 'dot-connecting' : (state.isOnline ? 'dot-online' : 'dot-offline');
   const lastSeenStr = state.lastSeen ? new Date(state.lastSeen).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : 'Never';
-  const connDetail = state.isOnline ? 'Device is connected and active' : 
-    (state.lastSeen && state.lastSeen > 0 ? `Last seen at ${lastSeenStr}` : 'Device connection unknown');
+  const connDetail = state.isConnecting ? 'Establishing connection to device' :
+    (state.isOnline ? 'Device is connected and active' : 
+    (state.lastSeen && state.lastSeen > 0 ? `Last seen at ${lastSeenStr}` : 'Device connection unknown'));
   
   // Battery display strings
   const batteryAvailable = state.batteryLevel != null && state.batteryLevel >= 0;
@@ -316,12 +335,12 @@ function renderPaired() {
         <div class="status-group">
           <div class="status-item">
             <span class="status-label">Account</span>
-            <span class="status-value" style="font-size: 11px;">${state.user?.email || 'Signed In'}</span>
+            <span class="status-value" style="font-size: 11px;">${escapeHtml(state.user?.email) || 'Signed In'}</span>
           </div>
           <div class="status-item">
             <span class="status-label">Device</span>
             <span id="sidebarDeviceStatus" class="status-value">
-              <span id="sidebarDeviceDot" class="dot ${state.isOnline ? 'dot-online' : 'dot-offline'}"></span>
+              <span id="sidebarDeviceDot" class="dot ${dotClass}"></span>
               ${statusLabel}
             </span>
           </div>
@@ -347,11 +366,11 @@ function renderPaired() {
       <main class="main-stage">
         <header class="view-header">
           <h1 class="view-title">Security Terminal</h1>
-          <p class="view-subtitle">Real-time OTP mirroring from device <strong>${state.pairedDeviceId.slice(0,8)}...</strong></p>
+          <p class="view-subtitle">Real-time OTP mirroring from device <strong>${escapeHtml(state.pairedDeviceId?.slice(0,8))}...</strong></p>
         </header>
 
         <div id="connectionIndicator" class="connection-indicator">
-          <span id="connDot" class="dot ${state.isOnline ? 'dot-online' : 'dot-offline'}"></span>
+          <span id="connDot" class="dot ${dotClass}"></span>
           <div class="conn-text">
             <span id="connStatus" class="conn-status" style="color: ${statusColor};">${statusLabel}</span>
             <span id="connDetail" class="conn-detail">${connDetail}</span>
@@ -482,16 +501,16 @@ function listenToCloudSync(uid) {
           console.log('[PinBridge] Cloud Sync active! Pairing validated.');
           state.pairedDeviceId = deviceId;
           state.secret = secret;
-          localStorage.setItem('pairedDeviceId', deviceId);
-          localStorage.setItem('secret', secret);
+          // Security (V-01): Do NOT persist secret to localStorage
           
           // Notify extension content script that pairing succeeded (if extension is active)
+          // Fix V-02: Use own origin instead of '*'
           window.postMessage({
             source: 'pinbridge-web',
             action: 'PAIRING_SUCCESS',
             deviceId: deviceId,
             secret: secret
-          }, '*');
+          }, window.location.origin);
 
           startListeners();
           updateUI();
@@ -534,8 +553,8 @@ async function handleSignOut() {
   state.latestOtp = null;
   state.user = null;
   localStorage.removeItem('pairedDeviceId');
-  localStorage.removeItem('secret');
   localStorage.removeItem('latestOtp');
+  // Note: secret is in-memory only (V-01), no localStorage removal needed
   try {
     await firebaseSignOut(auth);
   } catch (e) {
@@ -547,14 +566,19 @@ async function handleSignOut() {
 // ─── LISTENERS ──────────────────────────────────────────────────
 
 // Listen for sync/unpair from Extension
+// Note: secret is no longer in localStorage (V-01). The storage listener only
+// tracks deviceId changes. The secret is provided via postMessage SYNC events
+// or re-fetched from Firestore cloud sync.
 window.addEventListener('storage', (e) => {
   const d = localStorage.getItem('pairedDeviceId');
-  const s = localStorage.getItem('secret');
   
-  if (d && s && d !== state.pairedDeviceId) {
+  if (d && d !== state.pairedDeviceId) {
+    // deviceId changed — secret will arrive via postMessage SYNC or cloud sync
     state.pairedDeviceId = d;
-    state.secret = s;
-    startListeners();
+    // If secret is already in memory (from SYNC message), start listeners
+    if (state.secret) {
+      startListeners();
+    }
     updateUI();
   } else if (!d && state.pairedDeviceId) {
     handleForcedUnpair();
@@ -562,13 +586,15 @@ window.addEventListener('storage', (e) => {
 });
 
 // Listen for direct messages from Extension Content Script
+// Fix V-03: Validate event.source to only accept same-frame messages
 window.addEventListener('message', (e) => {
+  if (e.source !== window) return; // Only accept from same frame
   if (e.data && e.data.source === 'pinbridge-extension') {
     if (e.data.action === 'UNPAIR') {
       handleForcedUnpair();
     } else if (e.data.action === 'SYNC') {
       localStorage.setItem('pairedDeviceId', e.data.deviceId);
-      localStorage.setItem('secret', e.data.secret);
+      state.secret = e.data.secret; // In-memory only (V-01)
       window.dispatchEvent(new Event('storage'));
     }
   }
@@ -581,6 +607,10 @@ function startListeners() {
 
   // 1. Presence (Socket.IO)
   if (!socket) {
+    // P1-4: Set connecting state to show intermediate UI
+    state.isConnecting = true;
+    updateUI();
+
     socket = io(SOCKET_SERVER_URL, {
       auth: async (cb) => {
         try {
@@ -597,14 +627,21 @@ function startListeners() {
       }
     });
 
+    socket.on('connect', () => {
+      console.log('[PinBridge Web] Socket connected');
+      state.isConnecting = false;
+    });
+
     socket.on('presence_update', (data) => {
       if (data.deviceId === state.pairedDeviceId) {
+        state.isConnecting = false; // Got real status, no longer connecting
         checkStaleness(data.status === 'online', data.lastSeen, data.batteryLevel, data.isCharging);
       }
     });
 
     socket.on('connect_error', (err) => {
       console.warn('[PinBridge Web] Socket connection error:', err.message);
+      // Stay in connecting state — Socket.IO will auto-reconnect
     });
   }
 
@@ -663,8 +700,8 @@ function handleForcedUnpair() {
     state.secret = null;
     state.latestOtp = null;
     localStorage.removeItem('pairedDeviceId');
-    localStorage.removeItem('secret');
     localStorage.removeItem('latestOtp');
+    // Note: secret is in-memory only (V-01)
     updateUI();
 }
 
@@ -677,6 +714,7 @@ function stopListeners() {
   }
   unsubOtp = null;
   unsubStatus = null;
+  state.isConnecting = false; // P1-4: Reset connecting state
 }
 
 // ─── GLOBAL INIT ────────────────────────────────────────────────
@@ -720,9 +758,9 @@ onAuthStateChanged(auth, async (user) => {
     // Update local state with the fetched pairing data
     if (pairedDeviceId && secret) {
       state.pairedDeviceId = pairedDeviceId;
-      state.secret = secret;
+      state.secret = secret; // In-memory only (V-01)
       localStorage.setItem('pairedDeviceId', pairedDeviceId);
-      localStorage.setItem('secret', secret);
+      // Security (V-01): Do NOT persist secret to localStorage
       startListeners();
     }
 
@@ -730,6 +768,7 @@ onAuthStateChanged(auth, async (user) => {
     updateUI();
 
     // Always broadcast to extension content script (handles both fresh sign-in and existing session)
+    // Fix V-02: Use own origin instead of '*'
     window.postMessage({
       source: 'pinbridge-web',
       action: 'LOGIN_SUCCESS',
@@ -737,7 +776,7 @@ onAuthStateChanged(auth, async (user) => {
       email: user.email,
       pairedDeviceId,
       secret
-    }, '*');
+    }, window.location.origin);
 
     // Listen for future pairing changes
     listenToCloudSync(user.uid);

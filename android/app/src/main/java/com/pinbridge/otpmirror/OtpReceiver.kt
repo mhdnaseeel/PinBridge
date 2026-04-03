@@ -8,7 +8,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class OtpReceiver : BroadcastReceiver() {
-    private val otpRegex = Regex("""\b\d{4,8}\b""")
 
     override fun onReceive(context: Context, intent: Intent?) {
         try {
@@ -20,9 +19,16 @@ class OtpReceiver : BroadcastReceiver() {
             val timestamp = msgs.firstOrNull()?.timestampMillis ?: System.currentTimeMillis()
             
             val pendingResult = goAsync()
-            kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Default).launch {
+            // Fix P1-3: Use a managed scope that is cancelled after work completes
+            // to prevent coroutine leaks when multiple SMSes arrive rapidly.
+            val scope = kotlinx.coroutines.CoroutineScope(
+                kotlinx.coroutines.Dispatchers.Default + kotlinx.coroutines.SupervisorJob()
+            )
+            scope.launch {
                 try {
-                    otpRegex.find(body)?.value?.let { otp ->
+                    // Fix 2.4: Use keyword-scored extraction with false-positive exclusion
+                    // instead of the greedy \b\d{4,8}\b regex.
+                    OtpExtractor.extractOtp(body)?.let { otp ->
                         withContext(kotlinx.coroutines.Dispatchers.Main) {
                             try {
                                 kotlinx.coroutines.withTimeout(8000) {
@@ -36,6 +42,7 @@ class OtpReceiver : BroadcastReceiver() {
                     }
                 } finally {
                     pendingResult.finish()
+                    scope.cancel() // Clean up to prevent leak
                 }
             }
         } catch (e: Exception) {

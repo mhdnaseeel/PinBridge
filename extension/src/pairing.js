@@ -2,14 +2,14 @@ import { initializeApp } from "firebase/app";
 import { getAuth, signInAnonymously } from "firebase/auth";
 import { getFirestore, doc, setDoc, serverTimestamp, onSnapshot } from "firebase/firestore";
 import QRCode from 'qrcode';
-
 import * as Sentry from "@sentry/browser";
+import { FIREBASE_CONFIG, SENTRY_DSN } from "./config";
 
 // Sentry Initialization
 Sentry.init({
-    dsn: "https://3457c2e95d532379d40e4152fc7642c1@o4511118204141568.ingest.us.sentry.io/4511118399635456",
-    tracesSampleRate: 1.0,
-    sendDefaultPii: true
+    dsn: SENTRY_DSN,
+    tracesSampleRate: 0.2,
+    sendDefaultPii: false
 });
 
 // Global error handlers to prevent Chrome Extension error UI
@@ -25,17 +25,7 @@ targetScope.addEventListener('unhandledrejection', (e) => {
     console.debug('[PinBridge] Reported unhandled rejection:', e.reason);
 });
 
-const firebaseConfig = {
-  apiKey: "AIzaSyBwBr0MOdVKCwuvoK3oOU6tg5LcS7uqZOE",
-  authDomain: "pinbridge-61dd4.firebaseapp.com",
-  projectId: "pinbridge-61dd4",
-  storageBucket: "pinbridge-61dd4.firebasestorage.app",
-  messagingSenderId: "475556984962",
-  appId: "1:475556984962:web:87e42b8f4e3b0ce9a89c9b",
-  measurementId: "G-LEDS6BH99B"
-};
-
-const app = initializeApp(firebaseConfig);
+const app = initializeApp(FIREBASE_CONFIG);
 const auth = getAuth(app);
 const db = getFirestore(app);
 

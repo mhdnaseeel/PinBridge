@@ -19,6 +19,8 @@ jobs:
           cache: gradle
       - name: Build with Gradle
         run: cd android && ./gradlew build
+      - name: Run unit tests
+        run: cd android && ./gradlew test
 
   functions:
     runs-on: ubuntu-latest
@@ -46,5 +48,50 @@ jobs:
           node-version: 18
       - name: Install dependencies
         run: cd extension && npm install
+      - name: Build extension
+        run: cd extension && npm run build
       - name: Run tests
         run: cd extension && npm test
+
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - name: Install dependencies
+        run: cd web && npm install
+      - name: Build web dashboard
+        run: cd web && npm run build
+
+  server:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - name: Install dependencies
+        run: cd server && npm install
+      - name: Validate server syntax
+        run: cd server && node -e "try { require('./instrument.js'); console.log('Server modules OK'); } catch(e) { console.error(e); process.exit(1); }"
+      - name: Run tests
+        run: cd server && npm test
+
+  security-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Secret scanning with Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Dependency audit - Extension
+        run: cd extension && npm install && npm audit --audit-level=high || true
+      - name: Dependency audit - Server
+        run: cd server && npm install && npm audit --audit-level=high || true
+      - name: Dependency audit - Web
+        run: cd web && npm install && npm audit --audit-level=high || true

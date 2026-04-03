@@ -123,29 +123,9 @@ class PairingRepositoryImpl constructor(
             // Validate Google account match
             val pairingDoc = db.collection(Constants.COLL_PAIRINGS).document(deviceId).get().await()
             val extensionGoogleUid = pairingDoc.getString("googleUid")
-            val myGoogleUid = auth.currentUser?.uid
-            // Check if there's a Google-signed-in user (non-anonymous) — use the Google UID for matching
-            val googleUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
-            val isGoogleSignedIn = googleUser != null && googleUser.isAnonymous == false
-            if (extensionGoogleUid != null && isGoogleSignedIn && extensionGoogleUid != googleUser?.uid) {
-                throw Exception("Account mismatch. The extension is signed in with a different Google account. Please use the same account on both devices.")
-            }
+            validateGoogleAccountMatch(extensionGoogleUid)
 
-            // Mark as paired in Firestore
-            val pairingData = hashMapOf(
-                "paired" to true,
-                "pairedAt" to com.google.firebase.firestore.FieldValue.serverTimestamp(),
-                "secret" to secret
-            )
-            db.collection(Constants.COLL_PAIRINGS).document(deviceId)
-                .set(pairingData, com.google.firebase.firestore.SetOptions.merge())
-                .await()
-            
-            saveCredentials(deviceId, secret)
-            syncPairingToCloud(deviceId, secret)
-            startStatusListener()
-            // Start heartbeat service
-            DeviceHeartbeatService.start(context, deviceId)
+            completePairing(deviceId, secret)
             Log.i(TAG, "Paired via QR successfully – DeviceID = $deviceId")
         } catch (e: Exception) {
             Log.e(TAG, "QR Pairing failed", e)
@@ -176,32 +156,58 @@ class PairingRepositoryImpl constructor(
 
             // Validate Google account match
             val extensionGoogleUid = doc.getString("googleUid")
-            val googleUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
-            val isGoogleSignedIn = googleUser != null && googleUser.isAnonymous == false
-            if (extensionGoogleUid != null && isGoogleSignedIn && extensionGoogleUid != googleUser?.uid) {
-                throw Exception("Account mismatch. The extension is signed in with a different Google account. Please use the same account on both devices.")
-            }
- 
-            // Mark as paired in Firestore
-            val pairingData = hashMapOf(
-                "paired" to true,
-                "pairedAt" to com.google.firebase.firestore.FieldValue.serverTimestamp(),
-                "secret" to secret
-            )
-            db.collection(Constants.COLL_PAIRINGS).document(deviceId)
-                .set(pairingData, com.google.firebase.firestore.SetOptions.merge())
-                .await()
+            validateGoogleAccountMatch(extensionGoogleUid)
 
-            saveCredentials(deviceId, secret)
-            syncPairingToCloud(deviceId, secret)
-            startStatusListener()
-            // Start heartbeat service
-            DeviceHeartbeatService.start(context, deviceId)
+            completePairing(deviceId, secret)
             Log.i(TAG, "Code pairing successfully – DeviceID = $deviceId")
         } catch (e: Exception) {
             Log.e(TAG, "Code pairing failed", e)
             throw e
         }
+    }
+
+    /**
+     * Validates that the current Firebase user's Google UID matches the extension's UID.
+     * Throws if there's a mismatch.
+     */
+    private fun validateGoogleAccountMatch(extensionGoogleUid: String?) {
+        val googleUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
+        val isGoogleSignedIn = googleUser != null && googleUser.isAnonymous == false
+        if (extensionGoogleUid != null && isGoogleSignedIn && extensionGoogleUid != googleUser?.uid) {
+            throw Exception("Account mismatch. The extension is signed in with a different Google account. Please use the same account on both devices.")
+        }
+    }
+
+    /**
+     * Shared pairing completion logic used by both pairWithQr and pairWithCode.
+     * Writes pairing data to Firestore, saves credentials locally, syncs to cloud,
+     * starts the status listener, and starts the heartbeat service.
+     */
+    private suspend fun completePairing(deviceId: String, secret: String) {
+        val pairingData = hashMapOf(
+            "paired" to true,
+            "pairedAt" to com.google.firebase.firestore.FieldValue.serverTimestamp(),
+            "secret" to secret
+        )
+        db.collection(Constants.COLL_PAIRINGS).document(deviceId)
+            .set(pairingData, com.google.firebase.firestore.SetOptions.merge())
+            .await()
+
+        // Security (V-19): Remove secret from Firestore after both sides have it.
+        // The secret should only exist in local encrypted storage, not in the database.
+        try {
+            db.collection(Constants.COLL_PAIRINGS).document(deviceId)
+                .update("secret", com.google.firebase.firestore.FieldValue.delete())
+                .await()
+            Log.i(TAG, "Secret removed from Firestore pairing document (V-19)")
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to remove secret from Firestore (non-critical)", e)
+        }
+
+        saveCredentials(deviceId, secret)
+        syncPairingToCloud(deviceId, secret)
+        startStatusListener()
+        DeviceHeartbeatService.start(context, deviceId)
     }
 
     override suspend fun unpair() {

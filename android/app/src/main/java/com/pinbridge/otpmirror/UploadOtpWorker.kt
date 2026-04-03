@@ -49,6 +49,7 @@ class UploadOtpWorker @AssistedInject constructor(
                     "sender" to (inputData.getString("sender") ?: "Unknown"),
                     "ts"  to FieldValue.serverTimestamp(),
                     "smsTs" to smsTs,
+                    "uploaderUid" to (auth.currentUser?.uid ?: ""),
                     "expiresAt" to com.google.firebase.Timestamp(
                         java.util.Date(System.currentTimeMillis() + 10 * 60 * 1000)
                     )

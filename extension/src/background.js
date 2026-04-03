@@ -4,17 +4,15 @@ import { getFirestore, doc, onSnapshot, deleteDoc, updateDoc, setDoc, serverTime
 import { decryptOtp } from "./crypto";
 import { io } from "socket.io-client";
 import * as Sentry from "@sentry/browser";
+import { FIREBASE_CONFIG, SENTRY_DSN, SOCKET_SERVER_URL, GOOGLE_CLIENT_ID } from "./config";
 
 // Sentry Initialization
 Sentry.init({
-    dsn: "https://3457c2e95d532379d40e4152fc7642c1@o4511118204141568.ingest.us.sentry.io/4511118399635456",
-    tracesSampleRate: 1.0,
-    sendDefaultPii: true
+    dsn: SENTRY_DSN,
+    tracesSampleRate: 0.2,
+    sendDefaultPii: false
 });
 
-
-const SOCKET_SERVER_URL = "https://pinbridge-presence.onrender.com";
-let socket = null;
 
 // Global error handlers to capture and report errors to Sentry
 self.addEventListener('error', (e) => {
@@ -33,23 +31,12 @@ try {
   // sidePanel API may not be available during service worker restart
 }
 
-const firebaseConfig = {
-  apiKey: "AIzaSyBwBr0MOdVKCwuvoK3oOU6tg5LcS7uqZOE",
-  authDomain: "pinbridge-61dd4.firebaseapp.com",
-  projectId: "pinbridge-61dd4",
-  storageBucket: "pinbridge-61dd4.firebasestorage.app",
-  messagingSenderId: "475556984962",
-  appId: "1:475556984962:web:87e42b8f4e3b0ce9a89c9b",
-  measurementId: "G-LEDS6BH99B"
-};
-
-const app = initializeApp(firebaseConfig);
+const app = initializeApp(FIREBASE_CONFIG);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
 let unsubscribePairing = null;
 let unsubscribeOtp = null;
-let unsubscribeStatus = null;
 let isSigningOut = false;
 
 function safeSendMessage(message) {
@@ -125,10 +112,9 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
 async function handleGoogleSignIn(sendResponse) {
   try {
-    const clientId = "475556984962-jekqarbki0ob5s1una398poptimup0eq.apps.googleusercontent.com";
     const redirectUri = chrome.identity.getRedirectURL();
     const scopes = encodeURIComponent("profile email");
-    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&response_type=id_token%20token&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scopes}&nonce=${Math.random().toString(36).substring(2)}`;
+    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GOOGLE_CLIENT_ID}&response_type=id_token%20token&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scopes}&nonce=${Math.random().toString(36).substring(2)}`;
 
     chrome.identity.launchWebAuthFlow({
       url: authUrl,
@@ -279,9 +265,8 @@ async function performSignOutOnly() {
   }
 }
 
-async function performUnpairOnly() {
-  // Remove pairing data from Firestore and local storage, but keep Firebase Auth session
-  const { pairedDeviceId, googleUid } = await chrome.storage.local.get(['pairedDeviceId', 'googleUid']);
+// ─── Shared cleanup logic for unpair and sign-out ──────────────
+async function cleanupFirestorePairing(pairedDeviceId, googleUid) {
   try {
     if (pairedDeviceId) {
       console.log('[PinBridge] Cleaning up Firestore pairing for:', pairedDeviceId);
@@ -290,13 +275,19 @@ async function performUnpairOnly() {
         deleteDoc(doc(db, 'otps', pairedDeviceId))
       ]).catch(e => console.warn('[PinBridge] Partial Firestore cleanup:', e));
     }
-    // Also clean up cloud sync doc so web dashboard reflects the unpaired state
     if (googleUid) {
       await deleteDoc(doc(db, 'users', googleUid, 'mirroring', 'active'))
         .catch(e => console.warn('[PinBridge] Cloud sync cleanup:', e));
     }
   } catch (err) {
-    console.error('[PinBridge] Unpair cleanup failed:', err);
+    console.error('[PinBridge] Firestore cleanup failed:', err);
+  }
+}
+
+async function performUnpairOnly() {
+  const { pairedDeviceId, googleUid } = await chrome.storage.local.get(['pairedDeviceId', 'googleUid']);
+  try {
+    await cleanupFirestorePairing(pairedDeviceId, googleUid);
   } finally {
     await chrome.storage.local.remove(['pairedDeviceId', 'secret', 'latestOtp', 'isOnline', 'batteryLevel', 'isCharging']);
     stopListeners();
@@ -312,20 +303,7 @@ async function performSignOut() {
   
   const { pairedDeviceId, googleUid } = await chrome.storage.local.get(['pairedDeviceId', 'googleUid']);
   try {
-    if (pairedDeviceId) {
-      console.log('[PinBridge] Cleaning up Firestore for:', pairedDeviceId);
-      await Promise.all([
-        deleteDoc(doc(db, 'pairings', pairedDeviceId)),
-        deleteDoc(doc(db, 'otps', pairedDeviceId))
-      ]).catch(e => console.warn('[PinBridge] Partial Firestore cleanup:', e));
-    }
-    // Also clean up cloud sync doc
-    if (googleUid) {
-      await deleteDoc(doc(db, 'users', googleUid, 'mirroring', 'active'))
-        .catch(e => console.warn('[PinBridge] Cloud sync cleanup:', e));
-    }
-  } catch (err) {
-    console.error('[PinBridge] Sign out cleanup failed:', err);
+    await cleanupFirestorePairing(pairedDeviceId, googleUid);
   } finally {
     await signOut(auth).catch(() => {});
     await chrome.storage.local.remove(['pairedDeviceId', 'secret', 'latestOtp', 'googleUid', 'googleEmail']);
@@ -343,13 +321,14 @@ async function performSignOut() {
 function stopListeners() {
     if (unsubscribePairing) { unsubscribePairing(); unsubscribePairing = null; }
     if (unsubscribeOtp) { unsubscribeOtp(); unsubscribeOtp = null; }
-    if (unsubscribeStatus) { unsubscribeStatus(); unsubscribeStatus = null; }
     if (socket) {
         console.log('[PinBridge] Disconnecting socket...');
         socket.disconnect();
         socket = null;
     }
 }
+
+let socket = null;
 
 function startListeners(deviceId) {
   if (!deviceId) return;
@@ -361,7 +340,12 @@ function startListeners(deviceId) {
       auth: async (cb) => {
         const token = auth.currentUser ? await auth.currentUser.getIdToken() : null;
         cb({ token, deviceId, clientType: "viewer" });
-      }
+      },
+      // Fix P0-2: Enable automatic reconnection with exponential backoff
+      reconnection: true,
+      reconnectionAttempts: Infinity,
+      reconnectionDelay: 3000,
+      reconnectionDelayMax: 60000
     });
 
     socket.on('connect', () => console.log('[PinBridge] Socket connected to presence server'));
@@ -370,6 +354,11 @@ function startListeners(deviceId) {
       if (data.deviceId === deviceId) {
         validatePresence(data.status === 'online', data.lastSeen, data.batteryLevel, data.isCharging);
       }
+    });
+
+    socket.on('disconnect', (reason) => {
+      console.warn('[PinBridge] Socket disconnected:', reason);
+      // Socket.IO handles reconnection automatically with above config
     });
 
     socket.on('connect_error', (err) => {
@@ -400,29 +389,25 @@ function startListeners(deviceId) {
       safeSendMessage({ type: 'statusUpdate', online: effectiveOnline, lastSeen, isStale, batteryLevel: batteryLevel != null ? batteryLevel : undefined, isCharging: !!isCharging });
   }
 
-  // 2. Status Listener (Firestore) - Reliable source of truth
-  // No local deduplication — service worker restarts clear JS state,
-  // so we always propagate what Firestore says.
-  unsubscribeStatus = onSnapshot(doc(db, 'pairings', deviceId), snap => {
+  // 2. SINGLE Firestore listener for both status + pairing state (Fix W-5)
+  // Replaces the previous two separate onSnapshot listeners.
+  unsubscribePairing = onSnapshot(doc(db, 'pairings', deviceId), snap => {
     const data = snap.data();
-    if (!data) return;
-    
-    const online = data.status === 'online';
-    const lastSeen = data.lastOnline ? (data.lastOnline.toMillis ? data.lastOnline.toMillis() : data.lastOnline) : null;
-    const batteryLevel = data.batteryLevel != null ? data.batteryLevel : null;
-    const isCharging = !!data.isCharging;
-    
-    console.log(`[PinBridge] Firestore status update: ${online ? 'online' : 'offline'}, lastSeen: ${lastSeen}, battery: ${batteryLevel}%`);
-    validatePresence(online, lastSeen, batteryLevel, isCharging);
-  });
 
-  // 3. Pairing Listener – handles unpairing logic
-  unsubscribePairing = onSnapshot(doc(db, 'pairings', deviceId), async snap => {
-    const data = snap.data();
+    // Unpair detection: document deleted or paired === false
     if (!data || data.paired === false) {
       performUnpairOnly();
       return;
     }
+
+    // Status update: online/offline + battery
+    const online = data.status === 'online';
+    const lastSeen = data.lastOnline ? (data.lastOnline.toMillis ? data.lastOnline.toMillis() : data.lastOnline) : null;
+    const batteryLevel = data.batteryLevel != null ? data.batteryLevel : null;
+    const isCharging = !!data.isCharging;
+
+    console.log(`[PinBridge] Firestore status update: ${online ? 'online' : 'offline'}, lastSeen: ${lastSeen}, battery: ${batteryLevel}%`);
+    validatePresence(online, lastSeen, batteryLevel, isCharging);
   }, err => {
     if (err.code === 'permission-denied') performUnpairOnly();
   });
@@ -438,20 +423,31 @@ function startListeners(deviceId) {
 }
 
 async function processNewOtp(data) {
-    const { secret } = await chrome.storage.local.get(['secret']);
+    const { secret, latestOtp } = await chrome.storage.local.get(['secret', 'latestOtp']);
     if (!secret) return;
+
+    // Fix P0-1: Deduplicate OTPs by comparing upload timestamps.
+    // Without this, every Firestore snapshot (including initial cache reads)
+    // triggers a decrypt + notification of the same OTP.
+    const uploadTs = data.ts && typeof data.ts.toMillis === 'function' ? data.ts.toMillis() : Date.now();
+    const lastProcessedTs = latestOtp?.uploadTs || 0;
+    if (uploadTs <= lastProcessedTs) {
+        console.log(`[PinBridge] Skipping already-processed OTP (uploadTs: ${uploadTs} <= last: ${lastProcessedTs})`);
+        return;
+    }
 
     try {
         const decrypted = await decryptOtp(data, secret);
         const tsFromDb = data.smsTs || (data.ts && typeof data.ts.toMillis === 'function' ? data.ts.toMillis() : Date.now());
-        const uploadTs = data.ts && typeof data.ts.toMillis === 'function' ? data.ts.toMillis() : Date.now();
         chrome.storage.local.set({latestOtp: {otp: decrypted, ts: tsFromDb, uploadTs}});
         
+        // Fix V-06: Do not show the OTP in the notification.
+        // Notifications are visible on lock screens and in OS notification centers.
         chrome.notifications.create({
           type: 'basic',
           iconUrl: '/icons/128.png',
-          title: 'New OTP Received',
-          message: `Your OTP is: ${decrypted}`,
+          title: 'PinBridge',
+          message: 'New verification code received. Click to view.',
           priority: 2
         });
         

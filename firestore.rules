@@ -2,10 +2,22 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     match /pairings/{deviceId} {
-      allow read, write: if request.auth != null;
+      // Allow any authenticated user to create a new pairing session
+      allow create: if request.auth != null;
+      // Read/update/delete only if the caller's UID matches the document's googleUid,
+      // OR if the document has no googleUid set yet (initial anonymous pairing setup)
+      allow read, update, delete: if request.auth != null 
+        && (resource.data.googleUid == request.auth.uid 
+            || !resource.data.keys().hasAny(['googleUid']));
     }
     match /otps/{deviceId} {
-      allow read, write: if request.auth != null;
+      // OTP docs contain AES-256-GCM encrypted ciphertext only — no plaintext secrets.
+      // Write: any authenticated user (the Android app writes from its anonymous UID)
+      allow write: if request.auth != null;
+      // Read: only the uploader can read, OR legacy docs without uploaderUid field (V-13)
+      allow read: if request.auth != null
+        && (resource.data.uploaderUid == request.auth.uid
+            || !resource.data.keys().hasAny(['uploaderUid']));
     }
     match /users/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
