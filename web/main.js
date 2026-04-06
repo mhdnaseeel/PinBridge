@@ -759,9 +759,9 @@ function stopListeners() {
   unsubStatus = null;
 }
 
-// Re-evaluate online/offline every 5 seconds based on lastSeen
+// Re-evaluate online/offline every 5 seconds
 setInterval(() => {
-  if (state.pairedDeviceId && state.lastSeen > 0) {
+  if (state.pairedDeviceId && (state.lastSeen > 0 || state.serverStatus)) {
     updateUI();
   }
 }, 5000);
