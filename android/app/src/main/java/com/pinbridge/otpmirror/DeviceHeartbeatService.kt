@@ -30,7 +30,6 @@ import kotlinx.coroutines.tasks.await
 import org.json.JSONObject
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FieldValue
-import com.google.firebase.firestore.SetOptions
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -234,10 +233,11 @@ class DeviceHeartbeatService : Service() {
     }
 
     private var heartbeatJob: Job? = null
+    private var firestoreHeartbeatJob: Job? = null
+
     private fun startHeartbeatLoop() {
         Log.d(TAG, "Starting heartbeat loop (15s interval)")
         heartbeatJob?.cancel()
-        val db = FirebaseFirestore.getInstance()
         heartbeatJob = scope.launch {
             while (isActive && socket?.connected() == true) {
                 // Acquire WakeLock briefly for emission, release immediately after (PERF-5)
@@ -250,19 +250,6 @@ class DeviceHeartbeatService : Service() {
                     }
                     Log.v(TAG, "Emitting heartbeat with battery: level=$level, charging=$charging")
                     socket?.emit("heartbeat", payload)
-                    
-                    // Directly write to Firestore as single source of truth
-                    deviceId?.let { id ->
-                        val updateData = hashMapOf(
-                            "lastOnline" to FieldValue.serverTimestamp(),
-                            "status" to "online",
-                            "batteryLevel" to level,
-                            "isCharging" to charging,
-                            "batteryUpdatedAt" to FieldValue.serverTimestamp()
-                        )
-                        db.collection(Constants.COLL_PAIRINGS).document(id)
-                            .set(updateData, SetOptions.merge())
-                    }
                 } catch (e: Exception) {
                     Log.w(TAG, "Failed to read battery info or emit heartbeat", e)
                     socket?.emit("heartbeat")
@@ -273,6 +260,45 @@ class DeviceHeartbeatService : Service() {
             }
             Log.d(TAG, "Heartbeat loop stopped (socket disconnected or job cancelled)")
         }
+    }
+
+    /**
+     * Independent Firestore heartbeat: writes lastOnline + battery directly to Firestore
+     * every 15 seconds regardless of socket connection state. This ensures the extension
+     * never sees false "Offline" during socket reconnection gaps (Render cold starts, etc).
+     */
+    private fun startFirestoreHeartbeat() {
+        firestoreHeartbeatJob?.cancel()
+        val fsDb = FirebaseFirestore.getInstance()
+        firestoreHeartbeatJob = scope.launch {
+            while (isActive) {
+                val id = deviceId
+                if (id != null && isInternetAvailable()) {
+                    try {
+                        val (level, charging) = getBatteryInfo()
+                        val updateData = hashMapOf<String, Any>(
+                            "lastOnline" to FieldValue.serverTimestamp(),
+                            "status" to "online",
+                            "batteryLevel" to level,
+                            "isCharging" to charging,
+                            "batteryUpdatedAt" to FieldValue.serverTimestamp()
+                        )
+                        fsDb.collection(Constants.COLL_PAIRINGS).document(id)
+                            .update(updateData)
+                        Log.v(TAG, "Firestore heartbeat written: battery=$level, charging=$charging")
+                    } catch (e: Exception) {
+                        // Document may not exist (unpaired) — non-critical
+                        Log.w(TAG, "Firestore heartbeat write failed (may be unpaired)", e)
+                    }
+                }
+                delay(15000)
+            }
+        }
+    }
+
+    private fun stopFirestoreHeartbeat() {
+        firestoreHeartbeatJob?.cancel()
+        firestoreHeartbeatJob = null
     }
 
     private fun disconnectSocket() {
@@ -294,6 +320,7 @@ class DeviceHeartbeatService : Service() {
         override fun onLost(network: Network) {
             Log.d(TAG, "Network lost - Disconnecting socket")
             disconnectSocket()
+            stopFirestoreHeartbeat()
         }
     }
 
@@ -348,6 +375,9 @@ class DeviceHeartbeatService : Service() {
             return START_NOT_STICKY
         }
 
+        // Start Firestore heartbeat unconditionally — it runs even when socket is down
+        startFirestoreHeartbeat()
+
         if (isInternetAvailable()) {
             connectSocket()
         }
@@ -390,6 +420,7 @@ class DeviceHeartbeatService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         disconnectSocket()
+        stopFirestoreHeartbeat()
         releaseWakeLock()
         // Cancel the detached notification so it doesn't linger after service stops
         val nm = getSystemService(NotificationManager::class.java)
