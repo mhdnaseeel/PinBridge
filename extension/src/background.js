@@ -38,6 +38,7 @@ const db = getFirestore(app);
 let unsubscribePairing = null;
 let unsubscribeOtp = null;
 let isSigningOut = false;
+let pairingPending = false; // FIX: Track when pairing is in progress to prevent premature unpair
 
 function safeSendMessage(message) {
   try {
@@ -47,9 +48,15 @@ function safeSendMessage(message) {
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.type === 'pair') {
-    signInAnonymously(auth)
-      .then(async () => {
-        chrome.storage.local.set({ pairedDeviceId: msg.deviceId, secret: msg.secret });
+    const performPairing = async () => {
+        if (!auth.currentUser) {
+            console.log('[PinBridge] No active session during pairing message, signing in anonymously...');
+            await signInAnonymously(auth);
+        }
+        // FIX: pairedDeviceId is already saved by pairing.js after confirmation.
+        // Ensure it's set in storage (may already be there from pairing.js)
+        await chrome.storage.local.set({ pairedDeviceId: msg.deviceId, secret: msg.secret });
+        pairingPending = false; // Pairing is now confirmed
         startListeners(msg.deviceId);
         safeSendMessage({ type: 'paired', deviceId: msg.deviceId, isOnline: true });
 
@@ -69,8 +76,13 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         }
 
         sendResponse({status: 'paired'});
-      })
-      .catch(err => sendResponse({status: 'error', error: err.message}));
+    };
+
+    performPairing().catch(err => {
+        console.error('[PinBridge] Pairing execution failed:', err);
+        pairingPending = false;
+        sendResponse({status: 'error', error: err.message});
+    });
     return true;
   } else if (msg.type === 'getStatus') {
     chrome.storage.local.get(['pairedDeviceId', 'isOnline', 'lastSeen', 'batteryLevel', 'isCharging'], ({pairedDeviceId, isOnline, lastSeen, batteryLevel, isCharging}) => {
@@ -394,9 +406,25 @@ function startListeners(deviceId) {
   unsubscribePairing = onSnapshot(doc(db, 'pairings', deviceId), snap => {
     const data = snap.data();
 
-    // Unpair detection: document deleted or paired === false
-    if (!data || data.paired === false) {
+    // Unpair detection: document deleted
+    if (!data) {
+      console.log('[PinBridge] Pairing document deleted. Unpairing...');
       performUnpairOnly();
+      return;
+    }
+
+    // FIX: paired:false means pairing is in progress (set by pairing.js initially).
+    // Only treat it as an unpair if we were PREVIOUSLY paired (not during initial setup).
+    // During active pairing flow, pairingPending is true, so skip this check.
+    if (data.paired === false && !pairingPending) {
+      // Check if we were previously confirmed as paired
+      chrome.storage.local.get(['pairedDeviceId'], ({ pairedDeviceId }) => {
+        if (pairedDeviceId === deviceId) {
+          console.log('[PinBridge] Pairing explicitly revoked (paired set to false). Unpairing...');
+          performUnpairOnly();
+        }
+        // else: This is the initial pairing doc creation — ignore
+      });
       return;
     }
 
@@ -409,7 +437,15 @@ function startListeners(deviceId) {
     console.log(`[PinBridge] Firestore status update: ${online ? 'online' : 'offline'}, lastSeen: ${lastSeen}, battery: ${batteryLevel}%`);
     validatePresence(online, lastSeen, batteryLevel, isCharging);
   }, err => {
-    if (err.code === 'permission-denied') performUnpairOnly();
+    // FIX: Don't unpair on permission-denied if pairing is still in progress
+    if (err.code === 'permission-denied') {
+      if (pairingPending) {
+        console.warn('[PinBridge] Permission denied during active pairing — ignoring (pairing in progress).');
+      } else {
+        console.warn('[PinBridge] Permission denied on pairing listener. Unpairing.');
+        performUnpairOnly();
+      }
+    }
   });
 
   // 3. OTP Listener
@@ -418,7 +454,13 @@ function startListeners(deviceId) {
     if (!data) return;
     processNewOtp(data);
   }, err => {
-    if (err.code === 'permission-denied') performUnpairOnly();
+    if (err.code === 'permission-denied') {
+      if (pairingPending) {
+        console.warn('[PinBridge] OTP permission denied during active pairing — ignoring.');
+      } else {
+        performUnpairOnly();
+      }
+    }
   });
 }
 
@@ -470,6 +512,23 @@ chrome.runtime.onInstalled.addListener(() => {
           startListeners(pairedDeviceId);
       }
     });
+});
+
+// FIX: Listen for pairing-in-progress flag from session storage
+// This prevents the background from interfering with an active pairing flow
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === 'session' && changes.pairingInProgress) {
+    pairingPending = !!changes.pairingInProgress.newValue;
+    console.log(`[PinBridge] Pairing pending state changed: ${pairingPending}`);
+  }
+});
+
+// Check on startup if a pairing was left in progress
+chrome.storage.session.get(['pairingInProgress'], (data) => {
+  if (data.pairingInProgress) {
+    pairingPending = true;
+    console.log('[PinBridge] Pairing was in progress on startup.');
+  }
 });
 
 onAuthStateChanged(auth, user => {

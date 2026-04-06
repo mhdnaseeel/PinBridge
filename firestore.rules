@@ -4,9 +4,14 @@ service cloud.firestore {
     match /pairings/{deviceId} {
       // Allow any authenticated user to create a new pairing session
       allow create: if request.auth != null;
-      // Read/update/delete only if the caller's UID matches the document's googleUid,
-      // OR if the document has no googleUid set yet (initial anonymous pairing setup)
-      allow read, update, delete: if request.auth != null 
+      // Read/update if the caller's UID matches the document's googleUid,
+      // OR if the document has no googleUid set yet,
+      // OR if the document is NOT yet paired (allows the mobile app to check-in).
+      allow read, update: if request.auth != null 
+        && (resource.data.googleUid == request.auth.uid 
+            || !resource.data.keys().hasAny(['googleUid'])
+            || resource.data.paired != true);
+      allow delete: if request.auth != null 
         && (resource.data.googleUid == request.auth.uid 
             || !resource.data.keys().hasAny(['googleUid']));
     }
@@ -14,9 +19,10 @@ service cloud.firestore {
       // OTP docs contain AES-256-GCM encrypted ciphertext only — no plaintext secrets.
       // Write: any authenticated user (the Android app writes from its anonymous UID)
       allow write: if request.auth != null;
-      // Read: only the uploader can read, OR legacy docs without uploaderUid field (V-13)
+      // Read: only the uploader can read, OR the owner of the pairing (from pairings doc), OR legacy docs without uploaderUid field (V-13)
       allow read: if request.auth != null
         && (resource.data.uploaderUid == request.auth.uid
+            || get(/databases/$(database)/documents/pairings/$(deviceId)).data.googleUid == request.auth.uid
             || !resource.data.keys().hasAny(['uploaderUid']));
     }
     match /users/{userId} {

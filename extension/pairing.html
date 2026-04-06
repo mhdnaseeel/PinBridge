@@ -109,6 +109,81 @@
     button:active {
       transform: translateY(0);
     }
+
+    /* Status area */
+    .status-area {
+      margin-top: 24px;
+      padding: 16px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 500;
+      line-height: 1.5;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.3s ease;
+    }
+
+    .status-waiting {
+      background: #eef2ff;
+      color: #4338ca;
+      border: 1px solid #c7d2fe;
+    }
+
+    .status-error {
+      background: #fef2f2;
+      color: #b91c1c;
+      border: 1px solid #fecaca;
+    }
+
+    .status-success {
+      background: #f0fdf4;
+      color: #15803d;
+      border: 1px solid #bbf7d0;
+    }
+
+    .status-icon {
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .status-text {
+      flex: 1;
+    }
+
+    .countdown {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 16px;
+      text-align: center;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .pulse {
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    .retry-btn {
+      margin-top: 12px;
+      width: 100%;
+      padding: 10px;
+      background: #ef4444;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .retry-btn:hover {
+      background: #dc2626;
+    }
   </style>
 </head>
 <body>
@@ -124,6 +199,12 @@
     </div>
     
     <button id="copyBtn">Copy Connection Code</button>
+
+    <div id="statusArea" class="status-area status-waiting">
+      <span class="status-icon pulse">⏳</span>
+      <span id="statusText" class="status-text">Waiting for your phone to scan the QR code...</span>
+    </div>
+    <div id="countdown" class="countdown"></div>
   </div>
 
   <script src="dist/pairing.js"></script>

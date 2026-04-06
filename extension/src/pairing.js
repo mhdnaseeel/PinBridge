@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getAuth, signInAnonymously } from "firebase/auth";
+import { getAuth, signInAnonymously, onAuthStateChanged } from "firebase/auth";
 import { getFirestore, doc, setDoc, serverTimestamp, onSnapshot } from "firebase/firestore";
 import QRCode from 'qrcode';
 import * as Sentry from "@sentry/browser";
@@ -29,15 +29,91 @@ const app = initializeApp(FIREBASE_CONFIG);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
+// ─── Status UI helpers ─────────────────────────────────────────
+const statusArea = () => document.getElementById('statusArea');
+const statusText = () => document.getElementById('statusText');
+const countdownEl = () => document.getElementById('countdown');
+
+function setStatus(type, icon, message, showRetry = false) {
+  const area = statusArea();
+  const text = statusText();
+  if (!area || !text) return;
+
+  area.className = `status-area status-${type}`;
+  // Clear existing content
+  area.innerHTML = '';
+  
+  const iconSpan = document.createElement('span');
+  iconSpan.className = `status-icon${type === 'waiting' ? ' pulse' : ''}`;
+  iconSpan.textContent = icon;
+  area.appendChild(iconSpan);
+
+  const textSpan = document.createElement('span');
+  textSpan.className = 'status-text';
+  textSpan.id = 'statusText';
+  textSpan.textContent = message;
+  area.appendChild(textSpan);
+
+  if (showRetry) {
+    const retryBtn = document.createElement('button');
+    retryBtn.className = 'retry-btn';
+    retryBtn.textContent = 'Retry Pairing';
+    retryBtn.onclick = () => window.location.reload();
+    // Append retry button below the status area
+    area.parentElement.appendChild(retryBtn);
+  }
+}
+
+// ─── Countdown timer ───────────────────────────────────────────
+const PAIRING_TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes
+let countdownInterval = null;
+
+function startCountdown(startTime) {
+  if (countdownInterval) clearInterval(countdownInterval);
+  
+  countdownInterval = setInterval(() => {
+    const elapsed = Date.now() - startTime;
+    const remaining = PAIRING_TIMEOUT_MS - elapsed;
+    
+    if (remaining <= 0) {
+      clearInterval(countdownInterval);
+      setStatus('error', '⏰', 'Pairing session expired. Please try again.', true);
+      const cdEl = countdownEl();
+      if (cdEl) cdEl.textContent = '';
+      return;
+    }
+
+    const minutes = Math.floor(remaining / 60000);
+    const seconds = Math.floor((remaining % 60000) / 1000);
+    const cdEl = countdownEl();
+    if (cdEl) cdEl.textContent = `Session expires in ${minutes}:${seconds.toString().padStart(2, '0')}`;
+  }, 1000);
+}
+
+// ─── Main pairing flow ─────────────────────────────────────────
 (async () => {
-  // Ensure we are signed in anonymously
-  try {
-    await signInAnonymously(auth);
-    console.log('[PinBridge] Signed in anonymously');
-  } catch (e) {
-    console.error('[PinBridge] Auth failed:', e);
-    alert('Failed to authenticate. Please check your internet connection.');
-    return;
+  const startTime = Date.now();
+
+  // Use a promise to wait for auth to initialize or change
+  const user = await new Promise((resolve) => {
+    const unsubscribe = onAuthStateChanged(auth, (u) => {
+      unsubscribe();
+      resolve(u);
+    });
+  });
+
+  if (!user) {
+    console.log('[PinBridge] No active session, signing in anonymously for initial setup...');
+    try {
+      await signInAnonymously(auth);
+      console.log('[PinBridge] Signed in anonymously');
+    } catch (e) {
+      console.error('[PinBridge] Auth failed:', e);
+      setStatus('error', '❌', 'Failed to authenticate. Please check your internet connection and try again.', true);
+      return;
+    }
+  } else {
+    console.log('[PinBridge] Using existing session:', user.uid);
   }
 
   const deviceId = crypto.randomUUID();
@@ -53,35 +129,36 @@ const db = getFirestore(app);
   // Read the signed-in Google UID to embed in the pairing session
   const { googleUid } = await chrome.storage.local.get(['googleUid']);
   if (!googleUid) {
-    alert('You must sign in with Google before pairing. Please close this window and sign in first.');
+    setStatus('error', '🔒', 'You must sign in with Google before pairing. Please close this window and sign in first.');
     return;
   }
 
   // 1. Initialize via direct Firestore write (Functionless Spark Plan)
+  //    FIX: Include paired: false explicitly so the state is unambiguous
   try {
     await setDoc(doc(db, 'pairings', deviceId), {
       secret: secretB64,
       pairingCode: pairingCode,
       googleUid: googleUid,
+      paired: false,         // Explicitly false — Android will set to true
       createdAt: serverTimestamp()
     });
     console.log('[PinBridge] Pairing session initialized in Firestore with googleUid:', googleUid);
   } catch (e) {
     console.error('[PinBridge] Failed to initialize pairing session:', e);
-    alert(`Failed to initialize pairing session: ${e.message}\n\nPlease check your Firebase project setup.`);
+    setStatus('error', '❌', `Failed to initialize pairing session: ${e.message}. Please check your Firebase setup.`, true);
     return;
   }
 
-  // 2. Save in local storage for persistence across restarts
-  chrome.storage.local.set({
-    pairedDeviceId: deviceId, // Keep this consistent with what background expects
-    secret: secretB64
-  });
-
-  // Also keep pairingCode in session if needed for the UI during pairing
+  // 2. FIX: Do NOT save pairedDeviceId to chrome.storage.local yet!
+  //    Only save to session storage for temporary use during the pairing flow.
+  //    pairedDeviceId will be saved AFTER the Android app confirms pairing.
+  //    This prevents background.js from starting listeners prematurely.
   chrome.storage.session.set({
     deviceId,
-    pairingCode
+    secret: secretB64,
+    pairingCode,
+    pairingInProgress: true
   });
 
   // 3. Render QR
@@ -103,12 +180,31 @@ const db = getFirestore(app);
     setTimeout(() => btn.textContent = originalText, 2000);
   });
 
-  // 6. Listen for pairing completion
+  // 6. Start countdown
+  startCountdown(startTime);
+
+  // 7. Listen for pairing completion
+  let pairingCompleted = false;
   const unsub = onSnapshot(doc(db, 'pairings', deviceId), (snapshot) => {
     const data = snapshot.data();
-    if (data && data.paired) {
+    if (data && data.paired === true && !pairingCompleted) {
+        pairingCompleted = true;
         console.log('[PinBridge] Pairing confirmed by device!');
         if (typeof unsub === 'function') unsub();
+        if (countdownInterval) clearInterval(countdownInterval);
+
+        // FIX: NOW save pairedDeviceId to chrome.storage.local — pairing is confirmed
+        chrome.storage.local.set({
+          pairedDeviceId: deviceId,
+          secret: secretB64
+        });
+
+        // Clear the session-only pairingInProgress flag
+        chrome.storage.session.remove(['pairingInProgress']);
+
+        setStatus('success', '✅', 'Pairing confirmed! Finalizing connection...');
+        const cdEl = countdownEl();
+        if (cdEl) cdEl.textContent = '';
         
         // Notify background script to finalize pairing
         chrome.runtime.sendMessage({
@@ -116,6 +212,9 @@ const db = getFirestore(app);
             deviceId: deviceId,
             secret: secretB64
         }, (response) => {
+            if (chrome.runtime.lastError) {
+                console.warn('[PinBridge] Background response error:', chrome.runtime.lastError.message);
+            }
             if (response && response.status === 'paired') {
                 // Update UI to show success
                 const container = document.querySelector('.container');
@@ -126,24 +225,44 @@ const db = getFirestore(app);
                     <button id="closeBtn">Close Window</button>
                 `;
                 document.getElementById('closeBtn').onclick = () => window.close();
+
+                // Auto-close after 5 seconds
+                setTimeout(() => {
+                    try { window.close(); } catch (e) {}
+                }, 5000);
+            } else {
+                // Pairing message was sent but background had an issue — still paired in Firestore though
+                setStatus('success', '✅', 'Paired successfully! You can close this window.');
             }
         });
     }
   }, (error) => {
     if (error.code === 'permission-denied') {
-       console.log('[PinBridge] Pairing listener stopped (permission denied, likely signed out).');
+       console.warn('[PinBridge] Pairing listener: permission denied.');
+       // FIX: Do NOT close the window! Show error and let user retry.
+       if (!pairingCompleted) {
+         setStatus('error', '🔒', 'Permission error. You may need to sign in again.', true);
+       }
        if (typeof unsub === 'function') unsub();
-       window.close(); // Close the pairing window automatically
     } else {
        console.error('[PinBridge] Pairing snapshot error:', error);
+       if (!pairingCompleted) {
+         setStatus('error', '⚠️', `Connection error: ${error.message}. Please try again.`, true);
+       }
     }
   });
 
-  // 7. Auto-close if user signs out from popup while this tab is open
+  // 8. FIX: Only listen for explicit unpair actions (e.g. user signed out),
+  //    NOT for pairedDeviceId changes (since we no longer write it prematurely).
   chrome.storage.onChanged.addListener((changes, area) => {
-      if (area === 'local' && changes.pairedDeviceId && !changes.pairedDeviceId.newValue) {
-          if (typeof unsub === 'function') unsub();
-          window.close();
+      // If user signs out (googleUid removed) while pairing page is open, close it
+      if (area === 'local' && changes.googleUid && !changes.googleUid.newValue) {
+          if (!pairingCompleted) {
+            if (typeof unsub === 'function') unsub();
+            if (countdownInterval) clearInterval(countdownInterval);
+            setStatus('error', '🔒', 'You were signed out. Closing...');
+            setTimeout(() => window.close(), 2000);
+          }
       }
   });
 })();
