@@ -161,6 +161,16 @@ io.on('connection', async (socket) => {
             if (batteryLevel !== null) {
                 await redis.set(`battery:${deviceId}`, JSON.stringify({ level: batteryLevel, isCharging }));
             }
+
+            // FIX: Broadcast realtime updates (especially battery/lastSeen) to connected viewers
+            io.to(`room:${deviceId}`).emit('presence_update', {
+                deviceId,
+                status: 'online',
+                lastSeen: now,
+                batteryLevel: batteryLevel,
+                isCharging: isCharging
+            });
+
             
             // Periodically sync online status to Firestore (throttled)
             const lastSync = lastFirestoreSyncMap.get(deviceId) || 0;
