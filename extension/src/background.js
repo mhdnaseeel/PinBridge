@@ -39,6 +39,23 @@ let unsubscribePairing = null;
 let unsubscribeOtp = null;
 let isSigningOut = false;
 let pairingPending = false; // FIX: Track when pairing is in progress to prevent premature unpair
+let isPairingNow = false;   // FIX: Guard against concurrent startListeners from onAuthStateChanged
+
+// FIX: Helper to wait for Firebase Auth to restore from IndexedDB.
+// In MV3, the service worker may cold-start, and auth.currentUser will be null
+// until Firebase finishes restoring the session. Calling signInAnonymously
+// during this window DESTROYS the existing Google session.
+async function waitForAuth(timeoutMs = 5000) {
+  if (auth.currentUser) return auth.currentUser;
+  return new Promise((resolve) => {
+    const timer = setTimeout(() => { unsub(); resolve(null); }, timeoutMs);
+    const unsub = onAuthStateChanged(auth, (user) => {
+      clearTimeout(timer);
+      unsub();
+      resolve(user);
+    });
+  });
+}
 
 function safeSendMessage(message) {
   try {
@@ -49,15 +66,22 @@ function safeSendMessage(message) {
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.type === 'pair') {
     const performPairing = async () => {
-        if (!auth.currentUser) {
-            console.log('[PinBridge] No active session during pairing message, signing in anonymously...');
+        isPairingNow = true; // Guard: prevent onAuthStateChanged from calling startListeners
+
+        // FIX: Wait for Firebase Auth to restore the Google session from IndexedDB.
+        // DO NOT call signInAnonymously — it would overwrite the Google session,
+        // causing all Firestore listeners to use the wrong UID (anonymous instead
+        // of Google), which triggers permission-denied → performUnpairOnly().
+        let currentUser = await waitForAuth();
+        if (!currentUser) {
+            console.warn('[PinBridge] Auth not restored after waiting. Attempting anonymous sign-in as fallback...');
             await signInAnonymously(auth);
         }
-        // FIX: pairedDeviceId is already saved by pairing.js after confirmation.
-        // Ensure it's set in storage (may already be there from pairing.js)
+
         await chrome.storage.local.set({ pairedDeviceId: msg.deviceId, secret: msg.secret });
         pairingPending = false; // Pairing is now confirmed
         startListeners(msg.deviceId);
+        isPairingNow = false; // Allow onAuthStateChanged to work again
         safeSendMessage({ type: 'paired', deviceId: msg.deviceId, isOnline: true });
 
         // Write pairing to cloud so the web dashboard can auto-sync
@@ -80,6 +104,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
     performPairing().catch(err => {
         console.error('[PinBridge] Pairing execution failed:', err);
+        isPairingNow = false;
         pairingPending = false;
         sendResponse({status: 'error', error: err.message});
     });
@@ -226,8 +251,10 @@ async function handleManualFetch(sendResponse) {
     }
 
     try {
-        if (!auth.currentUser) {
-            console.log('[PinBridge] No active session, signing in anonymously...');
+        // FIX: Wait for auth to restore from IndexedDB instead of blindly calling signInAnonymously
+        let currentUser = await waitForAuth();
+        if (!currentUser) {
+            console.log('[PinBridge] No active session for manual fetch, signing in anonymously...');
             await signInAnonymously(auth);
         }
 
@@ -469,14 +496,20 @@ function startListeners(deviceId) {
   });
 
   // 3. OTP Listener
+  let isFirstOtpEvent = true; // Guard: skip permission errors on first event
   unsubscribeOtp = onSnapshot(doc(db, 'otps', deviceId), snap => {
+    isFirstOtpEvent = false;
     const data = snap.data();
     if (!data) return;
     processNewOtp(data);
   }, err => {
     if (err.code === 'permission-denied') {
-      if (pairingPending) {
-        console.warn('[PinBridge] OTP permission denied during active pairing — ignoring.');
+      if (pairingPending || isFirstOtpEvent) {
+        // FIX: OTP doc may not exist yet for a fresh pairing.
+        // Firestore rules referencing resource.data on a non-existent doc
+        // can return permission-denied. Don't unpair on the first error.
+        console.warn('[PinBridge] OTP permission denied (first event or pairing pending) — ignoring.');
+        isFirstOtpEvent = false;
       } else {
         performUnpairOnly();
       }
@@ -552,9 +585,12 @@ chrome.storage.session.get(['pairingInProgress'], (data) => {
 });
 
 onAuthStateChanged(auth, user => {
-  if (user) {
+  if (user && !isPairingNow) {
+    // FIX: Don't call startListeners if the pair handler is currently running.
+    // The pair handler manages its own startListeners call and concurrent
+    // invocations would race and potentially set up duplicate listeners.
     chrome.storage.local.get(['pairedDeviceId'], ({pairedDeviceId}) => {
-      if (pairedDeviceId) startListeners(pairedDeviceId);
+      if (pairedDeviceId && !isPairingNow) startListeners(pairedDeviceId);
     });
   }
 });
