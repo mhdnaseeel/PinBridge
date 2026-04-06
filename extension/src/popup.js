@@ -44,6 +44,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const batteryIndicator = document.getElementById('batteryIndicator');
     const batteryText = document.getElementById('batteryText');
 
+    // ── Active heartbeat: derive online/offline from lastSeen ──
+    const ONLINE_THRESHOLD = 45000; // 45 seconds (heartbeat is every 15s, server TTL is 35s)
+    let currentLastSeen = 0;
+    let currentBatteryLevel = null;
+    let currentIsCharging = false;
+
     // CAPTCHA elements
     const captchaModal = document.getElementById('captchaModal');
     const captchaCode = document.getElementById('captchaCode');
@@ -130,10 +136,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     chrome.runtime.sendMessage({ type: 'getStatus' }, (response) => {
         if (response && response.status === 'paired') {
             showPaired();
-            if (response.isOnline !== undefined) {
-                updateConnectionStatus(response.isOnline, response.lastSeen);
+            currentLastSeen = response.lastSeen || 0;
+            currentBatteryLevel = response.batteryLevel;
+            currentIsCharging = response.isCharging;
+            if (currentLastSeen > 0) {
+                updateConnectionStatus();
             } else {
-                // P1-4: Show "Connecting..." during initial Socket.IO cold-start
                 showConnectingStatus();
             }
             updateBatteryDisplay(response.batteryLevel, response.isCharging);
@@ -208,7 +216,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         statusText.style.color = '#6366f1';
     }
 
-    function updateConnectionStatus(online, lastSeen) {
+    function updateConnectionStatus() {
+        const now = Date.now();
+        const online = currentLastSeen > 0 && (now - currentLastSeen < ONLINE_THRESHOLD);
         if (online) {
             statusDot.className = 'dot dot-online';
             statusText.textContent = 'Online';
@@ -216,13 +226,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         } else {
             statusDot.className = 'dot dot-offline';
             let timeStr = 'Unknown';
-            if (lastSeen && typeof lastSeen === 'number' && lastSeen > 0) {
-                timeStr = new Date(lastSeen).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            if (currentLastSeen && typeof currentLastSeen === 'number' && currentLastSeen > 0) {
+                timeStr = new Date(currentLastSeen).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             }
             statusText.textContent = `Offline (${timeStr})`;
             statusText.style.color = '#f59e0b';
         }
     }
+
+    // Re-evaluate online/offline every 5 seconds based on lastSeen
+    setInterval(() => {
+        if (currentLastSeen > 0) {
+            updateConnectionStatus();
+        }
+    }, 5000);
 
     // ─── Battery Display ────────────────────────────────────
     function updateBatteryDisplay(level, isCharging) {
@@ -446,7 +463,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 onFetchSuccess();
             }
         } else if (msg.type === 'statusUpdate') {
-            updateConnectionStatus(msg.online, msg.lastSeen);
+            if (msg.lastSeen) currentLastSeen = msg.lastSeen;
+            if (msg.batteryLevel != null) {
+                currentBatteryLevel = msg.batteryLevel;
+                currentIsCharging = msg.isCharging;
+            }
+            updateConnectionStatus();
             if (msg.batteryLevel != null) {
                 updateBatteryDisplay(msg.batteryLevel, msg.isCharging);
             }

@@ -63,36 +63,78 @@ function safeSendMessage(message) {
   } catch (e) {}
 }
 
+// ─── Centralized State Manager ─────────────────────────────────
+// Single source of truth — accepts updates from Socket.IO and Firestore
+// but only applies them if the incoming lastSeen >= the current known value.
+// This eliminates race conditions where stale cache overwrites fresh data.
+const stateManager = {
+  lastSeen: 0,
+  batteryLevel: null,
+  isCharging: false,
+
+  // Returns true if state was updated, false if it was stale
+  update({ lastSeen, batteryLevel, isCharging }) {
+    // Reject stale updates
+    if (lastSeen && lastSeen < this.lastSeen) {
+      console.log(`[PinBridge StateManager] Rejected stale update (incoming=${lastSeen}, current=${this.lastSeen})`);
+      return false;
+    }
+    if (lastSeen) this.lastSeen = lastSeen;
+    if (batteryLevel != null) {
+      this.batteryLevel = batteryLevel;
+      this.isCharging = !!isCharging;
+    }
+    // Persist to storage for popup/sidepanel reads
+    const storageData = { lastSeen: this.lastSeen };
+    if (this.batteryLevel != null) {
+      storageData.batteryLevel = this.batteryLevel;
+      storageData.isCharging = this.isCharging;
+    }
+    chrome.storage.local.set(storageData);
+    // Push to any open popup/sidepanel
+    safeSendMessage({
+      type: 'statusUpdate',
+      lastSeen: this.lastSeen,
+      batteryLevel: this.batteryLevel != null ? this.batteryLevel : undefined,
+      isCharging: this.isCharging
+    });
+    return true;
+  },
+
+  reset() {
+    this.lastSeen = 0;
+    this.batteryLevel = null;
+    this.isCharging = false;
+  }
+};
+
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.type === 'pair') {
     const performPairing = async () => {
         isPairingNow = true; // Guard: prevent onAuthStateChanged from calling startListeners
 
         // FIX: Wait for Firebase Auth to restore the Google session from IndexedDB.
-        // DO NOT call signInAnonymously — it would overwrite the Google session,
-        // causing all Firestore listeners to use the wrong UID (anonymous instead
-        // of Google), which triggers permission-denied → performUnpairOnly().
         let currentUser = await waitForAuth();
         if (!currentUser) {
             console.warn('[PinBridge] Auth not restored after waiting. Attempting anonymous sign-in as fallback...');
             await signInAnonymously(auth);
         }
 
-        // Pre-seed online state to prevent "Offline" flickering while Server replication happens
+        // Save pairing data and seed an initial lastSeen so popup shows "Online"
+        const now = Date.now();
+        stateManager.update({ lastSeen: now });
         await chrome.storage.local.set({ 
             pairedDeviceId: msg.deviceId, 
             secret: msg.secret,
-            isOnline: true,
-            lastSeen: Date.now(),
-            pairingTime: Date.now() // Track when we paired for grace period
+            lastSeen: now
         });
         pairingPending = false; // Pairing is now confirmed
         startListeners(msg.deviceId);
         isPairingNow = false; // Allow onAuthStateChanged to work again
         
-        // Push initial optimistic online state to popup
-        safeSendMessage({ type: 'statusUpdate', online: true, lastSeen: Date.now(), isStale: false });
-        safeSendMessage({ type: 'paired', deviceId: msg.deviceId, isOnline: true });
+        // Push initial state to popup
+        safeSendMessage({ type: 'statusUpdate', lastSeen: now });
+        safeSendMessage({ type: 'paired', deviceId: msg.deviceId });
 
         // Write pairing to cloud so the web dashboard can auto-sync
         const { googleUid } = await chrome.storage.local.get(['googleUid']);
@@ -120,11 +162,10 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     });
     return true;
   } else if (msg.type === 'getStatus') {
-    chrome.storage.local.get(['pairedDeviceId', 'isOnline', 'lastSeen', 'batteryLevel', 'isCharging'], ({pairedDeviceId, isOnline, lastSeen, batteryLevel, isCharging}) => {
+    chrome.storage.local.get(['pairedDeviceId', 'lastSeen', 'batteryLevel', 'isCharging'], ({pairedDeviceId, lastSeen, batteryLevel, isCharging}) => {
       sendResponse({
         status: pairedDeviceId ? 'paired' : 'unpaired', 
         deviceId: pairedDeviceId,
-        isOnline: !!isOnline,
         lastSeen: lastSeen || null,
         batteryLevel: batteryLevel != null ? batteryLevel : null,
         isCharging: !!isCharging
@@ -339,9 +380,10 @@ async function performUnpairOnly() {
   // FIX: Clear local state and notify popup FIRST for instant UI response.
   // Firestore cleanup happens in the background (non-blocking).
   stopListeners();
-  await chrome.storage.local.remove(['pairedDeviceId', 'secret', 'latestOtp', 'isOnline', 'batteryLevel', 'isCharging']);
+  stateManager.reset();
+  await chrome.storage.local.remove(['pairedDeviceId', 'secret', 'latestOtp', 'lastSeen', 'batteryLevel', 'isCharging']);
   console.log('[PinBridge] Unpaired (auth preserved)');
-  safeSendMessage({ type: 'statusUpdate', online: false, lastSeen: Date.now() });
+  safeSendMessage({ type: 'statusUpdate', lastSeen: 0 });
   safeSendMessage({ type: 'unpaired' });
 
   // Firestore cleanup in background — don't block the UI
@@ -358,13 +400,14 @@ async function performSignOut() {
 
   // FIX: Clear local state and notify popup FIRST for instant UI response.
   stopListeners();
+  stateManager.reset();
   await signOut(auth).catch(() => {});
   await chrome.storage.local.remove(['pairedDeviceId', 'secret', 'latestOtp', 'googleUid', 'googleEmail']);
-  await chrome.storage.local.remove(['isOnline', 'batteryLevel', 'isCharging']);
+  await chrome.storage.local.remove(['lastSeen', 'batteryLevel', 'isCharging']);
   
   isSigningOut = false;
   console.log('[PinBridge] Local state cleaned');
-  safeSendMessage({ type: 'statusUpdate', online: false, lastSeen: Date.now() });
+  safeSendMessage({ type: 'statusUpdate', lastSeen: 0 });
   safeSendMessage({ type: 'unpaired' });
 
   // Firestore cleanup in background — don't block the UI
@@ -410,7 +453,7 @@ function startListeners(deviceId) {
 
   socket.on('presence_update', (data) => {
     if (data.deviceId === deviceId) {
-      validatePresence(data.status === 'online', data.lastSeen, data.batteryLevel, data.isCharging);
+      handlePresenceUpdate(data.lastSeen, data.batteryLevel, data.isCharging);
     }
   });
 
@@ -423,37 +466,10 @@ function startListeners(deviceId) {
     console.warn('[PinBridge] Socket connection error:', err.message);
   });
 
-  // Helper to validate and propagate status
-  function validatePresence(online, lastSeen, batteryLevel, isCharging) {
-      const now = Date.now();
-      const STALE_THRESHOLD = 60000;
-      let effectiveOnline = online;
-      let isStale = false;
-
-      if (online && lastSeen && (now - lastSeen > STALE_THRESHOLD)) {
-          console.warn(`[PinBridge] Stale online status detected (lastSeen: ${now - lastSeen}ms ago). Forcing offline.`);
-          effectiveOnline = false;
-          isStale = true;
-      }
-
-      // 15-second grace period after pairing: Ignore server 'offline' messages
-      // This is because the Android device takes a few seconds to connect to the socket
-      // and send its heartbeat, while the server defaults to 'offline' in Redis.
-      chrome.storage.local.get(['pairingTime'], ({ pairingTime }) => {
-          if (!effectiveOnline && pairingTime && (now - pairingTime < 15000)) {
-              console.log('[PinBridge] Ignoring offline status during 15s post-pairing grace period.');
-              return; // Abort saving offline state
-          }
-
-          console.log(`[PinBridge] Presence: ${effectiveOnline ? 'ONLINE' : 'OFFLINE'} ${isStale ? '(STALE)' : ''} Battery: ${batteryLevel}% ${isCharging ? '(Charging)' : ''}`);
-          const storageData = { isOnline: effectiveOnline, lastSeen };
-          if (batteryLevel != null) {
-              storageData.batteryLevel = batteryLevel;
-              storageData.isCharging = !!isCharging;
-          }
-          chrome.storage.local.set(storageData);
-          safeSendMessage({ type: 'statusUpdate', online: effectiveOnline, lastSeen, isStale, batteryLevel: batteryLevel != null ? batteryLevel : undefined, isCharging: !!isCharging });
-      });
+  // Helper: feed updates through the centralized StateManager
+  function handlePresenceUpdate(lastSeen, batteryLevel, isCharging) {
+      console.log(`[PinBridge] Presence update: lastSeen=${lastSeen}, battery=${batteryLevel}%, charging=${isCharging}`);
+      stateManager.update({ lastSeen, batteryLevel, isCharging });
   }
 
   // FIX (BUG A): The FIRST onSnapshot fires from Firestore's LOCAL CACHE, which
@@ -501,8 +517,8 @@ function startListeners(deviceId) {
     const batteryLevel = data.batteryLevel != null ? data.batteryLevel : null;
     const isCharging = !!data.isCharging;
 
-    console.log(`[PinBridge] Firestore status update: ${online ? 'online' : 'offline'}, lastSeen: ${lastSeen}, battery: ${batteryLevel}%`);
-    validatePresence(online, lastSeen, batteryLevel, isCharging);
+    console.log(`[PinBridge] Firestore status update: lastSeen: ${lastSeen}, battery: ${batteryLevel}%`);
+    handlePresenceUpdate(lastSeen, batteryLevel, isCharging);
   }, err => {
     if (err.code === 'permission-denied') {
       if (pairingPending || isFirstPairingSnapshot) {

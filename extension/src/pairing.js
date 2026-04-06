@@ -183,63 +183,76 @@ function startCountdown(startTime) {
   // 6. Start countdown
   startCountdown(startTime);
 
-  // 7. Listen for pairing completion
+  // 7. Listen for pairing completion — two-phase:
+  //    Phase 1: paired === true (device scanned QR)
+  //    Phase 2: status === 'online' (device connected to presence server)
   let pairingCompleted = false;
+  let pairingPhase1Done = false;
   const unsub = onSnapshot(doc(db, 'pairings', deviceId), (snapshot) => {
     const data = snapshot.data();
-    if (data && data.paired === true && !pairingCompleted) {
-        pairingCompleted = true;
-        console.log('[PinBridge] Pairing confirmed by device!');
-        if (typeof unsub === 'function') unsub();
-        if (countdownInterval) clearInterval(countdownInterval);
+    if (!data || pairingCompleted) return;
 
-        // FIX: NOW save pairedDeviceId to chrome.storage.local — pairing is confirmed
+    // Phase 1: Device confirmed pairing
+    if (data.paired === true && !pairingPhase1Done) {
+        pairingPhase1Done = true;
+        console.log('[PinBridge] Phase 1: Pairing confirmed by device. Waiting for device to come online...');
+        setStatus('waiting', '🔄', 'Device paired! Waiting for connection...');
+        
+        // Save credentials immediately so the background can start listeners
         chrome.storage.local.set({
           pairedDeviceId: deviceId,
           secret: secretB64
         });
-
-        // Clear the session-only pairingInProgress flag
         chrome.storage.session.remove(['pairingInProgress']);
-
-        setStatus('success', '✅', 'Pairing confirmed! Finalizing connection...');
-        const cdEl = countdownEl();
-        if (cdEl) cdEl.textContent = '';
         
-        // Notify background script to finalize pairing
+        // Notify background to start listeners right away
         chrome.runtime.sendMessage({
             type: 'pair',
             deviceId: deviceId,
             secret: secretB64
-        }, (response) => {
+        }, () => {
             if (chrome.runtime.lastError) {
                 console.warn('[PinBridge] Background response error:', chrome.runtime.lastError.message);
             }
-            if (response && response.status === 'paired') {
-                // Update UI to show success
-                const container = document.querySelector('.container');
-                container.innerHTML = `
-                    <h2 style="background: linear-gradient(to right, #10b981, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Successfully Paired!</h2>
-                    <p>Your Chrome extension is now securely connected to your mobile device.</p>
-                    <div style="font-size: 64px; margin: 32px 0;">✅</div>
-                    <button id="closeBtn">Close Window</button>
-                `;
-                document.getElementById('closeBtn').onclick = () => window.close();
-
-                // Auto-close after 5 seconds
-                setTimeout(() => {
-                    try { window.close(); } catch (e) {}
-                }, 5000);
-            } else {
-                // Pairing message was sent but background had an issue — still paired in Firestore though
-                setStatus('success', '✅', 'Paired successfully! You can close this window.');
-            }
         });
+    }
+
+    // Phase 2: Device is online — full success
+    if (pairingPhase1Done && data.status === 'online' && !pairingCompleted) {
+        pairingCompleted = true;
+        console.log('[PinBridge] Phase 2: Device online! Pairing fully complete.');
+        if (typeof unsub === 'function') unsub();
+        if (countdownInterval) clearInterval(countdownInterval);
+        
+        const container = document.querySelector('.container');
+        container.innerHTML = `
+            <h2 style="background: linear-gradient(to right, #10b981, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Successfully Paired!</h2>
+            <p>Your Chrome extension is now securely connected to your mobile device.</p>
+            <div style="font-size: 64px; margin: 32px 0;">✅</div>
+            <button id="closeBtn">Close Window</button>
+        `;
+        document.getElementById('closeBtn').onclick = () => window.close();
+        setTimeout(() => { try { window.close(); } catch (e) {} }, 5000);
+    }
+
+    // Fallback: If Phase 1 is done but device doesn't come online within 30s,
+    // still allow closing — the background has already started listeners.
+    if (pairingPhase1Done && !pairingCompleted) {
+        setTimeout(() => {
+            if (!pairingCompleted) {
+                pairingCompleted = true;
+                console.log('[PinBridge] Phase 2 timeout — closing with Phase 1 success.');
+                if (typeof unsub === 'function') unsub();
+                if (countdownInterval) clearInterval(countdownInterval);
+                setStatus('success', '✅', 'Paired successfully! You can close this window.');
+                const cdEl = countdownEl();
+                if (cdEl) cdEl.textContent = '';
+            }
+        }, 30000);
     }
   }, (error) => {
     if (error.code === 'permission-denied') {
        console.warn('[PinBridge] Pairing listener: permission denied.');
-       // FIX: Do NOT close the window! Show error and let user retry.
        if (!pairingCompleted) {
          setStatus('error', '🔒', 'Permission error. You may need to sign in again.', true);
        }

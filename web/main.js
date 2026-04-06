@@ -63,15 +63,19 @@ let state = {
   user: null, // Firebase user object
   pairedDeviceId: localStorage.getItem('pairedDeviceId'),
   secret: null, // In-memory only — never localStorage (V-01)
-  isOnline: false,
-  isConnecting: false, // P1-4: Intermediate state during Socket.IO cold-start
-  lastSeen: null,
+  lastSeen: 0,
   batteryLevel: null,
   isCharging: false,
   latestOtp: JSON.parse(localStorage.getItem('latestOtp') || 'null'),
   signingIn: false,
   error: null
 };
+
+// Active heartbeat: derive online/offline from lastSeen
+const ONLINE_THRESHOLD = 45000; // 45 seconds
+function isDeviceOnline() {
+  return state.lastSeen > 0 && (Date.now() - state.lastSeen < ONLINE_THRESHOLD);
+}
 
 // HTML escaping utility (V-07)
 function escapeHtml(str) {
@@ -184,27 +188,24 @@ function updateConnectionIndicator() {
   
   if (!dot) return;
   
-  if (state.isConnecting && !state.isOnline) {
-    // P1-4: Show "Connecting..." during initial Socket.IO connection
-    dot.className = 'dot dot-connecting';
-    statusText.textContent = 'Connecting...';
-    statusText.style.color = '#6366f1';
-    detailText.textContent = 'Establishing connection to device';
-  } else if (state.isOnline) {
+  const online = isDeviceOnline();
+  
+  if (online) {
     dot.className = 'dot dot-online';
     statusText.textContent = 'Online';
     statusText.style.color = '#10b981';
     detailText.textContent = 'Device is connected and active';
-  } else {
+  } else if (state.lastSeen > 0) {
     dot.className = 'dot dot-offline';
     statusText.textContent = 'Offline';
     statusText.style.color = '#f59e0b';
-    if (state.lastSeen && typeof state.lastSeen === 'number' && state.lastSeen > 0) {
-      const timeStr = new Date(state.lastSeen).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      detailText.textContent = `Last seen at ${timeStr}`;
-    } else {
-      detailText.textContent = 'Device connection unknown';
-    }
+    const timeStr = new Date(state.lastSeen).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    detailText.textContent = `Last seen at ${timeStr}`;
+  } else {
+    dot.className = 'dot dot-connecting';
+    statusText.textContent = 'Connecting...';
+    statusText.style.color = '#6366f1';
+    detailText.textContent = 'Establishing connection to device';
   }
 
   // Update battery display
@@ -223,8 +224,8 @@ function updateConnectionIndicator() {
   
   // Update sidebar
   if (sidebarDot) {
-    const sidebarDotClass = state.isConnecting ? 'dot-connecting' : (state.isOnline ? 'dot-online' : 'dot-offline');
-    const sidebarLabel = state.isConnecting ? 'Connecting...' : (state.isOnline ? 'Online' : 'Offline');
+    const sidebarDotClass = isDeviceOnline() ? 'dot-online' : (state.lastSeen > 0 ? 'dot-offline' : 'dot-connecting');
+    const sidebarLabel = isDeviceOnline() ? 'Online' : (state.lastSeen > 0 ? 'Offline' : 'Connecting...');
     sidebarDot.className = `dot ${sidebarDotClass}`;
     sidebarStatus.textContent = sidebarLabel;
   }
@@ -347,13 +348,12 @@ function renderPaired() {
   const otp = state.latestOtp?.otp || '------';
   const time = state.latestOtp?.ts ? new Date(state.latestOtp.ts).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'}) : 'Waiting for signal...';
   
-  const statusColor = state.isConnecting ? '#6366f1' : (state.isOnline ? '#10b981' : '#f59e0b');
-  const statusLabel = state.isConnecting ? 'Connecting...' : (state.isOnline ? 'Online' : 'Offline');
-  const dotClass = state.isConnecting ? 'dot-connecting' : (state.isOnline ? 'dot-online' : 'dot-offline');
+  const statusColor = isDeviceOnline() ? '#10b981' : (state.lastSeen > 0 ? '#f59e0b' : '#6366f1');
+  const statusLabel = isDeviceOnline() ? 'Online' : (state.lastSeen > 0 ? 'Offline' : 'Connecting...');
+  const dotClass = isDeviceOnline() ? 'dot-online' : (state.lastSeen > 0 ? 'dot-offline' : 'dot-connecting');
   const lastSeenStr = state.lastSeen ? new Date(state.lastSeen).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : 'Never';
-  const connDetail = state.isConnecting ? 'Establishing connection to device' :
-    (state.isOnline ? 'Device is connected and active' : 
-    (state.lastSeen && state.lastSeen > 0 ? `Last seen at ${lastSeenStr}` : 'Device connection unknown'));
+  const connDetail = isDeviceOnline() ? 'Device is connected and active' : 
+    (state.lastSeen && state.lastSeen > 0 ? `Last seen at ${lastSeenStr}` : 'Establishing connection to device');
   
   // Battery display strings
   const batteryAvailable = state.batteryLevel != null && state.batteryLevel >= 0;
@@ -649,8 +649,7 @@ function startListeners() {
 
   // 1. Presence (Socket.IO)
   if (!socket) {
-    // P1-4: Set connecting state to show intermediate UI
-    state.isConnecting = true;
+    // P1-4: Show connecting state until we get the first real status
     updateUI();
 
     socket = io(SOCKET_SERVER_URL, {
@@ -671,13 +670,11 @@ function startListeners() {
 
     socket.on('connect', () => {
       console.log('[PinBridge Web] Socket connected');
-      state.isConnecting = false;
     });
 
     socket.on('presence_update', (data) => {
       if (data.deviceId === state.pairedDeviceId) {
-        state.isConnecting = false; // Got real status, no longer connecting
-        checkStaleness(data.status === 'online', data.lastSeen, data.batteryLevel, data.isCharging);
+        applyPresenceUpdate(data.lastSeen, data.batteryLevel, data.isCharging);
       }
     });
 
@@ -687,18 +684,14 @@ function startListeners() {
     });
   }
 
-  function checkStaleness(online, lastSeen, batteryLevel, isCharging) {
-      const now = Date.now();
-      const STALE_THRESHOLD = 60000;
-      let effectiveOnline = online;
-
-      if (online && lastSeen && (now - lastSeen > STALE_THRESHOLD)) {
-          console.warn('[PinBridge Web] Stale presence detected. Marking as Standby.');
-          effectiveOnline = false;
+  // Timestamp-gated state update to prevent stale data from overriding fresh data
+  function applyPresenceUpdate(lastSeen, batteryLevel, isCharging) {
+      // Reject stale updates
+      if (lastSeen && lastSeen < state.lastSeen) {
+          console.log(`[PinBridge Web] Rejected stale update (incoming=${lastSeen}, current=${state.lastSeen})`);
+          return;
       }
-
-      state.isOnline = effectiveOnline;
-      state.lastSeen = lastSeen;
+      if (lastSeen) state.lastSeen = lastSeen;
       if (batteryLevel != null) {
           state.batteryLevel = batteryLevel;
           state.isCharging = !!isCharging;
@@ -715,7 +708,7 @@ function startListeners() {
     const lastSeen = data.lastOnline ? (data.lastOnline.toMillis ? data.lastOnline.toMillis() : data.lastOnline) : null;
     const batteryLevel = data.batteryLevel != null ? data.batteryLevel : null;
     const isCharging = !!data.isCharging;
-    checkStaleness(online, lastSeen, batteryLevel, isCharging);
+    applyPresenceUpdate(lastSeen, batteryLevel, isCharging);
   });
 
   // 3. OTP Mirroring (Firestore)
@@ -756,8 +749,14 @@ function stopListeners() {
   }
   unsubOtp = null;
   unsubStatus = null;
-  state.isConnecting = false; // P1-4: Reset connecting state
 }
+
+// Re-evaluate online/offline every 5 seconds based on lastSeen
+setInterval(() => {
+  if (state.pairedDeviceId && state.lastSeen > 0) {
+    updateUI();
+  }
+}, 5000);
 
 // ─── GLOBAL INIT ────────────────────────────────────────────────
 
