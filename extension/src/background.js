@@ -71,9 +71,10 @@ const stateManager = {
   lastSeen: 0,
   batteryLevel: null,
   isCharging: false,
+  serverStatus: null, // Authoritative status from socket server ('online'/'offline')
 
   // Returns true if state was updated, false if it was stale
-  update({ lastSeen, batteryLevel, isCharging }) {
+  update({ lastSeen, batteryLevel, isCharging, status }) {
     // Reject stale updates
     if (lastSeen && lastSeen < this.lastSeen) {
       console.log(`[PinBridge StateManager] Rejected stale update (incoming=${lastSeen}, current=${this.lastSeen})`);
@@ -84,17 +85,25 @@ const stateManager = {
       this.batteryLevel = batteryLevel;
       this.isCharging = !!isCharging;
     }
+    // Track the authoritative server status
+    if (status === 'online' || status === 'offline') {
+      this.serverStatus = status;
+    }
     // Persist to storage for popup/sidepanel reads
     const storageData = { lastSeen: this.lastSeen };
     if (this.batteryLevel != null) {
       storageData.batteryLevel = this.batteryLevel;
       storageData.isCharging = this.isCharging;
     }
+    if (this.serverStatus) {
+      storageData.serverStatus = this.serverStatus;
+    }
     chrome.storage.local.set(storageData);
     // Push to any open popup/sidepanel
     safeSendMessage({
       type: 'statusUpdate',
       lastSeen: this.lastSeen,
+      serverStatus: this.serverStatus,
       batteryLevel: this.batteryLevel != null ? this.batteryLevel : undefined,
       isCharging: this.isCharging
     });
@@ -105,6 +114,7 @@ const stateManager = {
     this.lastSeen = 0;
     this.batteryLevel = null;
     this.isCharging = false;
+    this.serverStatus = null;
   }
 };
 
@@ -162,11 +172,12 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     });
     return true;
   } else if (msg.type === 'getStatus') {
-    chrome.storage.local.get(['pairedDeviceId', 'lastSeen', 'batteryLevel', 'isCharging'], ({pairedDeviceId, lastSeen, batteryLevel, isCharging}) => {
+    chrome.storage.local.get(['pairedDeviceId', 'lastSeen', 'batteryLevel', 'isCharging', 'serverStatus'], ({pairedDeviceId, lastSeen, batteryLevel, isCharging, serverStatus}) => {
       sendResponse({
         status: pairedDeviceId ? 'paired' : 'unpaired', 
         deviceId: pairedDeviceId,
         lastSeen: lastSeen || null,
+        serverStatus: serverStatus || stateManager.serverStatus || null,
         batteryLevel: batteryLevel != null ? batteryLevel : null,
         isCharging: !!isCharging
       });
@@ -453,7 +464,7 @@ function startListeners(deviceId) {
 
   socket.on('presence_update', (data) => {
     if (data.deviceId === deviceId) {
-      handlePresenceUpdate(data.lastSeen, data.batteryLevel, data.isCharging);
+      handlePresenceUpdate(data.lastSeen, data.batteryLevel, data.isCharging, data.status);
     }
   });
 
@@ -467,9 +478,9 @@ function startListeners(deviceId) {
   });
 
   // Helper: feed updates through the centralized StateManager
-  function handlePresenceUpdate(lastSeen, batteryLevel, isCharging) {
-      console.log(`[PinBridge] Presence update: lastSeen=${lastSeen}, battery=${batteryLevel}%, charging=${isCharging}`);
-      stateManager.update({ lastSeen, batteryLevel, isCharging });
+  function handlePresenceUpdate(lastSeen, batteryLevel, isCharging, status) {
+      console.log(`[PinBridge] Presence update: status=${status}, lastSeen=${lastSeen}, battery=${batteryLevel}%, charging=${isCharging}`);
+      stateManager.update({ lastSeen, batteryLevel, isCharging, status });
   }
 
   // FIX (BUG A): The FIRST onSnapshot fires from Firestore's LOCAL CACHE, which
@@ -488,8 +499,16 @@ function startListeners(deviceId) {
     const data = snap.data();
 
     // Unpair detection: document deleted
+    // FIX (Bug 4): Document deletion is an UNAMBIGUOUS unpair signal — never skip it,
+    // even on the first snapshot. Unlike paired:false which can be stale cache,
+    // a missing document means it was genuinely deleted (e.g., from the phone).
     if (!data) {
+      if (pairingPending) {
+        console.log('[PinBridge] Document missing but pairing is pending — ignoring.');
+        return;
+      }
       console.log('[PinBridge] Pairing document deleted. Unpairing...');
+      isFirstPairingSnapshot = false;
       performUnpairOnly();
       return;
     }

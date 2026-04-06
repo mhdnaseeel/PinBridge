@@ -66,14 +66,18 @@ let state = {
   lastSeen: 0,
   batteryLevel: null,
   isCharging: false,
+  serverStatus: null, // Authoritative status from socket server ('online'/'offline')
   latestOtp: JSON.parse(localStorage.getItem('latestOtp') || 'null'),
   signingIn: false,
   error: null
 };
 
-// Active heartbeat: derive online/offline from lastSeen
+// Active heartbeat: derive online/offline from lastSeen or server status
 const ONLINE_THRESHOLD = 45000; // 45 seconds
 function isDeviceOnline() {
+  // FIX (Bug 1): Use authoritative server status if available
+  if (state.serverStatus === 'online') return true;
+  if (state.serverStatus === 'offline') return false;
   return state.lastSeen > 0 && (Date.now() - state.lastSeen < ONLINE_THRESHOLD);
 }
 
@@ -674,7 +678,7 @@ function startListeners() {
 
     socket.on('presence_update', (data) => {
       if (data.deviceId === state.pairedDeviceId) {
-        applyPresenceUpdate(data.lastSeen, data.batteryLevel, data.isCharging);
+        applyPresenceUpdate(data.lastSeen, data.batteryLevel, data.isCharging, data.status);
       }
     });
 
@@ -685,7 +689,7 @@ function startListeners() {
   }
 
   // Timestamp-gated state update to prevent stale data from overriding fresh data
-  function applyPresenceUpdate(lastSeen, batteryLevel, isCharging) {
+  function applyPresenceUpdate(lastSeen, batteryLevel, isCharging, serverStatus) {
       // Reject stale updates
       if (lastSeen && lastSeen < state.lastSeen) {
           console.log(`[PinBridge Web] Rejected stale update (incoming=${lastSeen}, current=${state.lastSeen})`);
@@ -695,6 +699,10 @@ function startListeners() {
       if (batteryLevel != null) {
           state.batteryLevel = batteryLevel;
           state.isCharging = !!isCharging;
+      }
+      // Track authoritative server status
+      if (serverStatus === 'online' || serverStatus === 'offline') {
+          state.serverStatus = serverStatus;
       }
       updateUI();
   }
@@ -707,7 +715,8 @@ function startListeners() {
     const lastSeen = data.lastOnline ? (data.lastOnline.toMillis ? data.lastOnline.toMillis() : data.lastOnline) : null;
     const batteryLevel = data.batteryLevel != null ? data.batteryLevel : null;
     const isCharging = !!data.isCharging;
-    applyPresenceUpdate(lastSeen, batteryLevel, isCharging);
+    const serverStatus = data.status || null; // Firestore also has the status field
+    applyPresenceUpdate(lastSeen, batteryLevel, isCharging, serverStatus);
   });
 
   // 3. OTP Mirroring (Firestore)

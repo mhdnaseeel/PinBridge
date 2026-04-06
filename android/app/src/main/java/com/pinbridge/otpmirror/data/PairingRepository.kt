@@ -215,6 +215,21 @@ class PairingRepositoryImpl constructor(
         try {
             // Stop heartbeat service
             DeviceHeartbeatService.stop(context)
+            
+            // FIX (Bug 4): Set paired:false BEFORE deleting the document.
+            // This gives the extension's Firestore listener a chance to detect the unpair
+            // via the field change, in addition to the document deletion signal.
+            try {
+                db.collection(Constants.COLL_PAIRINGS).document(deviceId)
+                    .update("paired", false)
+                    .await()
+                Log.i(TAG, "Set paired=false for: $deviceId")
+                // Brief delay to let Firestore propagate the field change to listeners
+                kotlinx.coroutines.delay(500)
+            } catch (e: Exception) {
+                Log.w(TAG, "Failed to set paired=false (non-critical, proceeding with delete)", e)
+            }
+            
             // Remove from Firestore
             db.collection(Constants.COLL_PAIRINGS).document(deviceId).delete().await()
             db.collection(Constants.COLL_OTPS).document(deviceId).delete().await()

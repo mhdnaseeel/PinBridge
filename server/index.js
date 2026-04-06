@@ -97,6 +97,8 @@ const lastHeartbeatMap = new Map();
 // Throttle Firestore writes to avoid excessive updates
 const lastFirestoreSyncMap = new Map();
 const FIRESTORE_SYNC_INTERVAL = 60000; // Sync to Firestore at most once per 60s
+// Track whether first heartbeat has been received (for eager battery write)
+const firstHeartbeatReceived = new Map();
 
 io.on('connection', async (socket) => {
     const { deviceId, user, clientType } = socket;
@@ -107,16 +109,30 @@ io.on('connection', async (socket) => {
     if (clientType === 'device') {
         const now = Date.now();
         lastHeartbeatMap.set(deviceId, now);
+        firstHeartbeatReceived.set(deviceId, false); // Reset: waiting for first heartbeat with battery
         
         await redis.set(`presence:${deviceId}`, 'online', 'EX', 35);
         await redis.set(`lastSeen:${deviceId}`, now.toString());
 
-        // Write online status to Firestore on connect (always)
+        // FIX (Bug 2): Read existing battery data from Redis to include in initial Firestore write
+        let existingBattery = null;
+        const batteryRaw = await redis.get(`battery:${deviceId}`);
+        if (batteryRaw) {
+            existingBattery = JSON.parse(batteryRaw);
+        }
+
+        // Write online status + any existing battery data to Firestore on connect (always)
         try {
-            await db.collection('pairings').doc(deviceId).update({
+            const updateData = {
                 lastOnline: admin.firestore.FieldValue.serverTimestamp(),
                 status: 'online'
-            });
+            };
+            if (existingBattery) {
+                updateData.batteryLevel = existingBattery.level;
+                updateData.isCharging = existingBattery.isCharging;
+                updateData.batteryUpdatedAt = admin.firestore.FieldValue.serverTimestamp();
+            }
+            await db.collection('pairings').doc(deviceId).update(updateData);
             lastFirestoreSyncMap.set(deviceId, now);
         } catch (e) {
             console.error('[PinBridge Server] Firestore online write error:', e.message);
@@ -125,7 +141,9 @@ io.on('connection', async (socket) => {
         io.to(`room:${deviceId}`).emit('presence_update', {
             deviceId,
             status: 'online',
-            lastSeen: now
+            lastSeen: now,
+            batteryLevel: existingBattery ? existingBattery.level : null,
+            isCharging: existingBattery ? existingBattery.isCharging : false
         });
     } else {
         const status = await redis.get(`presence:${deviceId}`) || 'offline';
@@ -162,10 +180,17 @@ io.on('connection', async (socket) => {
                 await redis.set(`battery:${deviceId}`, JSON.stringify({ level: batteryLevel, isCharging }));
             }
 
-            
-            // Periodically sync online status to Firestore (throttled)
+            // FIX (Bug 2): On the first heartbeat with battery data, write to Firestore immediately
+            // without respecting the 60s throttle. This ensures battery data is available fast.
+            const isFirstHB = !firstHeartbeatReceived.get(deviceId);
             const lastSync = lastFirestoreSyncMap.get(deviceId) || 0;
-            if (now - lastSync > FIRESTORE_SYNC_INTERVAL) {
+            const shouldSync = isFirstHB && batteryLevel !== null || (now - lastSync > FIRESTORE_SYNC_INTERVAL);
+            
+            if (isFirstHB && batteryLevel !== null) {
+                firstHeartbeatReceived.set(deviceId, true);
+            }
+
+            if (shouldSync) {
                 try {
                     const updateData = {
                         lastOnline: admin.firestore.FieldValue.serverTimestamp(),
@@ -199,6 +224,7 @@ io.on('connection', async (socket) => {
         if (clientType === 'device') {
             lastHeartbeatMap.delete(deviceId);
             lastFirestoreSyncMap.delete(deviceId);
+            firstHeartbeatReceived.delete(deviceId);
             await redis.set(`presence:${deviceId}`, 'offline');
             const now = Date.now();
 

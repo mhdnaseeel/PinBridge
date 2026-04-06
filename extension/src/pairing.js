@@ -196,6 +196,23 @@ function startCountdown(startTime) {
     if (data.paired === true && !pairingPhase1Done) {
         pairingPhase1Done = true;
         console.log('[PinBridge] Phase 1: Pairing confirmed by device. Waiting for device to come online...');
+        
+        // FIX (Bug 3): Hide the QR code, manual entry code, copy button, and countdown
+        // so the user doesn't see a confusing mix of QR + "Device paired!" message
+        const qrCanvas = document.getElementById('qrCanvas');
+        const codeBox = document.querySelector('.code-box');
+        const copyBtn = document.getElementById('copyBtn');
+        const cdEl = countdownEl();
+        
+        if (qrCanvas) qrCanvas.style.display = 'none';
+        if (codeBox) codeBox.style.display = 'none';
+        if (copyBtn) copyBtn.style.display = 'none';
+        if (cdEl) cdEl.style.display = 'none';
+        
+        // Update the description text
+        const descText = document.querySelector('.container > p');
+        if (descText) descText.textContent = 'Establishing secure connection with your device...';
+        
         setStatus('waiting', '🔄', 'Device paired! Waiting for connection...');
         
         // Save credentials immediately so the background can start listeners

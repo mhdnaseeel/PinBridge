@@ -49,6 +49,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     let currentLastSeen = 0;
     let currentBatteryLevel = null;
     let currentIsCharging = false;
+    let currentServerStatus = null; // Authoritative status from socket server
 
     // CAPTCHA elements
     const captchaModal = document.getElementById('captchaModal');
@@ -139,7 +140,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             currentLastSeen = response.lastSeen || 0;
             currentBatteryLevel = response.batteryLevel;
             currentIsCharging = response.isCharging;
-            if (currentLastSeen > 0) {
+            currentServerStatus = response.serverStatus || null;
+            if (currentLastSeen > 0 || currentServerStatus) {
                 updateConnectionStatus();
             } else {
                 showConnectingStatus();
@@ -218,12 +220,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function updateConnectionStatus() {
         const now = Date.now();
-        const online = currentLastSeen > 0 && (now - currentLastSeen < ONLINE_THRESHOLD);
+        // FIX (Bug 1): Use the authoritative server status if available.
+        // The server knows definitively if the device is connected via its socket.
+        // Fall back to lastSeen-based derivation only if serverStatus is unavailable.
+        const onlineByLastSeen = currentLastSeen > 0 && (now - currentLastSeen < ONLINE_THRESHOLD);
+        const online = currentServerStatus === 'online' || (currentServerStatus == null && onlineByLastSeen);
+        
         if (online) {
             statusDot.className = 'dot dot-online';
             statusText.textContent = 'Online';
             statusText.style.color = '#10b981';
-        } else {
+        } else if (currentServerStatus === 'offline' || currentLastSeen > 0) {
             statusDot.className = 'dot dot-offline';
             let timeStr = 'Unknown';
             if (currentLastSeen && typeof currentLastSeen === 'number' && currentLastSeen > 0) {
@@ -231,6 +238,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
             statusText.textContent = `Offline (${timeStr})`;
             statusText.style.color = '#f59e0b';
+        } else {
+            statusDot.className = 'dot dot-connecting';
+            statusText.textContent = 'Connecting...';
+            statusText.style.color = '#6366f1';
         }
     }
 
@@ -464,6 +475,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         } else if (msg.type === 'statusUpdate') {
             if (msg.lastSeen) currentLastSeen = msg.lastSeen;
+            if (msg.serverStatus) currentServerStatus = msg.serverStatus;
             if (msg.batteryLevel != null) {
                 currentBatteryLevel = msg.batteryLevel;
                 currentIsCharging = msg.isCharging;
