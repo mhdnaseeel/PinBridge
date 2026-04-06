@@ -45,7 +45,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const batteryText = document.getElementById('batteryText');
 
     // ── Active heartbeat: derive online/offline from lastSeen ──
-    const ONLINE_THRESHOLD = 45000; // 45 seconds (heartbeat is every 15s, server TTL is 35s)
+    const ONLINE_THRESHOLD = 25000; // 25 seconds heartbeat delta
     let currentLastSeen = 0;
     let currentBatteryLevel = null;
     let currentIsCharging = false;
@@ -220,17 +220,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function updateConnectionStatus() {
         const now = Date.now();
-        // FIX (Bug 1): Use the authoritative server status if available.
-        // The server knows definitively if the device is connected via its socket.
-        // Fall back to lastSeen-based derivation only if serverStatus is unavailable.
-        const onlineByLastSeen = currentLastSeen > 0 && (now - currentLastSeen < ONLINE_THRESHOLD);
-        const online = currentServerStatus === 'online' || (currentServerStatus == null && onlineByLastSeen);
+        // FIX (Bug 2): Use strict heartbeat interval for online calculations
+        // since Android now writes directly to Firestore every 15 seconds.
+        const online = currentLastSeen > 0 && (now - currentLastSeen < ONLINE_THRESHOLD);
         
         if (online) {
             statusDot.className = 'dot dot-online';
             statusText.textContent = 'Online';
             statusText.style.color = '#10b981';
-        } else if (currentServerStatus === 'offline' || currentLastSeen > 0) {
+        } else {
             statusDot.className = 'dot dot-offline';
             let timeStr = 'Unknown';
             if (currentLastSeen && typeof currentLastSeen === 'number' && currentLastSeen > 0) {
@@ -238,10 +236,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
             statusText.textContent = `Offline (${timeStr})`;
             statusText.style.color = '#f59e0b';
-        } else {
-            statusDot.className = 'dot dot-connecting';
-            statusText.textContent = 'Connecting...';
-            statusText.style.color = '#6366f1';
         }
     }
 

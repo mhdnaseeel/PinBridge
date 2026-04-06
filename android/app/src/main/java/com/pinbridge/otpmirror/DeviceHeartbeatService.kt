@@ -28,6 +28,9 @@ import io.socket.client.Socket
 import kotlinx.coroutines.*
 import kotlinx.coroutines.tasks.await
 import org.json.JSONObject
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.FieldValue
+import com.google.firebase.firestore.SetOptions
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -234,6 +237,7 @@ class DeviceHeartbeatService : Service() {
     private fun startHeartbeatLoop() {
         Log.d(TAG, "Starting heartbeat loop (15s interval)")
         heartbeatJob?.cancel()
+        val db = FirebaseFirestore.getInstance()
         heartbeatJob = scope.launch {
             while (isActive && socket?.connected() == true) {
                 // Acquire WakeLock briefly for emission, release immediately after (PERF-5)
@@ -246,8 +250,21 @@ class DeviceHeartbeatService : Service() {
                     }
                     Log.v(TAG, "Emitting heartbeat with battery: level=$level, charging=$charging")
                     socket?.emit("heartbeat", payload)
+                    
+                    // Directly write to Firestore as single source of truth
+                    deviceId?.let { id ->
+                        val updateData = hashMapOf(
+                            "lastOnline" to FieldValue.serverTimestamp(),
+                            "status" to "online",
+                            "batteryLevel" to level,
+                            "isCharging" to charging,
+                            "batteryUpdatedAt" to FieldValue.serverTimestamp()
+                        )
+                        db.collection(Constants.COLL_PAIRINGS).document(id)
+                            .set(updateData, SetOptions.merge())
+                    }
                 } catch (e: Exception) {
-                    Log.w(TAG, "Failed to read battery info, emitting plain heartbeat", e)
+                    Log.w(TAG, "Failed to read battery info or emit heartbeat", e)
                     socket?.emit("heartbeat")
                 } finally {
                     releaseWakeLock()

@@ -72,12 +72,11 @@ let state = {
   error: null
 };
 
-// Active heartbeat: derive online/offline from lastSeen or server status
-const ONLINE_THRESHOLD = 45000; // 45 seconds
+// Active heartbeat: derive online/offline from lastSeen
+const ONLINE_THRESHOLD = 25000; // 25 seconds
 function isDeviceOnline() {
-  // FIX (Bug 1): Use authoritative server status if available
-  if (state.serverStatus === 'online') return true;
-  if (state.serverStatus === 'offline') return false;
+  // FIX: Use strict heartbeat interval for online calculations
+  // since Android now writes directly to Firestore every 15 seconds.
   return state.lastSeen > 0 && (Date.now() - state.lastSeen < ONLINE_THRESHOLD);
 }
 
@@ -723,10 +722,18 @@ function startListeners() {
   unsubOtp = onSnapshot(doc(db, 'otps', state.pairedDeviceId), async (snap) => {
     const data = snap.data();
     if (!data) return;
+
+    // Deduplicate OTPs using otpEventId
+    const eventId = data.otpEventId;
+    if (eventId && state.latestOtp?.otpEventId === eventId) {
+        console.log(`[PinBridge Web] Skipping already-processed OTP (eventId: ${eventId})`);
+        return;
+    }
+
     try {
       const decrypted = await decryptOtp(data, state.secret);
       const ts = data.smsTs || Date.now();
-      state.latestOtp = { otp: decrypted, ts };
+      state.latestOtp = { otp: decrypted, ts, otpEventId: eventId };
       localStorage.setItem('latestOtp', JSON.stringify(state.latestOtp));
       updateUI();
     } catch (e) {

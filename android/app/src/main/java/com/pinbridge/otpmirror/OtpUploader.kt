@@ -45,6 +45,7 @@ object OtpUploader {
                 "otp" to encrypted.cipher,
                 "iv"  to encrypted.iv,
                 "sender" to sender,
+                "otpEventId" to java.util.UUID.randomUUID().toString(),
                 "ts"  to FieldValue.serverTimestamp(),
                 "smsTs" to smsTs,
                 "uploaderUid" to (auth.currentUser?.uid ?: ""),

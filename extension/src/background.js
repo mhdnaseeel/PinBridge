@@ -336,8 +336,8 @@ async function handleManualFetch(sendResponse) {
         }
 
         const currentData = await chrome.storage.local.get(['latestOtp']);
-        const preFetchUploadTs = currentData.latestOtp ? (currentData.latestOtp.uploadTs || 0) : 0;
-        console.log(`[PinBridge] Manual fetch request. Last uploadTs: ${preFetchUploadTs}`);
+        const preFetchEventId = currentData.latestOtp ? currentData.latestOtp.otpEventId : null;
+        console.log(`[PinBridge] Manual fetch request. Last eventId: ${preFetchEventId}`);
 
         // Update signaling Firestore
         await updateDoc(doc(db, 'pairings', pairedDeviceId), {
@@ -352,10 +352,10 @@ async function handleManualFetch(sendResponse) {
             
             // Check for new OTP in storage
             const { latestOtp } = await chrome.storage.local.get(['latestOtp']);
-            const currentUploadTs = latestOtp ? (latestOtp.uploadTs || 0) : 0;
+            const currentEventId = latestOtp ? latestOtp.otpEventId : null;
 
-            if (latestOtp && currentUploadTs > preFetchUploadTs) {
-                console.log(`[PinBridge] Fetch Success: New OTP found (ts: ${currentUploadTs})`);
+            if (latestOtp && currentEventId !== preFetchEventId) {
+                console.log(`[PinBridge] Fetch Success: New OTP found (eventId: ${currentEventId})`);
                 sendResponse({status: 'ok', otp: latestOtp.otp});
                 return;
             }
@@ -604,20 +604,19 @@ async function processNewOtp(data) {
     const { secret, latestOtp } = await chrome.storage.local.get(['secret', 'latestOtp']);
     if (!secret) return;
 
-    // Fix P0-1: Deduplicate OTPs by comparing upload timestamps.
+    // Fix P0-1: Deduplicate OTPs by comparing otpEventId.
     // Without this, every Firestore snapshot (including initial cache reads)
     // triggers a decrypt + notification of the same OTP.
-    const uploadTs = data.ts && typeof data.ts.toMillis === 'function' ? data.ts.toMillis() : Date.now();
-    const lastProcessedTs = latestOtp?.uploadTs || 0;
-    if (uploadTs <= lastProcessedTs) {
-        console.log(`[PinBridge] Skipping already-processed OTP (uploadTs: ${uploadTs} <= last: ${lastProcessedTs})`);
+    const eventId = data.otpEventId;
+    if (eventId && latestOtp?.otpEventId === eventId) {
+        console.log(`[PinBridge] Skipping already-processed OTP (eventId: ${eventId})`);
         return;
     }
 
     try {
         const decrypted = await decryptOtp(data, secret);
         const tsFromDb = data.smsTs || (data.ts && typeof data.ts.toMillis === 'function' ? data.ts.toMillis() : Date.now());
-        chrome.storage.local.set({latestOtp: {otp: decrypted, ts: tsFromDb, uploadTs}});
+        chrome.storage.local.set({latestOtp: {otp: decrypted, ts: tsFromDb, otpEventId: eventId}});
         
         // Fix V-06: Do not show the OTP in the notification.
         // Notifications are visible on lock screens and in OS notification centers.
