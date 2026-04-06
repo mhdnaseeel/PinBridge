@@ -78,10 +78,20 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             await signInAnonymously(auth);
         }
 
-        await chrome.storage.local.set({ pairedDeviceId: msg.deviceId, secret: msg.secret });
+        // Pre-seed online state to prevent "Offline" flickering while Server replication happens
+        await chrome.storage.local.set({ 
+            pairedDeviceId: msg.deviceId, 
+            secret: msg.secret,
+            isOnline: true,
+            lastSeen: Date.now(),
+            pairingTime: Date.now() // Track when we paired for grace period
+        });
         pairingPending = false; // Pairing is now confirmed
         startListeners(msg.deviceId);
         isPairingNow = false; // Allow onAuthStateChanged to work again
+        
+        // Push initial optimistic online state to popup
+        safeSendMessage({ type: 'statusUpdate', online: true, lastSeen: Date.now(), isStale: false });
         safeSendMessage({ type: 'paired', deviceId: msg.deviceId, isOnline: true });
 
         // Write pairing to cloud so the web dashboard can auto-sync
@@ -426,14 +436,24 @@ function startListeners(deviceId) {
           isStale = true;
       }
 
-      console.log(`[PinBridge] Presence: ${effectiveOnline ? 'ONLINE' : 'OFFLINE'} ${isStale ? '(STALE)' : ''} Battery: ${batteryLevel}% ${isCharging ? '(Charging)' : ''}`);
-      const storageData = { isOnline: effectiveOnline, lastSeen };
-      if (batteryLevel != null) {
-          storageData.batteryLevel = batteryLevel;
-          storageData.isCharging = !!isCharging;
-      }
-      chrome.storage.local.set(storageData);
-      safeSendMessage({ type: 'statusUpdate', online: effectiveOnline, lastSeen, isStale, batteryLevel: batteryLevel != null ? batteryLevel : undefined, isCharging: !!isCharging });
+      // 15-second grace period after pairing: Ignore server 'offline' messages
+      // This is because the Android device takes a few seconds to connect to the socket
+      // and send its heartbeat, while the server defaults to 'offline' in Redis.
+      chrome.storage.local.get(['pairingTime'], ({ pairingTime }) => {
+          if (!effectiveOnline && pairingTime && (now - pairingTime < 15000)) {
+              console.log('[PinBridge] Ignoring offline status during 15s post-pairing grace period.');
+              return; // Abort saving offline state
+          }
+
+          console.log(`[PinBridge] Presence: ${effectiveOnline ? 'ONLINE' : 'OFFLINE'} ${isStale ? '(STALE)' : ''} Battery: ${batteryLevel}% ${isCharging ? '(Charging)' : ''}`);
+          const storageData = { isOnline: effectiveOnline, lastSeen };
+          if (batteryLevel != null) {
+              storageData.batteryLevel = batteryLevel;
+              storageData.isCharging = !!isCharging;
+          }
+          chrome.storage.local.set(storageData);
+          safeSendMessage({ type: 'statusUpdate', online: effectiveOnline, lastSeen, isStale, batteryLevel: batteryLevel != null ? batteryLevel : undefined, isCharging: !!isCharging });
+      });
   }
 
   // FIX (BUG A): The FIRST onSnapshot fires from Firestore's LOCAL CACHE, which

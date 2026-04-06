@@ -156,7 +156,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         otpView.classList.remove('hidden');
         unpairedView.classList.add('hidden');
         connectionIndicator.classList.remove('hidden');
-        batteryIndicator.classList.remove('hidden');
+        // Do NOT unconditionally show battery indicator here. 
+        // updateBatteryDisplay() will show it when real data arrives.
     }
 
     function showUnpaired() {
