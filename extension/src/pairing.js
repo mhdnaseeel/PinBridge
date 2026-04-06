@@ -261,9 +261,16 @@ function startCountdown(startTime) {
                 console.log('[PinBridge] Phase 2 timeout — closing with Phase 1 success.');
                 if (typeof unsub === 'function') unsub();
                 if (countdownInterval) clearInterval(countdownInterval);
-                setStatus('success', '✅', 'Paired successfully! You can close this window.');
-                const cdEl = countdownEl();
-                if (cdEl) cdEl.textContent = '';
+                
+                const container = document.querySelector('.container');
+                container.innerHTML = `
+                    <h2 style="background: linear-gradient(to right, #10b981, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Successfully Paired!</h2>
+                    <p>Your Chrome extension is now securely connected to your mobile device.</p>
+                    <div style="font-size: 64px; margin: 32px 0;">✅</div>
+                    <button id="closeBtn">Close Window</button>
+                `;
+                document.getElementById('closeBtn').onclick = () => window.close();
+                setTimeout(() => { try { window.close(); } catch (e) {} }, 5000);
             }
         }, 30000);
     }
