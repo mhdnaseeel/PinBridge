@@ -512,7 +512,6 @@ function startListeners(deviceId) {
     isFirstPairingSnapshot = false;
 
     // Status update: online/offline + battery
-    const online = data.status === 'online';
     const lastSeen = data.lastOnline ? (data.lastOnline.toMillis ? data.lastOnline.toMillis() : data.lastOnline) : null;
     const batteryLevel = data.batteryLevel != null ? data.batteryLevel : null;
     const isCharging = !!data.isCharging;

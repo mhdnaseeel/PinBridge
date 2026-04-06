@@ -704,7 +704,6 @@ function startListeners() {
     const data = snap.data();
     if (!data) return;
     
-    const online = data.status === 'online';
     const lastSeen = data.lastOnline ? (data.lastOnline.toMillis ? data.lastOnline.toMillis() : data.lastOnline) : null;
     const batteryLevel = data.batteryLevel != null ? data.batteryLevel : null;
     const isCharging = !!data.isCharging;
