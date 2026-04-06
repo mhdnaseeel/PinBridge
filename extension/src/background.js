@@ -298,15 +298,19 @@ async function cleanupFirestorePairing(pairedDeviceId, googleUid) {
 
 async function performUnpairOnly() {
   const { pairedDeviceId, googleUid } = await chrome.storage.local.get(['pairedDeviceId', 'googleUid']);
-  try {
-    await cleanupFirestorePairing(pairedDeviceId, googleUid);
-  } finally {
-    await chrome.storage.local.remove(['pairedDeviceId', 'secret', 'latestOtp', 'isOnline', 'batteryLevel', 'isCharging']);
-    stopListeners();
-    console.log('[PinBridge] Unpaired (auth preserved)');
-    safeSendMessage({ type: 'statusUpdate', online: false, lastSeen: Date.now() });
-    safeSendMessage({ type: 'unpaired' });
-  }
+
+  // FIX: Clear local state and notify popup FIRST for instant UI response.
+  // Firestore cleanup happens in the background (non-blocking).
+  stopListeners();
+  await chrome.storage.local.remove(['pairedDeviceId', 'secret', 'latestOtp', 'isOnline', 'batteryLevel', 'isCharging']);
+  console.log('[PinBridge] Unpaired (auth preserved)');
+  safeSendMessage({ type: 'statusUpdate', online: false, lastSeen: Date.now() });
+  safeSendMessage({ type: 'unpaired' });
+
+  // Firestore cleanup in background — don't block the UI
+  cleanupFirestorePairing(pairedDeviceId, googleUid).catch(e => {
+    console.warn('[PinBridge] Background Firestore cleanup error:', e);
+  });
 }
 
 async function performSignOut() {
@@ -314,20 +318,22 @@ async function performSignOut() {
   isSigningOut = true;
   
   const { pairedDeviceId, googleUid } = await chrome.storage.local.get(['pairedDeviceId', 'googleUid']);
-  try {
-    await cleanupFirestorePairing(pairedDeviceId, googleUid);
-  } finally {
-    await signOut(auth).catch(() => {});
-    await chrome.storage.local.remove(['pairedDeviceId', 'secret', 'latestOtp', 'googleUid', 'googleEmail']);
-    await chrome.storage.local.remove(['isOnline', 'batteryLevel', 'isCharging']);
-    
-    stopListeners();
-    
-    isSigningOut = false;
-    console.log('[PinBridge] Local state cleaned');
-    safeSendMessage({ type: 'statusUpdate', online: false, lastSeen: Date.now() });
-    safeSendMessage({ type: 'unpaired' }); 
-  }
+
+  // FIX: Clear local state and notify popup FIRST for instant UI response.
+  stopListeners();
+  await signOut(auth).catch(() => {});
+  await chrome.storage.local.remove(['pairedDeviceId', 'secret', 'latestOtp', 'googleUid', 'googleEmail']);
+  await chrome.storage.local.remove(['isOnline', 'batteryLevel', 'isCharging']);
+  
+  isSigningOut = false;
+  console.log('[PinBridge] Local state cleaned');
+  safeSendMessage({ type: 'statusUpdate', online: false, lastSeen: Date.now() });
+  safeSendMessage({ type: 'unpaired' });
+
+  // Firestore cleanup in background — don't block the UI
+  cleanupFirestorePairing(pairedDeviceId, googleUid).catch(e => {
+    console.warn('[PinBridge] Background Firestore cleanup error:', e);
+  });
 }
 
 function stopListeners() {
@@ -345,38 +351,40 @@ let socket = null;
 function startListeners(deviceId) {
   if (!deviceId) return;
 
+  // FIX: Stop any existing listeners before starting new ones to prevent
+  // duplicate listeners and memory leaks from multiple startListeners() calls.
+  stopListeners();
+
   // 1. Presence (Socket.IO) - Real-time primary
-  if (!socket) {
-    console.log('[PinBridge] Connecting to presence server:', SOCKET_SERVER_URL);
-    socket = io(SOCKET_SERVER_URL, {
-      auth: async (cb) => {
-        const token = auth.currentUser ? await auth.currentUser.getIdToken() : null;
-        cb({ token, deviceId, clientType: "viewer" });
-      },
-      // Fix P0-2: Enable automatic reconnection with exponential backoff
-      reconnection: true,
-      reconnectionAttempts: Infinity,
-      reconnectionDelay: 3000,
-      reconnectionDelayMax: 60000
-    });
+  console.log('[PinBridge] Connecting to presence server:', SOCKET_SERVER_URL);
+  socket = io(SOCKET_SERVER_URL, {
+    auth: async (cb) => {
+      const token = auth.currentUser ? await auth.currentUser.getIdToken() : null;
+      cb({ token, deviceId, clientType: "viewer" });
+    },
+    // Fix P0-2: Enable automatic reconnection with exponential backoff
+    reconnection: true,
+    reconnectionAttempts: Infinity,
+    reconnectionDelay: 3000,
+    reconnectionDelayMax: 60000
+  });
 
-    socket.on('connect', () => console.log('[PinBridge] Socket connected to presence server'));
+  socket.on('connect', () => console.log('[PinBridge] Socket connected to presence server'));
 
-    socket.on('presence_update', (data) => {
-      if (data.deviceId === deviceId) {
-        validatePresence(data.status === 'online', data.lastSeen, data.batteryLevel, data.isCharging);
-      }
-    });
+  socket.on('presence_update', (data) => {
+    if (data.deviceId === deviceId) {
+      validatePresence(data.status === 'online', data.lastSeen, data.batteryLevel, data.isCharging);
+    }
+  });
 
-    socket.on('disconnect', (reason) => {
-      console.warn('[PinBridge] Socket disconnected:', reason);
-      // Socket.IO handles reconnection automatically with above config
-    });
+  socket.on('disconnect', (reason) => {
+    console.warn('[PinBridge] Socket disconnected:', reason);
+    // Socket.IO handles reconnection automatically with above config
+  });
 
-    socket.on('connect_error', (err) => {
-      console.warn('[PinBridge] Socket connection error:', err.message);
-    });
-  }
+  socket.on('connect_error', (err) => {
+    console.warn('[PinBridge] Socket connection error:', err.message);
+  });
 
   // Helper to validate and propagate status
   function validatePresence(online, lastSeen, batteryLevel, isCharging) {
@@ -401,8 +409,18 @@ function startListeners(deviceId) {
       safeSendMessage({ type: 'statusUpdate', online: effectiveOnline, lastSeen, isStale, batteryLevel: batteryLevel != null ? batteryLevel : undefined, isCharging: !!isCharging });
   }
 
-  // 2. SINGLE Firestore listener for both status + pairing state (Fix W-5)
-  // Replaces the previous two separate onSnapshot listeners.
+  // FIX (BUG A): The FIRST onSnapshot fires from Firestore's LOCAL CACHE, which
+  // still has the stale paired:false from the initial document creation.
+  // Since pairingPending is already false (set in the pair handler before calling
+  // startListeners), the old code treated this cached paired:false as an unpair
+  // signal and immediately called performUnpairOnly() — destroying the pairing.
+  //
+  // Fix: Skip the unpair check on the first snapshot. If the document truly has
+  // paired:false from the server, Firestore will fire a second snapshot with
+  // the server-confirmed state.
+  let isFirstPairingSnapshot = true;
+
+  // 2. SINGLE Firestore listener for both status + pairing state
   unsubscribePairing = onSnapshot(doc(db, 'pairings', deviceId), snap => {
     const data = snap.data();
 
@@ -413,20 +431,22 @@ function startListeners(deviceId) {
       return;
     }
 
-    // FIX: paired:false means pairing is in progress (set by pairing.js initially).
-    // Only treat it as an unpair if we were PREVIOUSLY paired (not during initial setup).
-    // During active pairing flow, pairingPending is true, so skip this check.
-    if (data.paired === false && !pairingPending) {
-      // Check if we were previously confirmed as paired
-      chrome.storage.local.get(['pairedDeviceId'], ({ pairedDeviceId }) => {
-        if (pairedDeviceId === deviceId) {
-          console.log('[PinBridge] Pairing explicitly revoked (paired set to false). Unpairing...');
-          performUnpairOnly();
-        }
-        // else: This is the initial pairing doc creation — ignore
-      });
+    if (data.paired === false) {
+      if (isFirstPairingSnapshot || pairingPending) {
+        // FIX: First snapshot is likely from Firestore cache with stale paired:false.
+        // Or pairing is still in progress. Don't unpair — wait for server snapshot.
+        console.log('[PinBridge] Ignoring paired:false (first snapshot or pairing pending).');
+        isFirstPairingSnapshot = false;
+        return;
+      }
+      // Subsequent snapshot with paired:false — genuine unpair signal
+      console.log('[PinBridge] Pairing explicitly revoked (paired set to false). Unpairing...');
+      performUnpairOnly();
       return;
     }
+
+    // Got a valid snapshot (paired:true or status update) — no longer first
+    isFirstPairingSnapshot = false;
 
     // Status update: online/offline + battery
     const online = data.status === 'online';
@@ -437,10 +457,10 @@ function startListeners(deviceId) {
     console.log(`[PinBridge] Firestore status update: ${online ? 'online' : 'offline'}, lastSeen: ${lastSeen}, battery: ${batteryLevel}%`);
     validatePresence(online, lastSeen, batteryLevel, isCharging);
   }, err => {
-    // FIX: Don't unpair on permission-denied if pairing is still in progress
     if (err.code === 'permission-denied') {
-      if (pairingPending) {
-        console.warn('[PinBridge] Permission denied during active pairing — ignoring (pairing in progress).');
+      if (pairingPending || isFirstPairingSnapshot) {
+        console.warn('[PinBridge] Permission denied during startup/pairing — ignoring.');
+        isFirstPairingSnapshot = false;
       } else {
         console.warn('[PinBridge] Permission denied on pairing listener. Unpairing.');
         performUnpairOnly();
