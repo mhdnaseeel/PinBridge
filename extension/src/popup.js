@@ -245,9 +245,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // Re-evaluate online/offline every 5 seconds based on lastSeen
+    // Re-evaluate online/offline every 5 seconds
     setInterval(() => {
-        if (currentLastSeen > 0) {
+        if (currentLastSeen > 0 || currentServerStatus) {
             updateConnectionStatus();
         }
     }, 5000);

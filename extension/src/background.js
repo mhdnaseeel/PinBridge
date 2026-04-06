@@ -118,6 +118,21 @@ const stateManager = {
   }
 };
 
+// ─── Service Worker Keepalive ──────────────────────────────────
+// MV3 service workers go idle after ~30s. An alarm every 25s keeps it alive
+// so Firestore onSnapshot listeners (OTP + status) remain active.
+const KEEPALIVE_ALARM = 'pinbridge-keepalive';
+
+function startKeepalive() {
+  chrome.alarms.create(KEEPALIVE_ALARM, { periodInMinutes: 0.4 }); // ~24 seconds
+  console.log('[PinBridge] Keepalive alarm started.');
+}
+
+function stopKeepalive() {
+  chrome.alarms.clear(KEEPALIVE_ALARM);
+  console.log('[PinBridge] Keepalive alarm stopped.');
+}
+
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.type === 'pair') {
     const performPairing = async () => {
@@ -360,7 +375,8 @@ async function performSignOutOnly() {
   try {
     await signOut(auth).catch(() => {});
     console.log('[PinBridge] Signed out (auth only), pairing preserved.');
-    safeSendMessage({ type: 'unpaired' });
+    // FIX: Don't send 'unpaired' — pairing is still active.
+    // The popup handles sign-out separately via signOutOnly response.
   } catch (err) {
     console.error('[PinBridge] Sign out (auth only) failed:', err);
   }
@@ -371,6 +387,15 @@ async function cleanupFirestorePairing(pairedDeviceId, googleUid) {
   try {
     if (pairedDeviceId) {
       console.log('[PinBridge] Cleaning up Firestore pairing for:', pairedDeviceId);
+      // FIX (Bug 5): Set paired:false BEFORE deleting, so the Android's Firestore
+      // listener gets a clear unpair signal even if it misses the deletion.
+      try {
+        await updateDoc(doc(db, 'pairings', pairedDeviceId), { paired: false });
+        // Brief delay to let Firestore propagate the field change to Android
+        await new Promise(r => setTimeout(r, 500));
+      } catch (e) {
+        console.warn('[PinBridge] Failed to set paired=false (non-critical):', e.message);
+      }
       await Promise.all([
         deleteDoc(doc(db, 'pairings', pairedDeviceId)),
         deleteDoc(doc(db, 'otps', pairedDeviceId))
@@ -392,7 +417,7 @@ async function performUnpairOnly() {
   // Firestore cleanup happens in the background (non-blocking).
   stopListeners();
   stateManager.reset();
-  await chrome.storage.local.remove(['pairedDeviceId', 'secret', 'latestOtp', 'lastSeen', 'batteryLevel', 'isCharging']);
+  await chrome.storage.local.remove(['pairedDeviceId', 'secret', 'latestOtp', 'lastSeen', 'batteryLevel', 'isCharging', 'serverStatus']);
   console.log('[PinBridge] Unpaired (auth preserved)');
   safeSendMessage({ type: 'statusUpdate', lastSeen: 0 });
   safeSendMessage({ type: 'unpaired' });
@@ -414,7 +439,7 @@ async function performSignOut() {
   stateManager.reset();
   await signOut(auth).catch(() => {});
   await chrome.storage.local.remove(['pairedDeviceId', 'secret', 'latestOtp', 'googleUid', 'googleEmail']);
-  await chrome.storage.local.remove(['lastSeen', 'batteryLevel', 'isCharging']);
+  await chrome.storage.local.remove(['lastSeen', 'batteryLevel', 'isCharging', 'serverStatus']);
   
   isSigningOut = false;
   console.log('[PinBridge] Local state cleaned');
@@ -435,6 +460,7 @@ function stopListeners() {
         socket.disconnect();
         socket = null;
     }
+    stopKeepalive();
 }
 
 let socket = null;
@@ -459,6 +485,9 @@ function startListeners(deviceId) {
     reconnectionDelay: 3000,
     reconnectionDelayMax: 60000
   });
+
+  // Start keepalive to prevent service worker from sleeping
+  startKeepalive();
 
   socket.on('connect', () => console.log('[PinBridge] Socket connected to presence server'));
 
@@ -535,8 +564,8 @@ function startListeners(deviceId) {
     const batteryLevel = data.batteryLevel != null ? data.batteryLevel : null;
     const isCharging = !!data.isCharging;
 
-    console.log(`[PinBridge] Firestore status update: lastSeen: ${lastSeen}, battery: ${batteryLevel}%`);
-    handlePresenceUpdate(lastSeen, batteryLevel, isCharging);
+    console.log(`[PinBridge] Firestore status update: status=${data.status}, lastSeen: ${lastSeen}, battery: ${batteryLevel}%`);
+    handlePresenceUpdate(lastSeen, batteryLevel, isCharging, data.status || null);
   }, err => {
     if (err.code === 'permission-denied') {
       if (pairingPending || isFirstPairingSnapshot) {
@@ -646,5 +675,20 @@ onAuthStateChanged(auth, user => {
     chrome.storage.local.get(['pairedDeviceId'], ({pairedDeviceId}) => {
       if (pairedDeviceId && !isPairingNow) startListeners(pairedDeviceId);
     });
+  }
+});
+
+// ─── Alarm handler: keepalive + listener recovery ─────────────
+chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name === KEEPALIVE_ALARM) {
+    // Service worker was woken by alarm — ensure listeners are alive
+    if (!unsubscribePairing && !isPairingNow) {
+      chrome.storage.local.get(['pairedDeviceId'], ({pairedDeviceId}) => {
+        if (pairedDeviceId && !unsubscribePairing && !isPairingNow) {
+          console.log('[PinBridge] Keepalive: Restarting listeners after SW restart.');
+          startListeners(pairedDeviceId);
+        }
+      });
+    }
   }
 });

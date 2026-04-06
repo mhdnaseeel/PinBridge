@@ -27,7 +27,8 @@
     "storage",
     "notifications",
     "sidePanel",
-    "identity"
+    "identity",
+    "alarms"
   ],
   "host_permissions": [
     "https://*.firebaseio.com/*",
