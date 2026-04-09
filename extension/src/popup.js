@@ -220,9 +220,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function updateConnectionStatus() {
         const now = Date.now();
-        // FIX (Bug 2): Use strict heartbeat interval for online calculations
-        // since Android now writes directly to Firestore every 15 seconds.
-        const online = currentLastSeen > 0 && (now - currentLastSeen < ONLINE_THRESHOLD);
+        // Use strict heartbeat interval for online calculations, but
+        // fallback to serverStatus flag if lastSeen hasn't successfully synced.
+        const isRecent = currentLastSeen > 0 && (now - currentLastSeen < ONLINE_THRESHOLD);
+        const online = isRecent || currentServerStatus === 'online';
         
         if (online) {
             statusDot.className = 'dot dot-online';

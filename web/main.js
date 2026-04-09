@@ -75,9 +75,10 @@ let state = {
 // Active heartbeat: derive online/offline from lastSeen
 const ONLINE_THRESHOLD = 25000; // 25 seconds
 function isDeviceOnline() {
-  // FIX: Use strict heartbeat interval for online calculations
-  // since Android now writes directly to Firestore every 15 seconds.
-  return state.lastSeen > 0 && (Date.now() - state.lastSeen < ONLINE_THRESHOLD);
+  // Use strict heartbeat interval for online calculations, but
+  // fallback to serverStatus flag if lastSeen hasn't successfully synced.
+  const isRecent = state.lastSeen > 0 && (Date.now() - state.lastSeen < ONLINE_THRESHOLD);
+  return isRecent || state.serverStatus === 'online';
 }
 
 // HTML escaping utility (V-07)
