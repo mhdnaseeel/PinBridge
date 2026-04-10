@@ -75,10 +75,10 @@ let state = {
 // Active heartbeat: derive online/offline from lastSeen
 const ONLINE_THRESHOLD = 25000; // 25 seconds
 function isDeviceOnline() {
-  // Use strict heartbeat interval for online calculations, but
-  // fallback to serverStatus flag if lastSeen hasn't successfully synced.
-  const isRecent = state.lastSeen > 0 && (Date.now() - state.lastSeen < ONLINE_THRESHOLD);
-  return isRecent || state.serverStatus === 'online';
+  const now = Date.now();
+  const isRecent = state.lastSeen > 0 && (now - state.lastSeen < ONLINE_THRESHOLD);
+  const isTrustworthy = state.lastSeen > 0 && (now - state.lastSeen < 60000);
+  return isRecent || (state.serverStatus === 'online' && isTrustworthy);
 }
 
 // HTML escaping utility (V-07)

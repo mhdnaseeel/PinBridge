@@ -137,16 +137,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     chrome.runtime.sendMessage({ type: 'getStatus' }, (response) => {
         if (response && response.status === 'paired') {
             showPaired();
-            currentLastSeen = response.lastSeen || 0;
-            currentBatteryLevel = response.batteryLevel;
-            currentIsCharging = response.isCharging;
-            currentServerStatus = response.serverStatus || null;
-            if (currentLastSeen > 0 || currentServerStatus) {
-                updateConnectionStatus();
-            } else {
-                showConnectingStatus();
-            }
-            updateBatteryDisplay(response.batteryLevel, response.isCharging);
+            // FIX: Treat ALL cached values as stale on popup open.
+            // Show "Connecting…" and hide battery until fresh data arrives
+            // via a statusUpdate message from the background.
+            showConnectingStatus();
+            batteryIndicator.classList.add('hidden');
+            // Request background to push fresh live status immediately
+            chrome.runtime.sendMessage({ type: 'refreshStatus' });
         } else {
             showUnpaired();
         }
@@ -223,7 +220,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Use strict heartbeat interval for online calculations, but
         // fallback to serverStatus flag if lastSeen hasn't successfully synced.
         const isRecent = currentLastSeen > 0 && (now - currentLastSeen < ONLINE_THRESHOLD);
-        const online = isRecent || currentServerStatus === 'online';
+        
+        // FIX: Only trust the 'online' server status override if the data is less than 60s old.
+        // This prevents frozen disk data in chrome.storage.local from keeping the UI perpetually 'online'
+        const isTrustworthy = currentLastSeen > 0 && (now - currentLastSeen < 60000);
+        const online = isRecent || (currentServerStatus === 'online' && isTrustworthy);
         
         if (online) {
             statusDot.className = 'dot dot-online';
@@ -237,6 +238,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
             statusText.textContent = `Offline (${timeStr})`;
             statusText.style.color = '#f59e0b';
+            // FIX: Clear battery display when device goes offline — don't show stale battery
+            currentBatteryLevel = null;
+            currentIsCharging = false;
+            updateBatteryDisplay(null, false);
         }
     }
 
@@ -470,14 +475,21 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         } else if (msg.type === 'statusUpdate') {
             if (msg.lastSeen) currentLastSeen = msg.lastSeen;
-            if (msg.serverStatus) currentServerStatus = msg.serverStatus;
+            if (msg.serverStatus !== undefined) currentServerStatus = msg.serverStatus;
             if (msg.batteryLevel != null) {
                 currentBatteryLevel = msg.batteryLevel;
                 currentIsCharging = msg.isCharging;
             }
             updateConnectionStatus();
+            // Only show battery if device is online (updateConnectionStatus handles clearing it when offline)
             if (msg.batteryLevel != null) {
-                updateBatteryDisplay(msg.batteryLevel, msg.isCharging);
+                // Re-check online status before updating battery
+                const now = Date.now();
+                const isOnline = (currentLastSeen > 0 && (now - currentLastSeen < ONLINE_THRESHOLD)) ||
+                    (currentServerStatus === 'online' && currentLastSeen > 0 && (now - currentLastSeen < 60000));
+                if (isOnline) {
+                    updateBatteryDisplay(msg.batteryLevel, msg.isCharging);
+                }
             }
         } else if (msg.type === 'unpaired' || msg.type === 'signOut') {
             showUnpaired();

@@ -86,11 +86,19 @@ const stateManager = {
     if (status === 'online' || status === 'offline') {
       this.serverStatus = status;
     }
+    // FIX: If device goes offline, clear battery so stale values don't persist
+    if (status === 'offline') {
+      this.batteryLevel = null;
+      this.isCharging = false;
+    }
     // Persist to storage for popup/sidepanel reads
     const storageData = { lastSeen: this.lastSeen };
     if (this.batteryLevel != null) {
       storageData.batteryLevel = this.batteryLevel;
       storageData.isCharging = this.isCharging;
+    } else {
+      // Actively remove stale battery from storage when null
+      chrome.storage.local.remove(['batteryLevel', 'isCharging']);
     }
     if (this.serverStatus) {
       storageData.serverStatus = this.serverStatus;
@@ -228,6 +236,33 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   } else if (msg.type === 'webPairingSuccess') {
     handleWebPairingSuccess(msg);
     return true;
+  } else if (msg.type === 'refreshStatus') {
+    // FIX: Popup requests fresh live status. Push whatever we have now
+    // and ask the socket server for an immediate presence refresh.
+    safeSendMessage({
+      type: 'statusUpdate',
+      lastSeen: stateManager.lastSeen,
+      serverStatus: stateManager.serverStatus,
+      batteryLevel: stateManager.batteryLevel,
+      isCharging: stateManager.isCharging
+    });
+    // Ask socket server for fresh presence data
+    if (socket && socket.connected) {
+      chrome.storage.local.get(['pairedDeviceId'], ({pairedDeviceId}) => {
+        if (pairedDeviceId) {
+          socket.emit('request_presence', { deviceId: pairedDeviceId });
+        }
+      });
+    }
+    // Also restart listeners if they died during SW sleep
+    if (!unsubscribePairing && !isPairingNow) {
+      chrome.storage.local.get(['pairedDeviceId'], ({pairedDeviceId}) => {
+        if (pairedDeviceId) {
+          console.log('[PinBridge] refreshStatus: Restarting idle listeners.');
+          startListeners(pairedDeviceId);
+        }
+      });
+    }
   }
 });
 
@@ -496,7 +531,11 @@ function startListeners(deviceId) {
   // Start keepalive to prevent service worker from sleeping
   startKeepalive();
 
-  socket.on('connect', () => console.log('[PinBridge] Socket connected to presence server'));
+  socket.on('connect', () => {
+    console.log('[PinBridge] Socket connected to presence server');
+    // FIX: On reconnect, request fresh presence and push a statusUpdate
+    socket.emit('request_presence', { deviceId });
+  });
 
   socket.on('presence_update', (data) => {
     if (data.deviceId === deviceId) {
@@ -516,7 +555,12 @@ function startListeners(deviceId) {
   // Helper: feed updates through the centralized StateManager
   function handlePresenceUpdate(lastSeen, batteryLevel, isCharging, status) {
       console.log(`[PinBridge] Presence update: status=${status}, lastSeen=${lastSeen}, battery=${batteryLevel}%, charging=${isCharging}`);
-      stateManager.update({ lastSeen, batteryLevel, isCharging, status });
+      // FIX: If the device is offline, clear battery so the popup doesn't show stale values
+      if (status === 'offline') {
+          stateManager.update({ lastSeen, batteryLevel: null, isCharging: false, status });
+      } else {
+          stateManager.update({ lastSeen, batteryLevel, isCharging, status });
+      }
   }
 
   // FIX (BUG A): The FIRST onSnapshot fires from Firestore's LOCAL CACHE, which
