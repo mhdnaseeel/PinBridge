@@ -225,6 +225,20 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         console.log('[PinBridge] Manual Sync Signal requested via popup, restarting presence listeners.');
         // Force bypass cooldown
         lastListenersStartTime = 0;
+        
+        // Clear cached presence data during loading loop
+        stateManager.lastSeen = 0;
+        stateManager.batteryLevel = null;
+        stateManager.serverStatus = 'offline';
+        chrome.storage.local.set({ lastSeen: 0, batteryLevel: null, isCharging: false, serverStatus: 'offline' });
+        safeSendMessage({
+          type: 'statusUpdate',
+          lastSeen: 0,
+          serverStatus: 'offline',
+          batteryLevel: null,
+          isCharging: false
+        });
+
         startPresenceListeners(pairedDeviceId);
       }
     });

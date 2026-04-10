@@ -458,7 +458,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         syncSignalBtn.addEventListener('click', () => {
             syncSignalBtn.disabled = true;
             syncSignalBtn.innerHTML = 'Syncing...';
-            // Force status to "Connecting..." immediately for user feedback
+            // Force reset local cache and show "Connecting..." immediately
+            currentLastSeen = 0;
+            currentBatteryLevel = null;
+            currentServerStatus = 'offline';
+            batteryIndicator.classList.add('hidden');
             showConnectingStatus();
             chrome.runtime.sendMessage({ type: 'syncSignal' }, () => {
                 setTimeout(() => {

@@ -553,6 +553,12 @@ function renderPaired() {
         syncSignalBtn.disabled = true;
         const original = syncSignalBtn.innerHTML;
         syncSignalBtn.innerHTML = 'Connecting...';
+
+        // Clear cached data so UI doesn't show old values while connecting
+        state.lastSeen = 0;
+        state.batteryLevel = null;
+        state.serverStatus = 'offline';
+        updateUI();
         
         socket.disconnect();
         setTimeout(() => {
