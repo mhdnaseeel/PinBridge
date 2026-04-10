@@ -237,19 +237,24 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     handleWebPairingSuccess(msg);
     return true;
   } else if (msg.type === 'refreshStatus') {
-    // FIX: Popup requests fresh live status. If the service worker cold-started,
-    // stateManager will have zeros. Hydrate from chrome.storage.local first,
-    // then push to popup, then request fresh live data from socket server.
+    // FIX: Popup requests fresh live status.
+    // ALWAYS read from chrome.storage.local — it's the most reliable source because
+    // Firestore onSnapshot writes to it continuously. The in-memory stateManager
+    // may be stale if the SW restarted and no Firestore snapshot has arrived yet.
     const hydrateAndPush = async () => {
-      // Hydrate stateManager from storage if it was cold-started (lastSeen === 0)
-      if (stateManager.lastSeen === 0) {
-        const stored = await chrome.storage.local.get(['lastSeen', 'batteryLevel', 'isCharging', 'serverStatus']);
-        if (stored.lastSeen) stateManager.lastSeen = stored.lastSeen;
-        if (stored.batteryLevel != null) {
-          stateManager.batteryLevel = stored.batteryLevel;
-          stateManager.isCharging = !!stored.isCharging;
-        }
-        if (stored.serverStatus) stateManager.serverStatus = stored.serverStatus;
+      // Always read the latest from storage
+      const stored = await chrome.storage.local.get(['lastSeen', 'batteryLevel', 'isCharging', 'serverStatus']);
+      
+      // Update stateManager with latest storage values (storage may be newer)
+      if (stored.lastSeen && stored.lastSeen > stateManager.lastSeen) {
+        stateManager.lastSeen = stored.lastSeen;
+      }
+      if (stored.batteryLevel != null) {
+        stateManager.batteryLevel = stored.batteryLevel;
+        stateManager.isCharging = !!stored.isCharging;
+      }
+      if (stored.serverStatus) {
+        stateManager.serverStatus = stored.serverStatus;
       }
 
       // Push current state to popup
@@ -261,15 +266,9 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         isCharging: stateManager.isCharging
       });
 
-      // Ask socket server for fresh presence data
-      if (socket && socket.connected) {
-        const { pairedDeviceId } = await chrome.storage.local.get(['pairedDeviceId']);
-        if (pairedDeviceId) {
-          socket.emit('request_presence', { deviceId: pairedDeviceId });
-        }
-      }
-
-      // Restart listeners if they died during SW sleep
+      // Restart listeners if they died during SW sleep.
+      // startListeners() reconnects the socket, and the server automatically
+      // sends a presence_update to viewers on socket connect (server line 148-161).
       if (!unsubscribePairing && !isPairingNow) {
         const { pairedDeviceId } = await chrome.storage.local.get(['pairedDeviceId']);
         if (pairedDeviceId) {
@@ -549,8 +548,8 @@ function startListeners(deviceId) {
 
   socket.on('connect', () => {
     console.log('[PinBridge] Socket connected to presence server');
-    // FIX: On reconnect, request fresh presence and push a statusUpdate
-    socket.emit('request_presence', { deviceId });
+    // The server automatically sends a presence_update to viewers on connect
+    // (server lines 148-161), so no need to request it — just log.
   });
 
   socket.on('presence_update', (data) => {
