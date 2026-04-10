@@ -589,7 +589,9 @@ function startPresenceListeners(deviceId) {
     reconnection: true,
     reconnectionAttempts: Infinity,
     reconnectionDelay: 3000,
-    reconnectionDelayMax: 60000
+    reconnectionDelayMax: 60000,
+    // FIX: Force websocket transport because MV3 Service Workers don't support XMLHttpRequest (long-polling)
+    transports: ['websocket']
   });
 
   // Start keepalive to prevent service worker from sleeping

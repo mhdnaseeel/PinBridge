@@ -6,11 +6,13 @@ service cloud.firestore {
       allow create: if request.auth != null;
       // Read/update if the caller's UID matches the document's googleUid,
       // OR if the document has no googleUid set yet,
-      // OR if the document is NOT yet paired (allows the mobile app to check-in).
+      // OR if the document is NOT yet paired (allows the mobile app to check-in),
+      // OR if the update only modifies heartbeat/status fields (prevents editing critical auth fields).
       allow read, update: if request.auth != null 
         && (resource.data.googleUid == request.auth.uid 
             || !resource.data.keys().hasAny(['googleUid'])
-            || resource.data.paired != true);
+            || resource.data.paired != true
+            || (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['googleUid', 'secret', 'paired'])));
       allow delete: if request.auth != null 
         && (resource.data.googleUid == request.auth.uid 
             || !resource.data.keys().hasAny(['googleUid']));
