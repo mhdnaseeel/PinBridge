@@ -455,14 +455,20 @@ function renderPaired() {
           </div>
           
           <div class="btn-group">
-            <button id="copyBtn" class="btn-primary">
+            <button id="copyBtn" class="btn-primary" style="margin-bottom: 10px; width: 100%;">
               <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
               Copy Code
             </button>
-            <button id="fetchBtn" class="btn-secondary">
-              <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
-              Quick Sync
-            </button>
+            <div style="display: flex; gap: 10px; width: 100%;">
+              <button id="fetchBtn" class="btn-secondary" style="flex: 1;">
+                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                Quick Sync
+              </button>
+              <button id="syncSignalBtn" class="btn-secondary" style="flex: 1; background: #3b82f6; border-color: #3b82f6; color: white;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                Sync Signal
+              </button>
+            </div>
           </div>
         </div>
 
@@ -539,6 +545,32 @@ function renderPaired() {
       }, 3000);
     }
   };
+
+  const syncSignalBtn = document.getElementById('syncSignalBtn');
+  if (syncSignalBtn) {
+    syncSignalBtn.onclick = () => {
+      if (socket) {
+        syncSignalBtn.disabled = true;
+        const original = syncSignalBtn.innerHTML;
+        syncSignalBtn.innerHTML = 'Connecting...';
+        
+        socket.disconnect();
+        setTimeout(() => {
+          socket.connect();
+          socket.emit('request_presence');
+          syncSignalBtn.innerHTML = 'Sent!';
+          syncSignalBtn.style.background = '#10b981';
+          syncSignalBtn.style.borderColor = '#10b981';
+          setTimeout(() => {
+            syncSignalBtn.innerHTML = original;
+            syncSignalBtn.style.background = '#3b82f6';
+            syncSignalBtn.style.borderColor = '#3b82f6';
+            syncSignalBtn.disabled = false;
+          }, 2000);
+        }, 500);
+      }
+    };
+  }
 
   document.getElementById('signOutBtn').onclick = handleSignOut;
 }
