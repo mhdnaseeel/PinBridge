@@ -37,6 +37,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const statusText = document.getElementById('statusText');
     const offlineBanner = document.getElementById('offlineBanner');
     const googleSignInBtn = document.getElementById('googleSignInBtn');
+    const syncSignalBtn = document.getElementById('syncSignalBtn');
     const startPairingBtn = document.getElementById('startPairingBtn');
     const emptyText = document.getElementById('emptyText');
     const errorMsg = document.getElementById('errorMsg');
@@ -452,6 +453,22 @@ document.addEventListener('DOMContentLoaded', async () => {
             manualFetchBtn.style.background = '#10b981';
         }, 2000);
     };
+
+    if (syncSignalBtn) {
+        syncSignalBtn.addEventListener('click', () => {
+            syncSignalBtn.disabled = true;
+            syncSignalBtn.innerHTML = 'Syncing...';
+            // Force status to "Connecting..." immediately for user feedback
+            showConnectingStatus();
+            chrome.runtime.sendMessage({ type: 'syncSignal' }, () => {
+                setTimeout(() => {
+                    syncSignalBtn.disabled = false;
+                    syncSignalBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg> Sync Signal';
+                    updateConnectionStatus(); // Refresh status text in case it updated
+                }, 2000);
+            });
+        });
+    }
 
     manualFetchBtn.addEventListener('click', () => {
         if (!navigator.onLine) {

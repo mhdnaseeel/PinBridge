@@ -219,6 +219,17 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   } else if (msg.type === 'manualFetch') {
     handleManualFetch(sendResponse);
     return true;
+  } else if (msg.type === 'syncSignal') {
+    chrome.storage.local.get(['pairedDeviceId'], ({pairedDeviceId}) => {
+      if (pairedDeviceId) {
+        console.log('[PinBridge] Manual Sync Signal requested via popup, restarting presence listeners.');
+        // Force bypass cooldown
+        lastListenersStartTime = 0;
+        startPresenceListeners(pairedDeviceId);
+      }
+    });
+    sendResponse({status: 'ok'});
+    return true;
   } else if (msg.type === 'signOutOnly') {
     // Sign out from Firebase Auth only — keep pairing data intact
     performSignOutOnly().then(() => sendResponse({status: 'ok'}));
