@@ -78,15 +78,26 @@ class DeviceHeartbeatService : Service() {
         reconnectAttempt = 0
     }
 
-    /**
-     * Reads current battery level (0-100) and charging status from BatteryManager.
-     * Uses the system service API (no BroadcastReceiver needed).
-     */
     private fun getBatteryInfo(): Pair<Int, Boolean> {
-        val bm = getSystemService(Context.BATTERY_SERVICE) as BatteryManager
-        val level = bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
-        val isCharging = bm.isCharging
-        return Pair(level, isCharging)
+        val batteryStatus: Intent? = android.content.IntentFilter(Intent.ACTION_BATTERY_CHANGED).let { ifilter ->
+            registerReceiver(null, ifilter)
+        }
+        val status: Int = batteryStatus?.getIntExtra(BatteryManager.EXTRA_STATUS, -1) ?: -1
+        val isCharging: Boolean = status == BatteryManager.BATTERY_STATUS_CHARGING 
+                || status == BatteryManager.BATTERY_STATUS_FULL
+        val level: Int = batteryStatus?.getIntExtra(BatteryManager.EXTRA_LEVEL, -1) ?: -1
+        val scale: Int = batteryStatus?.getIntExtra(BatteryManager.EXTRA_SCALE, -1) ?: -1
+        val batteryPct = if (scale > 0) (level * 100 / scale) else -1
+
+        // Fallback to BatteryManager if broadcast somehow fails to yield data
+        if (batteryPct < 0) {
+            val bm = getSystemService(Context.BATTERY_SERVICE) as BatteryManager
+            val bmLevel = bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
+            val bmCharging = bm.isCharging
+            return Pair(bmLevel, bmCharging)
+        }
+        
+        return Pair(batteryPct, isCharging)
     }
 
     /**
