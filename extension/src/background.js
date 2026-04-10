@@ -268,7 +268,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     // may be stale if the SW restarted and no Firestore snapshot has arrived yet.
     const hydrateAndPush = async () => {
       // Always read the latest from storage
-      const stored = await chrome.storage.local.get(['lastSeen', 'batteryLevel', 'isCharging', 'serverStatus']);
+      const stored = await chrome.storage.local.get(['lastSeen', 'batteryLevel', 'isCharging', 'serverStatus', 'pairedDeviceId']);
       
       // Update stateManager with latest storage values only if storage is newer
       // than our current in-memory state. This prevents stale storage reads
@@ -287,23 +287,18 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         }
       }
 
-      // Push current state to popup
+      const isSocketAlive = socket && (socket.connected || socket.active);
+      const listenersFullyDead = !unsubscribePairing && !isSocketAlive;
+      const isConnecting = (socket && socket.active && !socket.connected) || (listenersFullyDead && !isPairingNow && !!stored.pairedDeviceId);
+
+      // Push current state to popup, overriding serverStatus if we are currently establishing a connection
       safeSendMessage({
         type: 'statusUpdate',
         lastSeen: stateManager.lastSeen,
-        serverStatus: stateManager.serverStatus,
+        serverStatus: isConnecting ? 'connecting' : stateManager.serverStatus,
         batteryLevel: stateManager.batteryLevel,
         isCharging: stateManager.isCharging
       });
-
-      // FIX: Only restart listeners if they are truly dead AND not currently connecting.
-      // The old code restarted on every 3s poll if socket wasn't yet connected,
-      // which killed the connecting socket before it could finish the auth handshake.
-      // This created a death spiral: start→kill→start→kill→... every 3 seconds.
-      //
-      // isSocketAlive: socket exists AND is connected, connecting, or reconnecting.
-      const isSocketAlive = socket && (socket.connected || socket.active);
-      const listenersFullyDead = !unsubscribePairing && !isSocketAlive;
 
       if (listenersFullyDead && !isPairingNow) {
         const { pairedDeviceId } = await chrome.storage.local.get(['pairedDeviceId']);

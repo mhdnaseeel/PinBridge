@@ -283,6 +283,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             statusDot.className = 'dot dot-online';
             statusText.textContent = 'Online';
             statusText.style.color = '#10b981';
+        } else if (currentServerStatus === 'connecting') {
+            showConnectingStatus();
+            batteryIndicator.classList.add('hidden');
         } else {
             statusDot.className = 'dot dot-offline';
             let timeStr = 'Unknown';
