@@ -385,8 +385,8 @@ function renderPaired() {
           </div>
           <div class="status-item">
             <span class="status-label">Device</span>
-            <span class="status-value" style="font-size: 11px; font-weight: 500; color: #10b981;">
-              Connected
+            <span id="sidebarDeviceStatus" class="status-value" style="font-size: 11px; font-weight: 500; color: ${statusColor};">
+              <span id="sidebarDeviceDot" class="dot ${dotClass}"></span> ${statusLabel}
             </span>
           </div>
           <div class="status-item">
