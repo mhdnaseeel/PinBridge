@@ -213,8 +213,9 @@ function updateConnectionIndicator() {
   }
 
   // Update battery display
+  const batteryAvailable = online && state.batteryLevel != null && state.batteryLevel >= 0;
   if (batteryEl) {
-    if (state.batteryLevel != null && state.batteryLevel >= 0) {
+    if (batteryAvailable) {
       let batteryHtml = `🔋 ${state.batteryLevel}%`;
       if (state.isCharging) {
         batteryHtml += ' <span class="charging-badge">⚡ Charging</span>';
@@ -228,15 +229,15 @@ function updateConnectionIndicator() {
   
   // Update sidebar
   if (sidebarStatus) {
-    const sidebarDotClass = isDeviceOnline() ? 'dot-online' : (state.lastSeen > 0 ? 'dot-offline' : 'dot-connecting');
-    const sidebarLabel = isDeviceOnline() ? 'Online' : (state.lastSeen > 0 ? 'Offline' : 'Connecting...');
+    const sidebarDotClass = online ? 'dot-online' : (state.lastSeen > 0 ? 'dot-offline' : 'dot-connecting');
+    const sidebarLabel = online ? 'Online' : (state.lastSeen > 0 ? 'Offline' : 'Connecting...');
     sidebarStatus.innerHTML = `<span id="sidebarDeviceDot" class="dot ${sidebarDotClass}"></span> ${sidebarLabel}`;
   }
   if (sidebarLastSeen) {
     sidebarLastSeen.textContent = state.lastSeen ? new Date(state.lastSeen).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : 'Never';
   }
   if (sidebarBatteryEl) {
-    if (state.batteryLevel != null && state.batteryLevel >= 0) {
+    if (batteryAvailable) {
       let sidebarBatteryHtml = `${state.batteryLevel}%`;
       if (state.isCharging) {
         sidebarBatteryHtml += ' ⚡';
@@ -359,7 +360,7 @@ function renderPaired() {
     (state.lastSeen && state.lastSeen > 0 ? `Last seen at ${lastSeenStr}` : 'Establishing connection to device');
   
   // Battery display strings
-  const batteryAvailable = state.batteryLevel != null && state.batteryLevel >= 0;
+  const batteryAvailable = isDeviceOnline() && state.batteryLevel != null && state.batteryLevel >= 0;
   const sidebarBatteryStr = batteryAvailable ? `${state.batteryLevel}%${state.isCharging ? ' ⚡' : ''}` : '--';
   let batteryHtml = '';
   if (batteryAvailable) {
@@ -728,6 +729,11 @@ function startListeners() {
       // Track authoritative server status
       if (serverStatus === 'online' || serverStatus === 'offline') {
           state.serverStatus = serverStatus;
+          // FIX: If device goes offline, clear battery state so stale values don't persist
+          if (serverStatus === 'offline') {
+              state.batteryLevel = null;
+              state.isCharging = false;
+          }
       }
       updateUI();
   }
