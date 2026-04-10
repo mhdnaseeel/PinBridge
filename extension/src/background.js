@@ -245,16 +245,21 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       // Always read the latest from storage
       const stored = await chrome.storage.local.get(['lastSeen', 'batteryLevel', 'isCharging', 'serverStatus']);
       
-      // Update stateManager with latest storage values (storage may be newer)
+      // Update stateManager with latest storage values only if storage is newer
+      // than our current in-memory state. This prevents stale storage reads
+      // from overwriting fresh live data received by listeners.
       if (stored.lastSeen && stored.lastSeen > stateManager.lastSeen) {
         stateManager.lastSeen = stored.lastSeen;
-      }
-      if (stored.batteryLevel != null) {
-        stateManager.batteryLevel = stored.batteryLevel;
-        stateManager.isCharging = !!stored.isCharging;
-      }
-      if (stored.serverStatus) {
-        stateManager.serverStatus = stored.serverStatus;
+        if (stored.batteryLevel != null) {
+          stateManager.batteryLevel = stored.batteryLevel;
+          stateManager.isCharging = !!stored.isCharging;
+        } else {
+          stateManager.batteryLevel = null;
+          stateManager.isCharging = false;
+        }
+        if (stored.serverStatus) {
+          stateManager.serverStatus = stored.serverStatus;
+        }
       }
 
       // Push current state to popup
