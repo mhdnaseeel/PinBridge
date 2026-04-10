@@ -103,11 +103,14 @@ const stateManager = {
       storageData.serverStatus = this.serverStatus;
     }
     chrome.storage.local.set(storageData);
+
+    const isConnecting = socket && socket.active && !socket.connected;
+
     // Push to any open popup/sidepanel
     safeSendMessage({
       type: 'statusUpdate',
       lastSeen: this.lastSeen,
-      serverStatus: this.serverStatus,
+      serverStatus: isConnecting ? 'connecting' : this.serverStatus,
       batteryLevel: this.batteryLevel,
       isCharging: this.isCharging
     });
