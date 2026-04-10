@@ -227,11 +227,10 @@ function updateConnectionIndicator() {
   }
   
   // Update sidebar
-  if (sidebarDot) {
+  if (sidebarStatus) {
     const sidebarDotClass = isDeviceOnline() ? 'dot-online' : (state.lastSeen > 0 ? 'dot-offline' : 'dot-connecting');
     const sidebarLabel = isDeviceOnline() ? 'Online' : (state.lastSeen > 0 ? 'Offline' : 'Connecting...');
-    sidebarDot.className = `dot ${sidebarDotClass}`;
-    sidebarStatus.textContent = sidebarLabel;
+    sidebarStatus.innerHTML = `<span id="sidebarDeviceDot" class="dot ${sidebarDotClass}"></span> ${sidebarLabel}`;
   }
   if (sidebarLastSeen) {
     sidebarLastSeen.textContent = state.lastSeen ? new Date(state.lastSeen).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : 'Never';
