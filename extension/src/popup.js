@@ -205,13 +205,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         if (needsUpdate) {
             updateConnectionStatus();
-            // Show battery only if online
-            const now = Date.now();
-            const isOnline = (currentLastSeen > 0 && (now - currentLastSeen < ONLINE_THRESHOLD)) ||
-                (currentServerStatus === 'online' && currentLastSeen > 0 && (now - currentLastSeen < 60000));
-            if (isOnline && currentBatteryLevel != null) {
-                updateBatteryDisplay(currentBatteryLevel, currentIsCharging);
-            }
         }
     });
 
@@ -297,10 +290,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
             statusText.textContent = `Offline (${timeStr})`;
             statusText.style.color = '#f59e0b';
-            // FIX: Clear battery display when device goes offline — don't show stale battery
-            currentBatteryLevel = null;
-            currentIsCharging = false;
-            updateBatteryDisplay(null, false);
+            // Show last known battery in red when offline
+            if (currentBatteryLevel != null) {
+                updateBatteryDisplay(currentBatteryLevel, currentIsCharging, true);
+            }
         }
     }
 
@@ -312,17 +305,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     }, 5000);
 
     // ─── Battery Display ────────────────────────────────────
-    function updateBatteryDisplay(level, isCharging) {
+    function updateBatteryDisplay(level, isCharging, isOffline = false) {
         if (level == null || level < 0) {
             batteryIndicator.classList.add('hidden');
             return;
         }
         batteryIndicator.classList.remove('hidden');
-        let html = `${level}%`;
-        if (isCharging) {
-            html += ' <span class="charging-badge">⚡ Charging</span>';
+        if (isOffline) {
+            batteryText.innerHTML = `${level}% <span style="color:#ef4444;font-size:11px;">(Last known)</span>`;
+            batteryText.style.color = '#ef4444';
+        } else {
+            let html = `${level}%`;
+            if (isCharging) {
+                html += ' <span class="charging-badge">⚡ Charging</span>';
+            }
+            batteryText.innerHTML = html;
+            batteryText.style.color = '';
         }
-        batteryText.innerHTML = html;
     }
 
     // ─── OTP Display ────────────────────────────────────────
@@ -540,15 +539,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 currentIsCharging = msg.isCharging;
             }
             updateConnectionStatus();
-            // Only show battery if device is online (updateConnectionStatus handles clearing it when offline)
-            if (msg.batteryLevel != null) {
-                // Re-check online status before updating battery
+            // Show battery — updateConnectionStatus handles red styling when offline
+            if (currentBatteryLevel != null) {
                 const now = Date.now();
                 const isOnline = (currentLastSeen > 0 && (now - currentLastSeen < ONLINE_THRESHOLD)) ||
                     (currentServerStatus === 'online' && currentLastSeen > 0 && (now - currentLastSeen < 60000));
-                if (isOnline) {
-                    updateBatteryDisplay(msg.batteryLevel, msg.isCharging);
-                }
+                updateBatteryDisplay(currentBatteryLevel, currentIsCharging, !isOnline);
             }
         } else if (msg.type === 'unpaired' || msg.type === 'signOut') {
             isPaired = false;

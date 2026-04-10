@@ -86,11 +86,8 @@ const stateManager = {
     if (status === 'online' || status === 'offline') {
       this.serverStatus = status;
     }
-    // FIX: If device goes offline, clear battery so stale values don't persist
-    if (status === 'offline') {
-      this.batteryLevel = null;
-      this.isCharging = false;
-    }
+    // Note: Battery is intentionally NOT cleared on offline.
+    // The popup/web will show the last known battery in red when offline.
     // Persist to storage for popup/sidepanel reads
     const storageData = { lastSeen: this.lastSeen };
     if (this.batteryLevel != null) {
@@ -109,7 +106,7 @@ const stateManager = {
       type: 'statusUpdate',
       lastSeen: this.lastSeen,
       serverStatus: this.serverStatus,
-      batteryLevel: this.batteryLevel != null ? this.batteryLevel : undefined,
+      batteryLevel: this.batteryLevel,
       isCharging: this.isCharging
     });
     return true;
@@ -575,12 +572,9 @@ function startListeners(deviceId) {
   // Helper: feed updates through the centralized StateManager
   function handlePresenceUpdate(lastSeen, batteryLevel, isCharging, status) {
       console.log(`[PinBridge] Presence update: status=${status}, lastSeen=${lastSeen}, battery=${batteryLevel}%, charging=${isCharging}`);
-      // FIX: If the device is offline, clear battery so the popup doesn't show stale values
-      if (status === 'offline') {
-          stateManager.update({ lastSeen, batteryLevel: null, isCharging: false, status });
-      } else {
-          stateManager.update({ lastSeen, batteryLevel, isCharging, status });
-      }
+      // Pass through all values including battery — the popup/web handles
+      // showing the last known battery in red when offline.
+      stateManager.update({ lastSeen, batteryLevel, isCharging, status });
   }
 
   // FIX (BUG A): The FIRST onSnapshot fires from Firestore's LOCAL CACHE, which

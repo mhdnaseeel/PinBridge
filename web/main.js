@@ -213,14 +213,20 @@ function updateConnectionIndicator() {
   }
 
   // Update battery display
-  const batteryAvailable = online && state.batteryLevel != null && state.batteryLevel >= 0;
+  const hasBattery = state.batteryLevel != null && state.batteryLevel >= 0;
   if (batteryEl) {
-    if (batteryAvailable) {
-      let batteryHtml = `🔋 ${state.batteryLevel}%`;
-      if (state.isCharging) {
-        batteryHtml += ' <span class="charging-badge">⚡ Charging</span>';
+    if (hasBattery) {
+      if (online) {
+        let batteryHtml = `🔋 ${state.batteryLevel}%`;
+        if (state.isCharging) {
+          batteryHtml += ' <span class="charging-badge">⚡ Charging</span>';
+        }
+        batteryEl.innerHTML = batteryHtml;
+        batteryEl.style.color = '';
+      } else {
+        batteryEl.innerHTML = `🔋 ${state.batteryLevel}% <span style="color:#ef4444;font-size:12px;">(Last known)</span>`;
+        batteryEl.style.color = '#ef4444';
       }
-      batteryEl.innerHTML = batteryHtml;
       batteryEl.style.display = 'flex';
     } else {
       batteryEl.style.display = 'none';
@@ -237,14 +243,21 @@ function updateConnectionIndicator() {
     sidebarLastSeen.textContent = state.lastSeen ? new Date(state.lastSeen).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : 'Never';
   }
   if (sidebarBatteryEl) {
-    if (batteryAvailable) {
-      let sidebarBatteryHtml = `${state.batteryLevel}%`;
-      if (state.isCharging) {
-        sidebarBatteryHtml += ' ⚡';
+    if (hasBattery) {
+      if (online) {
+        let sidebarBatteryHtml = `${state.batteryLevel}%`;
+        if (state.isCharging) {
+          sidebarBatteryHtml += ' ⚡';
+        }
+        sidebarBatteryEl.textContent = sidebarBatteryHtml;
+        sidebarBatteryEl.style.color = '';
+      } else {
+        sidebarBatteryEl.textContent = `${state.batteryLevel}%`;
+        sidebarBatteryEl.style.color = '#ef4444';
       }
-      sidebarBatteryEl.textContent = sidebarBatteryHtml;
     } else {
       sidebarBatteryEl.textContent = '--';
+      sidebarBatteryEl.style.color = '';
     }
   }
 }
@@ -360,13 +373,21 @@ function renderPaired() {
     (state.lastSeen && state.lastSeen > 0 ? `Last seen at ${lastSeenStr}` : 'Establishing connection to device');
   
   // Battery display strings
-  const batteryAvailable = isDeviceOnline() && state.batteryLevel != null && state.batteryLevel >= 0;
-  const sidebarBatteryStr = batteryAvailable ? `${state.batteryLevel}%${state.isCharging ? ' ⚡' : ''}` : '--';
+  const deviceOnline = isDeviceOnline();
+  const hasBattery = state.batteryLevel != null && state.batteryLevel >= 0;
+  const sidebarBatteryStr = hasBattery ? `${state.batteryLevel}%${deviceOnline && state.isCharging ? ' ⚡' : ''}` : '--';
+  const sidebarBatteryColor = hasBattery && !deviceOnline ? '#ef4444' : '';
   let batteryHtml = '';
-  if (batteryAvailable) {
-    batteryHtml = `🔋 ${state.batteryLevel}%`;
-    if (state.isCharging) {
-      batteryHtml += ' <span class="charging-badge">⚡ Charging</span>';
+  let batteryStyle = '';
+  if (hasBattery) {
+    if (deviceOnline) {
+      batteryHtml = `🔋 ${state.batteryLevel}%`;
+      if (state.isCharging) {
+        batteryHtml += ' <span class="charging-badge">⚡ Charging</span>';
+      }
+    } else {
+      batteryHtml = `🔋 ${state.batteryLevel}% <span style="color:#ef4444;font-size:12px;">(Last known)</span>`;
+      batteryStyle = 'color:#ef4444;';
     }
   }
   
@@ -397,7 +418,7 @@ function renderPaired() {
           </div>
           <div class="status-item">
             <span class="status-label">Battery</span>
-            <span id="sidebarBattery" class="status-value" style="font-size: 11px;">
+            <span id="sidebarBattery" class="status-value" style="font-size: 11px;${sidebarBatteryColor ? ' color:' + sidebarBatteryColor + ';' : ''}">
               ${sidebarBatteryStr}
             </span>
           </div>
@@ -422,7 +443,7 @@ function renderPaired() {
           </div>
         </div>
 
-        <div id="batteryDisplay" class="battery-display" style="display: ${batteryAvailable ? 'flex' : 'none'};">
+        <div id="batteryDisplay" class="battery-display" style="display: ${hasBattery ? 'flex' : 'none'};${batteryStyle}">
           ${batteryHtml}
         </div>
 
@@ -729,11 +750,8 @@ function startListeners() {
       // Track authoritative server status
       if (serverStatus === 'online' || serverStatus === 'offline') {
           state.serverStatus = serverStatus;
-          // FIX: If device goes offline, clear battery state so stale values don't persist
-          if (serverStatus === 'offline') {
-              state.batteryLevel = null;
-              state.isCharging = false;
-          }
+          // Note: Battery is intentionally NOT cleared on offline.
+          // The UI shows the last known battery in red when offline.
       }
       updateUI();
   }
