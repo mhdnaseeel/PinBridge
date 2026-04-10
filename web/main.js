@@ -384,15 +384,8 @@ function renderPaired() {
           </div>
           <div class="status-item">
             <span class="status-label">Device</span>
-            <span class="status-value" style="font-size: 11px;">
-              ${escapeHtml(state.pairedDeviceId)}
-            </span>
-          </div>
-          <div class="status-item">
-            <span class="status-label">Status</span>
-            <span id="sidebarDeviceStatus" class="status-value">
-              <span id="sidebarDeviceDot" class="dot ${dotClass}"></span>
-              ${statusLabel}
+            <span class="status-value" style="font-size: 11px; font-weight: 500; color: #10b981;">
+              Connected
             </span>
           </div>
           <div class="status-item">
