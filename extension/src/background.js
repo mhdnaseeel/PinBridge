@@ -189,11 +189,12 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     });
     return true;
   } else if (msg.type === 'getStatus') {
-    // Service worker might have slept. Restart listeners if dead.
-    if (!unsubscribePairing && !isPairingNow) {
+    // Service worker might have slept. Restart listeners if dead or socket disconnected.
+    const socketDead = !socket || !socket.connected;
+    if ((!unsubscribePairing || socketDead) && !isPairingNow) {
         chrome.storage.local.get(['pairedDeviceId'], ({pairedDeviceId}) => {
             if (pairedDeviceId) {
-                console.log('[PinBridge] getStatus: Restarting idle listeners.');
+                console.log(`[PinBridge] getStatus: Restarting listeners (socketDead=${socketDead}).`);
                 startListeners(pairedDeviceId);
             }
         });
@@ -268,15 +269,22 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         isCharging: stateManager.isCharging
       });
 
-      // Restart listeners if they died during SW sleep.
-      // startListeners() reconnects the socket, and the server automatically
-      // sends a presence_update to viewers on socket connect (server line 148-161).
-      if (!unsubscribePairing && !isPairingNow) {
+      // FIX: Check actual listener health, not just whether unsubscribePairing exists.
+      // The old guard (!unsubscribePairing) was wrong because onAuthStateChanged sets
+      // unsubscribePairing on SW restart even when the socket auth fails and Firestore
+      // listener silently dies — so it looked "alive" but was completely broken.
+      const socketDead = !socket || !socket.connected;
+      const listenersNeedRestart = !unsubscribePairing || socketDead;
+
+      if (listenersNeedRestart && !isPairingNow) {
         const { pairedDeviceId } = await chrome.storage.local.get(['pairedDeviceId']);
         if (pairedDeviceId) {
-          console.log('[PinBridge] refreshStatus: Restarting idle listeners.');
+          console.log(`[PinBridge] refreshStatus: Restarting listeners (unsubscribePairing=${!!unsubscribePairing}, socketDead=${socketDead}).`);
           startListeners(pairedDeviceId);
         }
+      } else if (socket && socket.connected) {
+        // Socket is alive — request fresh data from server in case we missed updates
+        socket.emit('request_presence');
       }
     };
     hydrateAndPush().catch(e => console.warn('[PinBridge] refreshStatus error:', e));
@@ -535,7 +543,12 @@ function startListeners(deviceId) {
   console.log('[PinBridge] Connecting to presence server:', SOCKET_SERVER_URL);
   socket = io(SOCKET_SERVER_URL, {
     auth: async (cb) => {
-      const token = auth.currentUser ? await auth.currentUser.getIdToken() : null;
+      // FIX: Wait for Firebase Auth to restore from IndexedDB on SW cold-start.
+      // Without this, auth.currentUser is null and the server rejects the connection
+      // with 'Authentication error: Missing token'. The socket then enters exponential
+      // backoff and never recovers within a reasonable time.
+      const user = await waitForAuth(5000);
+      const token = user ? await user.getIdToken() : null;
       cb({ token, deviceId, clientType: "viewer" });
     },
     // Fix P0-2: Enable automatic reconnection with exponential backoff
@@ -550,8 +563,9 @@ function startListeners(deviceId) {
 
   socket.on('connect', () => {
     console.log('[PinBridge] Socket connected to presence server');
-    // The server automatically sends a presence_update to viewers on connect
-    // (server lines 148-161), so no need to request it — just log.
+    // Server sends presence_update to viewers on connect (lines 148-161),
+    // but also explicitly request it to be safe after reconnections.
+    socket.emit('request_presence');
   });
 
   socket.on('presence_update', (data) => {
@@ -634,8 +648,19 @@ function startListeners(deviceId) {
   }, err => {
     if (err.code === 'permission-denied') {
       if (pairingPending || isFirstPairingSnapshot) {
-        console.warn('[PinBridge] Permission denied during startup/pairing — ignoring.');
+        // FIX: Instead of silently ignoring this error and leaving the listener dead,
+        // schedule a retry. Firebase onSnapshot listeners do NOT auto-recover from errors.
+        // The old code just set isFirstPairingSnapshot = false and moved on, leaving
+        // the Firestore channel permanently dead until the next full SW restart.
+        console.warn('[PinBridge] Permission denied during startup — scheduling listener restart in 3s.');
         isFirstPairingSnapshot = false;
+        unsubscribePairing = null; // Mark as dead so refreshStatus will restart
+        setTimeout(() => {
+          if (!unsubscribePairing && !isPairingNow) {
+            console.log('[PinBridge] Retrying listeners after permission-denied recovery.');
+            startListeners(deviceId);
+          }
+        }, 3000);
       } else {
         console.warn('[PinBridge] Permission denied on pairing listener. Unpairing.');
         performUnpairOnly();
@@ -745,11 +770,12 @@ onAuthStateChanged(auth, user => {
 // ─── Alarm handler: keepalive + listener recovery ─────────────
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === KEEPALIVE_ALARM) {
-    // Service worker was woken by alarm — ensure listeners are alive
-    if (!unsubscribePairing && !isPairingNow) {
+    // Service worker was woken by alarm — ensure listeners are alive and socket is connected
+    const socketDead = !socket || !socket.connected;
+    if ((!unsubscribePairing || socketDead) && !isPairingNow) {
       chrome.storage.local.get(['pairedDeviceId'], ({pairedDeviceId}) => {
-        if (pairedDeviceId && !unsubscribePairing && !isPairingNow) {
-          console.log('[PinBridge] Keepalive: Restarting listeners after SW restart.');
+        if (pairedDeviceId && (!unsubscribePairing || socketDead) && !isPairingNow) {
+          console.log(`[PinBridge] Keepalive: Restarting listeners (socketDead=${socketDead}).`);
           startListeners(pairedDeviceId);
         }
       });

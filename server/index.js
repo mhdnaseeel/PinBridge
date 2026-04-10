@@ -218,6 +218,26 @@ io.on('connection', async (socket) => {
         }
     });
 
+    // Allow viewer clients to explicitly request current presence data.
+    // This is used by the Chrome extension after SW restart when the socket
+    // reconnects and needs fresh data without waiting for the next heartbeat.
+    socket.on('request_presence', async () => {
+        if (clientType !== 'device') {
+            const status = await redis.get(`presence:${deviceId}`) || 'offline';
+            const lastSeen = await redis.get(`lastSeen:${deviceId}`);
+            const batteryRaw = await redis.get(`battery:${deviceId}`);
+            const battery = batteryRaw ? JSON.parse(batteryRaw) : null;
+
+            socket.emit('presence_update', {
+                deviceId,
+                status,
+                lastSeen: lastSeen ? parseInt(lastSeen) : null,
+                batteryLevel: battery ? battery.level : null,
+                isCharging: battery ? battery.isCharging : false
+            });
+        }
+    });
+
     socket.on('disconnect', async (reason) => {
         console.log(`[PinBridge Server] ${clientType === 'device' ? 'Device' : 'Viewer'} disconnected: ${deviceId} (${reason})`);
         
