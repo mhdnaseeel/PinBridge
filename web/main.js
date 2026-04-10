@@ -469,22 +469,51 @@ function renderPaired() {
 
   document.getElementById('fetchBtn').onclick = async () => {
     const btn = document.getElementById('fetchBtn');
+    
+    if (!isDeviceOnline()) {
+      const original = btn.innerHTML;
+      btn.innerHTML = 'Device Offline';
+      btn.style.background = '#ef4444';
+      btn.disabled = true;
+      setTimeout(() => {
+        btn.innerHTML = original;
+        btn.style.background = '';
+        btn.disabled = false;
+      }, 2000);
+      return;
+    }
+
     btn.disabled = true;
     const original = btn.innerHTML;
     btn.innerHTML = 'Requesting...';
     try {
+      const preEventId = state.latestOtp ? state.latestOtp.otpEventId : null;
       await updateDoc(doc(db, 'pairings', state.pairedDeviceId), {
         fetchRequested: serverTimestamp()
       });
-      setTimeout(() => {
-        btn.disabled = false;
-        btn.innerHTML = original;
-      }, 3000);
+      
+      let attempts = 0;
+      const waitInterval = setInterval(() => {
+          attempts++;
+          if (state.latestOtp && state.latestOtp.otpEventId !== preEventId) {
+             clearInterval(waitInterval);
+             btn.innerHTML = 'Success!';
+             btn.style.background = '#10b981';
+             setTimeout(() => { btn.disabled = false; btn.innerHTML = original; btn.style.background = ''; }, 2000);
+          } else if (attempts >= 10) { // 10 seconds timeout
+             clearInterval(waitInterval);
+             btn.innerHTML = 'Timed Out';
+             btn.style.background = '#f59e0b';
+             setTimeout(() => { btn.disabled = false; btn.innerHTML = original; btn.style.background = ''; }, 2000);
+          }
+      }, 1000);
     } catch (e) {
       btn.innerHTML = 'Error';
+      btn.style.background = '#ef4444';
       setTimeout(() => {
         btn.disabled = false;
         btn.innerHTML = original;
+        btn.style.background = '';
       }, 3000);
     }
   };

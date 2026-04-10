@@ -184,6 +184,16 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     });
     return true;
   } else if (msg.type === 'getStatus') {
+    // Service worker might have slept. Restart listeners if dead.
+    if (!unsubscribePairing && !isPairingNow) {
+        chrome.storage.local.get(['pairedDeviceId'], ({pairedDeviceId}) => {
+            if (pairedDeviceId) {
+                console.log('[PinBridge] getStatus: Restarting idle listeners.');
+                startListeners(pairedDeviceId);
+            }
+        });
+    }
+
     chrome.storage.local.get(['pairedDeviceId', 'lastSeen', 'batteryLevel', 'isCharging', 'serverStatus'], ({pairedDeviceId, lastSeen, batteryLevel, isCharging, serverStatus}) => {
       sendResponse({
         status: pairedDeviceId ? 'paired' : 'unpaired', 
