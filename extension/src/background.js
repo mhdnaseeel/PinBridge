@@ -73,14 +73,11 @@ const stateManager = {
   isCharging: false,
   serverStatus: null, // Authoritative status from socket server ('online'/'offline')
 
-  // Returns true if state was updated, false if it was stale
+  // Returns true if state was updated
   update({ lastSeen, batteryLevel, isCharging, status }) {
-    // Reject stale updates
-    if (lastSeen && lastSeen < this.lastSeen) {
-      console.log(`[PinBridge StateManager] Rejected stale update (incoming=${lastSeen}, current=${this.lastSeen})`);
-      return false;
+    if (lastSeen) {
+        this.lastSeen = lastSeen;
     }
-    if (lastSeen) this.lastSeen = lastSeen;
     if (batteryLevel != null) {
       this.batteryLevel = batteryLevel;
       this.isCharging = !!isCharging;

@@ -687,14 +687,12 @@ function startListeners() {
     });
   }
 
-  // Timestamp-gated state update to prevent stale data from overriding fresh data
   function applyPresenceUpdate(lastSeen, batteryLevel, isCharging, serverStatus) {
-      // Reject stale updates
-      if (lastSeen && lastSeen < state.lastSeen) {
-          console.log(`[PinBridge Web] Rejected stale update (incoming=${lastSeen}, current=${state.lastSeen})`);
-          return;
+      if (lastSeen) {
+          // Always accept the latest timestamp. If clock skew makes it slightly jump backwards, 
+          // the 25s threshold handles it seamlessly.
+          state.lastSeen = lastSeen;
       }
-      if (lastSeen) state.lastSeen = lastSeen;
       if (batteryLevel != null) {
           state.batteryLevel = batteryLevel;
           state.isCharging = !!isCharging;
