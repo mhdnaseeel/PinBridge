@@ -705,18 +705,19 @@ async function processNewOtp(data) {
     const { secret, latestOtp } = await chrome.storage.local.get(['secret', 'latestOtp']);
     if (!secret) return;
 
-    // Fix P0-1: Deduplicate OTPs by comparing otpEventId.
+    // Fix P0-1: Deduplicate OTPs by comparing otpEventId OR timestamp.
     // Without this, every Firestore snapshot (including initial cache reads)
     // triggers a decrypt + notification of the same OTP.
     const eventId = data.otpEventId;
-    if (eventId && latestOtp?.otpEventId === eventId) {
-        console.log(`[PinBridge] Skipping already-processed OTP (eventId: ${eventId})`);
+    const tsFromDb = data.smsTs || (data.ts && typeof data.ts.toMillis === 'function' ? data.ts.toMillis() : Date.now());
+    
+    if ((eventId && latestOtp?.otpEventId === eventId) || (latestOtp?.ts === tsFromDb && latestOtp?.ts > 0)) {
+        console.log(`[PinBridge] Skipping already-processed OTP`);
         return;
     }
 
     try {
         const decrypted = await decryptOtp(data, secret);
-        const tsFromDb = data.smsTs || (data.ts && typeof data.ts.toMillis === 'function' ? data.ts.toMillis() : Date.now());
         chrome.storage.local.set({latestOtp: {otp: decrypted, ts: tsFromDb, otpEventId: eventId}});
         
         // Fix V-06: Do not show the OTP in the notification.

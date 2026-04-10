@@ -172,10 +172,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-    // Load latest OTP
+    // Load latest OTP (do not animate on initial load)
     chrome.storage.local.get(['latestOtp'], ({ latestOtp }) => {
         if (latestOtp) {
-            updateOtpDisplay(latestOtp);
+            updateOtpDisplay(latestOtp, false);
         }
     });
 
@@ -325,12 +325,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // ─── OTP Display ────────────────────────────────────────
-    function updateOtpDisplay(otpData) {
+    function updateOtpDisplay(otpData, animate = true) {
         if (!otpData || !otpData.otp) return;
         otpContent.textContent = otpData.otp;
-        otpValue.style.animation = 'none';
-        void otpValue.offsetWidth;
-        otpValue.style.animation = 'fadeIn 0.5s ease-out';
+        
+        if (animate) {
+            otpValue.style.animation = 'none';
+            void otpValue.offsetWidth;
+            otpValue.style.animation = 'fadeIn 0.5s ease-out';
+        } else {
+            otpValue.style.animation = 'none';
+        }
+        
         const timeStr = new Date(otpData.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         otpTime.textContent = `Latest OTP received at ${timeStr}`;
     }
