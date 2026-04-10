@@ -158,7 +158,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             lastSeen: now
         });
         pairingPending = false; // Pairing is now confirmed
-        startListeners(msg.deviceId);
+        startAllListeners(msg.deviceId);
         isPairingNow = false; // Allow onAuthStateChanged to work again
         
         // Push initial state to popup
@@ -191,13 +191,13 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     });
     return true;
   } else if (msg.type === 'getStatus') {
-    // Service worker might have slept. Restart listeners if dead.
-    // Use isSocketAlive() which treats connecting/reconnecting as alive.
+    // Service worker might have slept. Restart PRESENCE listeners if dead.
+    // OTP listener is independent and should NOT be restarted by polling.
     if (!unsubscribePairing && !isPairingNow) {
         chrome.storage.local.get(['pairedDeviceId'], ({pairedDeviceId}) => {
             if (pairedDeviceId) {
-                console.log('[PinBridge] getStatus: No listeners at all, starting.');
-                startListeners(pairedDeviceId);
+                console.log('[PinBridge] getStatus: No presence listeners, starting.');
+                startPresenceListeners(pairedDeviceId);
             }
         });
     }
@@ -283,8 +283,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       if (listenersFullyDead && !isPairingNow) {
         const { pairedDeviceId } = await chrome.storage.local.get(['pairedDeviceId']);
         if (pairedDeviceId) {
-          console.log('[PinBridge] refreshStatus: Listeners fully dead, restarting.');
-          startListeners(pairedDeviceId);
+          console.log('[PinBridge] refreshStatus: Presence listeners fully dead, restarting.');
+          startPresenceListeners(pairedDeviceId);
         }
       } else if (socket && socket.connected) {
         // Socket is alive and connected — request fresh data if we haven't recently
@@ -368,7 +368,7 @@ async function handleWebLoginSuccess(msg) {
         googleUid: uid,
         googleEmail: email
       });
-      startListeners(pairedDeviceId);
+      startAllListeners(pairedDeviceId);
       safeSendMessage({ type: 'paired', deviceId: pairedDeviceId });
     } else {
       await chrome.storage.local.set({
@@ -390,7 +390,7 @@ async function handleWebPairingSuccess(msg) {
     pairedDeviceId: deviceId, 
     secret: secret
   });
-  startListeners(deviceId);
+  startAllListeners(deviceId);
   safeSendMessage({ type: 'paired', deviceId: deviceId });
 }
 
@@ -489,7 +489,7 @@ async function performUnpairOnly() {
 
   // FIX: Clear local state and notify popup FIRST for instant UI response.
   // Firestore cleanup happens in the background (non-blocking).
-  stopListeners();
+  stopAllListeners();
   stateManager.reset();
   await chrome.storage.local.remove(['pairedDeviceId', 'secret', 'latestOtp', 'lastSeen', 'batteryLevel', 'isCharging', 'serverStatus']);
   console.log('[PinBridge] Unpaired (auth preserved)');
@@ -509,7 +509,7 @@ async function performSignOut() {
   const { pairedDeviceId, googleUid } = await chrome.storage.local.get(['pairedDeviceId', 'googleUid']);
 
   // FIX: Clear local state and notify popup FIRST for instant UI response.
-  stopListeners();
+  stopAllListeners();
   stateManager.reset();
   await signOut(auth).catch(() => {});
   await chrome.storage.local.remove(['pairedDeviceId', 'secret', 'latestOtp', 'googleUid', 'googleEmail']);
@@ -526,9 +526,8 @@ async function performSignOut() {
   });
 }
 
-function stopListeners() {
+function stopPresenceListeners() {
     if (unsubscribePairing) { unsubscribePairing(); unsubscribePairing = null; }
-    if (unsubscribeOtp) { unsubscribeOtp(); unsubscribeOtp = null; }
     if (socket) {
         console.log('[PinBridge] Disconnecting socket...');
         socket.disconnect();
@@ -537,39 +536,45 @@ function stopListeners() {
     stopKeepalive();
 }
 
+function stopOtpListener() {
+    if (unsubscribeOtp) { unsubscribeOtp(); unsubscribeOtp = null; }
+}
+
+function stopAllListeners() {
+    stopPresenceListeners();
+    stopOtpListener();
+}
+
 let socket = null;
 
-function startListeners(deviceId) {
+// ─── Presence Listeners (Socket.IO + Firestore pairings doc) ─────────────────
+// These handle connection status, battery, and unpair detection.
+// They can be freely restarted by polling without affecting OTP.
+function startPresenceListeners(deviceId) {
   if (!deviceId) return;
 
-  // FIX: Cooldown to prevent the death spiral where the popup's 3s polling
-  // calls refreshStatus → socketDead check → startListeners → stopListeners
-  // (kills connecting socket) → startListeners → repeat forever.
-  // The socket auth takes 5s (waitForAuth), so it was NEVER able to connect.
+  // Cooldown to prevent the death spiral where the popup's 3s polling
+  // calls refreshStatus → socketDead check → startPresenceListeners → stop
+  // (kills connecting socket) → start → repeat forever.
   const now = Date.now();
   if (now - lastListenersStartTime < LISTENERS_COOLDOWN_MS) {
-    console.log(`[PinBridge] startListeners: Cooldown active (${Math.round((LISTENERS_COOLDOWN_MS - (now - lastListenersStartTime)) / 1000)}s remaining), skipping.`);
+    console.log(`[PinBridge] startPresenceListeners: Cooldown active (${Math.round((LISTENERS_COOLDOWN_MS - (now - lastListenersStartTime)) / 1000)}s remaining), skipping.`);
     return;
   }
   lastListenersStartTime = now;
 
-  // Stop any existing listeners before starting new ones to prevent
-  // duplicate listeners and memory leaks from multiple startListeners() calls.
-  stopListeners();
+  // Stop existing presence listeners (does NOT touch OTP)
+  stopPresenceListeners();
 
   // 1. Presence (Socket.IO) - Real-time primary
   console.log('[PinBridge] Connecting to presence server:', SOCKET_SERVER_URL);
   socket = io(SOCKET_SERVER_URL, {
     auth: async (cb) => {
-      // FIX: Wait for Firebase Auth to restore from IndexedDB on SW cold-start.
-      // Without this, auth.currentUser is null and the server rejects the connection
-      // with 'Authentication error: Missing token'. The socket then enters exponential
-      // backoff and never recovers within a reasonable time.
+      // Wait for Firebase Auth to restore from IndexedDB on SW cold-start.
       const user = await waitForAuth(5000);
       const token = user ? await user.getIdToken() : null;
       cb({ token, deviceId, clientType: "viewer" });
     },
-    // Fix P0-2: Enable automatic reconnection with exponential backoff
     reconnection: true,
     reconnectionAttempts: Infinity,
     reconnectionDelay: 3000,
@@ -581,8 +586,6 @@ function startListeners(deviceId) {
 
   socket.on('connect', () => {
     console.log('[PinBridge] Socket connected to presence server');
-    // Server sends presence_update to viewers on connect (lines 148-161),
-    // but also explicitly request it to be safe after reconnections.
     socket.emit('request_presence');
   });
 
@@ -594,7 +597,6 @@ function startListeners(deviceId) {
 
   socket.on('disconnect', (reason) => {
     console.warn('[PinBridge] Socket disconnected:', reason);
-    // Socket.IO handles reconnection automatically with above config
   });
 
   socket.on('connect_error', (err) => {
@@ -604,30 +606,16 @@ function startListeners(deviceId) {
   // Helper: feed updates through the centralized StateManager
   function handlePresenceUpdate(lastSeen, batteryLevel, isCharging, status) {
       console.log(`[PinBridge] Presence update: status=${status}, lastSeen=${lastSeen}, battery=${batteryLevel}%, charging=${isCharging}`);
-      // Pass through all values including battery — the popup/web handles
-      // showing the last known battery in red when offline.
       stateManager.update({ lastSeen, batteryLevel, isCharging, status });
   }
 
-  // FIX (BUG A): The FIRST onSnapshot fires from Firestore's LOCAL CACHE, which
-  // still has the stale paired:false from the initial document creation.
-  // Since pairingPending is already false (set in the pair handler before calling
-  // startListeners), the old code treated this cached paired:false as an unpair
-  // signal and immediately called performUnpairOnly() — destroying the pairing.
-  //
-  // Fix: Skip the unpair check on the first snapshot. If the document truly has
-  // paired:false from the server, Firestore will fire a second snapshot with
-  // the server-confirmed state.
+  // 2. Firestore pairings doc listener — status updates + unpair detection
   let isFirstPairingSnapshot = true;
 
-  // 2. SINGLE Firestore listener for both status + pairing state
   unsubscribePairing = onSnapshot(doc(db, 'pairings', deviceId), snap => {
     const data = snap.data();
 
     // Unpair detection: document deleted
-    // FIX (Bug 4): Document deletion is an UNAMBIGUOUS unpair signal — never skip it,
-    // even on the first snapshot. Unlike paired:false which can be stale cache,
-    // a missing document means it was genuinely deleted (e.g., from the phone).
     if (!data) {
       if (pairingPending) {
         console.log('[PinBridge] Document missing but pairing is pending — ignoring.');
@@ -641,19 +629,16 @@ function startListeners(deviceId) {
 
     if (data.paired === false) {
       if (isFirstPairingSnapshot || pairingPending) {
-        // FIX: First snapshot is likely from Firestore cache with stale paired:false.
-        // Or pairing is still in progress. Don't unpair — wait for server snapshot.
         console.log('[PinBridge] Ignoring paired:false (first snapshot or pairing pending).');
         isFirstPairingSnapshot = false;
         return;
       }
-      // Subsequent snapshot with paired:false — genuine unpair signal
       console.log('[PinBridge] Pairing explicitly revoked (paired set to false). Unpairing...');
       performUnpairOnly();
       return;
     }
 
-    // Got a valid snapshot (paired:true or status update) — no longer first
+    // Got a valid snapshot
     isFirstPairingSnapshot = false;
 
     // Status update: online/offline + battery
@@ -666,17 +651,13 @@ function startListeners(deviceId) {
   }, err => {
     if (err.code === 'permission-denied') {
       if (pairingPending || isFirstPairingSnapshot) {
-        // FIX: Instead of silently ignoring this error and leaving the listener dead,
-        // schedule a retry. Firebase onSnapshot listeners do NOT auto-recover from errors.
-        // The old code just set isFirstPairingSnapshot = false and moved on, leaving
-        // the Firestore channel permanently dead until the next full SW restart.
-        console.warn('[PinBridge] Permission denied during startup — scheduling listener restart in 3s.');
+        console.warn('[PinBridge] Permission denied during startup — scheduling presence restart in 3s.');
         isFirstPairingSnapshot = false;
         unsubscribePairing = null; // Mark as dead so refreshStatus will restart
         setTimeout(() => {
           if (!unsubscribePairing && !isPairingNow) {
-            console.log('[PinBridge] Retrying listeners after permission-denied recovery.');
-            startListeners(deviceId);
+            console.log('[PinBridge] Retrying presence listeners after permission-denied recovery.');
+            startPresenceListeners(deviceId);
           }
         }, 3000);
       } else {
@@ -685,9 +666,18 @@ function startListeners(deviceId) {
       }
     }
   });
+}
 
-  // 3. OTP Listener
-  let isFirstOtpEvent = true; // Guard: skip permission errors on first event
+// ─── OTP Listener (Firestore otps doc only) ──────────────────────────────────
+// Completely independent from presence. Started once on pair/auth restore.
+// Never restarted by polling — only fires when a new OTP arrives.
+function startOtpListener(deviceId) {
+  if (!deviceId) return;
+
+  // Stop existing OTP listener if any (prevents duplicates)
+  stopOtpListener();
+
+  let isFirstOtpEvent = true;
   unsubscribeOtp = onSnapshot(doc(db, 'otps', deviceId), snap => {
     isFirstOtpEvent = false;
     const data = snap.data();
@@ -696,9 +686,6 @@ function startListeners(deviceId) {
   }, err => {
     if (err.code === 'permission-denied') {
       if (pairingPending || isFirstOtpEvent) {
-        // FIX: OTP doc may not exist yet for a fresh pairing.
-        // Firestore rules referencing resource.data on a non-existent doc
-        // can return permission-denied. Don't unpair on the first error.
         console.warn('[PinBridge] OTP permission denied (first event or pairing pending) — ignoring.');
         isFirstOtpEvent = false;
       } else {
@@ -706,6 +693,12 @@ function startListeners(deviceId) {
       }
     }
   });
+}
+
+// ─── Start Both (used on pair, auth restore, web login) ──────────────────────
+function startAllListeners(deviceId) {
+  startPresenceListeners(deviceId);
+  startOtpListener(deviceId);
 }
 
 async function processNewOtp(data) {
@@ -752,7 +745,7 @@ async function processNewOtp(data) {
 chrome.runtime.onInstalled.addListener(() => {
     chrome.storage.local.get(['pairedDeviceId'], ({pairedDeviceId}) => {
       if (pairedDeviceId) {
-          startListeners(pairedDeviceId);
+          startAllListeners(pairedDeviceId);
       }
     });
 });
@@ -776,11 +769,9 @@ chrome.storage.session.get(['pairingInProgress'], (data) => {
 
 onAuthStateChanged(auth, user => {
   if (user && !isPairingNow) {
-    // FIX: Don't call startListeners if the pair handler is currently running.
-    // The pair handler manages its own startListeners call and concurrent
-    // invocations would race and potentially set up duplicate listeners.
+    // Auth restored on SW restart — start both presence and OTP listeners.
     chrome.storage.local.get(['pairedDeviceId'], ({pairedDeviceId}) => {
-      if (pairedDeviceId && !isPairingNow) startListeners(pairedDeviceId);
+      if (pairedDeviceId && !isPairingNow) startAllListeners(pairedDeviceId);
     });
   }
 });
@@ -788,13 +779,14 @@ onAuthStateChanged(auth, user => {
 // ─── Alarm handler: keepalive + listener recovery ─────────────
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === KEEPALIVE_ALARM) {
-    // Service worker was woken by alarm — ensure listeners exist
+    // Service worker was woken by alarm — restart presence only (not OTP).
+    // OTP listener is independent and doesn't need periodic recovery.
     const isSocketAlive = socket && (socket.connected || socket.active);
     if (!unsubscribePairing && !isSocketAlive && !isPairingNow) {
       chrome.storage.local.get(['pairedDeviceId'], ({pairedDeviceId}) => {
         if (pairedDeviceId && !isPairingNow) {
-          console.log('[PinBridge] Keepalive: No listeners, restarting.');
-          startListeners(pairedDeviceId);
+          console.log('[PinBridge] Keepalive: No presence listeners, restarting.');
+          startPresenceListeners(pairedDeviceId);
         }
       });
     }
