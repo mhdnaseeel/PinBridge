@@ -186,7 +186,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     chrome.storage.onChanged.addListener((changes, area) => {
         if (area !== 'local' || !isPaired) return;
         let needsUpdate = false;
-        if (changes.lastSeen && changes.lastSeen.newValue) {
+        if (changes.lastSeen && changes.lastSeen.newValue !== undefined) {
             currentLastSeen = changes.lastSeen.newValue;
             needsUpdate = true;
         }
@@ -194,8 +194,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             currentServerStatus = changes.serverStatus.newValue || null;
             needsUpdate = true;
         }
-        if (changes.batteryLevel) {
-            currentBatteryLevel = changes.batteryLevel.newValue != null ? changes.batteryLevel.newValue : null;
+        if (changes.batteryLevel && changes.batteryLevel.newValue !== undefined) {
+            currentBatteryLevel = changes.batteryLevel.newValue;
             needsUpdate = true;
         }
         if (changes.isCharging) {
@@ -562,9 +562,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 onFetchSuccess();
             }
         } else if (msg.type === 'statusUpdate') {
-            if (msg.lastSeen) currentLastSeen = msg.lastSeen;
+            if (msg.lastSeen !== undefined) currentLastSeen = msg.lastSeen;
             if (msg.serverStatus !== undefined) currentServerStatus = msg.serverStatus;
-            if (msg.batteryLevel != null) {
+            if (msg.batteryLevel !== undefined) {
                 currentBatteryLevel = msg.batteryLevel;
                 currentIsCharging = msg.isCharging;
             }
