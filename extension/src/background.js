@@ -40,6 +40,8 @@ let unsubscribeOtp = null;
 let isSigningOut = false;
 let pairingPending = false; // FIX: Track when pairing is in progress to prevent premature unpair
 let isPairingNow = false;   // FIX: Guard against concurrent startListeners from onAuthStateChanged
+let lastListenersStartTime = 0; // FIX: Cooldown to prevent death-spiral restarts
+const LISTENERS_COOLDOWN_MS = 15000; // Don't restart listeners more than once per 15s
 
 // FIX: Helper to wait for Firebase Auth to restore from IndexedDB.
 // In MV3, the service worker may cold-start, and auth.currentUser will be null
@@ -189,12 +191,12 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     });
     return true;
   } else if (msg.type === 'getStatus') {
-    // Service worker might have slept. Restart listeners if dead or socket disconnected.
-    const socketDead = !socket || !socket.connected;
-    if ((!unsubscribePairing || socketDead) && !isPairingNow) {
+    // Service worker might have slept. Restart listeners if dead.
+    // Use isSocketAlive() which treats connecting/reconnecting as alive.
+    if (!unsubscribePairing && !isPairingNow) {
         chrome.storage.local.get(['pairedDeviceId'], ({pairedDeviceId}) => {
             if (pairedDeviceId) {
-                console.log(`[PinBridge] getStatus: Restarting listeners (socketDead=${socketDead}).`);
+                console.log('[PinBridge] getStatus: No listeners at all, starting.');
                 startListeners(pairedDeviceId);
             }
         });
@@ -269,22 +271,27 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         isCharging: stateManager.isCharging
       });
 
-      // FIX: Check actual listener health, not just whether unsubscribePairing exists.
-      // The old guard (!unsubscribePairing) was wrong because onAuthStateChanged sets
-      // unsubscribePairing on SW restart even when the socket auth fails and Firestore
-      // listener silently dies — so it looked "alive" but was completely broken.
-      const socketDead = !socket || !socket.connected;
-      const listenersNeedRestart = !unsubscribePairing || socketDead;
+      // FIX: Only restart listeners if they are truly dead AND not currently connecting.
+      // The old code restarted on every 3s poll if socket wasn't yet connected,
+      // which killed the connecting socket before it could finish the auth handshake.
+      // This created a death spiral: start→kill→start→kill→... every 3 seconds.
+      //
+      // isSocketAlive: socket exists AND is connected, connecting, or reconnecting.
+      const isSocketAlive = socket && (socket.connected || socket.active);
+      const listenersFullyDead = !unsubscribePairing && !isSocketAlive;
 
-      if (listenersNeedRestart && !isPairingNow) {
+      if (listenersFullyDead && !isPairingNow) {
         const { pairedDeviceId } = await chrome.storage.local.get(['pairedDeviceId']);
         if (pairedDeviceId) {
-          console.log(`[PinBridge] refreshStatus: Restarting listeners (unsubscribePairing=${!!unsubscribePairing}, socketDead=${socketDead}).`);
+          console.log('[PinBridge] refreshStatus: Listeners fully dead, restarting.');
           startListeners(pairedDeviceId);
         }
       } else if (socket && socket.connected) {
-        // Socket is alive — request fresh data from server in case we missed updates
-        socket.emit('request_presence');
+        // Socket is alive and connected — request fresh data if we haven't recently
+        const dataAge = Date.now() - stateManager.lastSeen;
+        if (dataAge > 30000 || stateManager.lastSeen === 0) {
+          socket.emit('request_presence');
+        }
       }
     };
     hydrateAndPush().catch(e => console.warn('[PinBridge] refreshStatus error:', e));
@@ -535,7 +542,18 @@ let socket = null;
 function startListeners(deviceId) {
   if (!deviceId) return;
 
-  // FIX: Stop any existing listeners before starting new ones to prevent
+  // FIX: Cooldown to prevent the death spiral where the popup's 3s polling
+  // calls refreshStatus → socketDead check → startListeners → stopListeners
+  // (kills connecting socket) → startListeners → repeat forever.
+  // The socket auth takes 5s (waitForAuth), so it was NEVER able to connect.
+  const now = Date.now();
+  if (now - lastListenersStartTime < LISTENERS_COOLDOWN_MS) {
+    console.log(`[PinBridge] startListeners: Cooldown active (${Math.round((LISTENERS_COOLDOWN_MS - (now - lastListenersStartTime)) / 1000)}s remaining), skipping.`);
+    return;
+  }
+  lastListenersStartTime = now;
+
+  // Stop any existing listeners before starting new ones to prevent
   // duplicate listeners and memory leaks from multiple startListeners() calls.
   stopListeners();
 
@@ -770,12 +788,12 @@ onAuthStateChanged(auth, user => {
 // ─── Alarm handler: keepalive + listener recovery ─────────────
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === KEEPALIVE_ALARM) {
-    // Service worker was woken by alarm — ensure listeners are alive and socket is connected
-    const socketDead = !socket || !socket.connected;
-    if ((!unsubscribePairing || socketDead) && !isPairingNow) {
+    // Service worker was woken by alarm — ensure listeners exist
+    const isSocketAlive = socket && (socket.connected || socket.active);
+    if (!unsubscribePairing && !isSocketAlive && !isPairingNow) {
       chrome.storage.local.get(['pairedDeviceId'], ({pairedDeviceId}) => {
-        if (pairedDeviceId && (!unsubscribePairing || socketDead) && !isPairingNow) {
-          console.log(`[PinBridge] Keepalive: Restarting listeners (socketDead=${socketDead}).`);
+        if (pairedDeviceId && !isPairingNow) {
+          console.log('[PinBridge] Keepalive: No listeners, restarting.');
           startListeners(pairedDeviceId);
         }
       });

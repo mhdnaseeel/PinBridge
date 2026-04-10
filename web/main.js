@@ -723,6 +723,8 @@ function startListeners() {
 
     socket.on('connect', () => {
       console.log('[PinBridge Web] Socket connected');
+      // Explicitly request current presence data on connect/reconnect
+      socket.emit('request_presence');
     });
 
     socket.on('presence_update', (data) => {
