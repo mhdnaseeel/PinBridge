@@ -237,32 +237,48 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     handleWebPairingSuccess(msg);
     return true;
   } else if (msg.type === 'refreshStatus') {
-    // FIX: Popup requests fresh live status. Push whatever we have now
-    // and ask the socket server for an immediate presence refresh.
-    safeSendMessage({
-      type: 'statusUpdate',
-      lastSeen: stateManager.lastSeen,
-      serverStatus: stateManager.serverStatus,
-      batteryLevel: stateManager.batteryLevel,
-      isCharging: stateManager.isCharging
-    });
-    // Ask socket server for fresh presence data
-    if (socket && socket.connected) {
-      chrome.storage.local.get(['pairedDeviceId'], ({pairedDeviceId}) => {
+    // FIX: Popup requests fresh live status. If the service worker cold-started,
+    // stateManager will have zeros. Hydrate from chrome.storage.local first,
+    // then push to popup, then request fresh live data from socket server.
+    const hydrateAndPush = async () => {
+      // Hydrate stateManager from storage if it was cold-started (lastSeen === 0)
+      if (stateManager.lastSeen === 0) {
+        const stored = await chrome.storage.local.get(['lastSeen', 'batteryLevel', 'isCharging', 'serverStatus']);
+        if (stored.lastSeen) stateManager.lastSeen = stored.lastSeen;
+        if (stored.batteryLevel != null) {
+          stateManager.batteryLevel = stored.batteryLevel;
+          stateManager.isCharging = !!stored.isCharging;
+        }
+        if (stored.serverStatus) stateManager.serverStatus = stored.serverStatus;
+      }
+
+      // Push current state to popup
+      safeSendMessage({
+        type: 'statusUpdate',
+        lastSeen: stateManager.lastSeen,
+        serverStatus: stateManager.serverStatus,
+        batteryLevel: stateManager.batteryLevel,
+        isCharging: stateManager.isCharging
+      });
+
+      // Ask socket server for fresh presence data
+      if (socket && socket.connected) {
+        const { pairedDeviceId } = await chrome.storage.local.get(['pairedDeviceId']);
         if (pairedDeviceId) {
           socket.emit('request_presence', { deviceId: pairedDeviceId });
         }
-      });
-    }
-    // Also restart listeners if they died during SW sleep
-    if (!unsubscribePairing && !isPairingNow) {
-      chrome.storage.local.get(['pairedDeviceId'], ({pairedDeviceId}) => {
+      }
+
+      // Restart listeners if they died during SW sleep
+      if (!unsubscribePairing && !isPairingNow) {
+        const { pairedDeviceId } = await chrome.storage.local.get(['pairedDeviceId']);
         if (pairedDeviceId) {
           console.log('[PinBridge] refreshStatus: Restarting idle listeners.');
           startListeners(pairedDeviceId);
         }
-      });
-    }
+      }
+    };
+    hydrateAndPush().catch(e => console.warn('[PinBridge] refreshStatus error:', e));
   }
 });
 

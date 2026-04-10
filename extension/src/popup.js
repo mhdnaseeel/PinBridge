@@ -134,16 +134,39 @@ document.addEventListener('DOMContentLoaded', async () => {
     updateBrowserStatus();
 
     // ─── Check Initial Status ───────────────────────────────
+    let isPaired = false;
+    let syncInterval = null;
+
+    // FIX: Continuous sync loop — polls background every 3s while popup is open.
+    // This mirrors how the web dashboard gets continuous updates from its own
+    // Socket.IO + Firestore listeners. The popup can't hold its own connections,
+    // so it polls the background's live stateManager instead.
+    function startContinuousSync() {
+        if (syncInterval) return;
+        // Request immediately on start
+        chrome.runtime.sendMessage({ type: 'refreshStatus' });
+        // Then poll every 3 seconds for fresh data
+        syncInterval = setInterval(() => {
+            chrome.runtime.sendMessage({ type: 'refreshStatus' });
+        }, 3000);
+    }
+
+    function stopContinuousSync() {
+        if (syncInterval) {
+            clearInterval(syncInterval);
+            syncInterval = null;
+        }
+    }
+
     chrome.runtime.sendMessage({ type: 'getStatus' }, (response) => {
         if (response && response.status === 'paired') {
+            isPaired = true;
             showPaired();
-            // FIX: Treat ALL cached values as stale on popup open.
             // Show "Connecting…" and hide battery until fresh data arrives
-            // via a statusUpdate message from the background.
             showConnectingStatus();
             batteryIndicator.classList.add('hidden');
-            // Request background to push fresh live status immediately
-            chrome.runtime.sendMessage({ type: 'refreshStatus' });
+            // Start continuous sync — like web dashboard's live listeners
+            startContinuousSync();
         } else {
             showUnpaired();
         }
@@ -153,6 +176,42 @@ document.addEventListener('DOMContentLoaded', async () => {
     chrome.storage.local.get(['latestOtp'], ({ latestOtp }) => {
         if (latestOtp) {
             updateOtpDisplay(latestOtp);
+        }
+    });
+
+    // FIX: Secondary sync channel — watch chrome.storage.onChanged for
+    // status updates. This catches updates even if the background's
+    // safeSendMessage fires before the popup's listener is registered.
+    chrome.storage.onChanged.addListener((changes, area) => {
+        if (area !== 'local' || !isPaired) return;
+        let needsUpdate = false;
+        if (changes.lastSeen && changes.lastSeen.newValue) {
+            currentLastSeen = changes.lastSeen.newValue;
+            needsUpdate = true;
+        }
+        if (changes.serverStatus) {
+            currentServerStatus = changes.serverStatus.newValue || null;
+            needsUpdate = true;
+        }
+        if (changes.batteryLevel) {
+            currentBatteryLevel = changes.batteryLevel.newValue != null ? changes.batteryLevel.newValue : null;
+            needsUpdate = true;
+        }
+        if (changes.isCharging) {
+            currentIsCharging = !!changes.isCharging.newValue;
+        }
+        if (changes.latestOtp && changes.latestOtp.newValue) {
+            updateOtpDisplay(changes.latestOtp.newValue);
+        }
+        if (needsUpdate) {
+            updateConnectionStatus();
+            // Show battery only if online
+            const now = Date.now();
+            const isOnline = (currentLastSeen > 0 && (now - currentLastSeen < ONLINE_THRESHOLD)) ||
+                (currentServerStatus === 'online' && currentLastSeen > 0 && (now - currentLastSeen < 60000));
+            if (isOnline && currentBatteryLevel != null) {
+                updateBatteryDisplay(currentBatteryLevel, currentIsCharging);
+            }
         }
     });
 
@@ -245,9 +304,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // Re-evaluate online/offline every 5 seconds
+    // Re-evaluate online/offline every 5 seconds (handles lastSeen aging out)
     setInterval(() => {
-        if (currentLastSeen > 0 || currentServerStatus) {
+        if (isPaired && (currentLastSeen > 0 || currentServerStatus)) {
             updateConnectionStatus();
         }
     }, 5000);
@@ -492,9 +551,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             }
         } else if (msg.type === 'unpaired' || msg.type === 'signOut') {
+            isPaired = false;
+            stopContinuousSync();
             showUnpaired();
         } else if (msg.type === 'paired') {
+            isPaired = true;
             showPaired();
+            showConnectingStatus();
+            batteryIndicator.classList.add('hidden');
+            startContinuousSync();
         }
     });
 });
