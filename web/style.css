@@ -647,167 +647,35 @@ button {
 }
 .offline-banner.active { display: block; }
 
-/* ─── TASKS MODULE (SKELETON & UI) ────────────────────────────── */
-.tasks-module {
-  margin-top: 24px;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid var(--glass-border);
-  border-radius: 20px;
-  padding: 24px;
-}
-
-.tasks-header {
-  font-family: var(--font-heading);
-  font-size: 18px;
-  font-weight: 700;
-  margin-bottom: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.tasks-loading-text {
-  font-size: 12px;
-  color: var(--text-muted);
-  font-weight: 500;
-  animation: pulse-connecting 1.5s infinite;
-}
-
-.tasks-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-/* Skeleton Loaders */
-.task-skeleton {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 16px;
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-}
+/* ─── GLOBAL UX ELEMENTS (Skeletons & Syncing) ────────────────────── */
 
 .skeleton-box {
   background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite linear;
+  border-radius: 8px;
+  color: transparent !important;
+  user-select: none;
+  pointer-events: none;
 }
 
-.skeleton-checkbox {
-  width: 20px;
-  height: 20px;
-  border-radius: 6px;
-  flex-shrink: 0;
+.skeleton-box * {
+  visibility: hidden;
 }
 
-.skeleton-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.skeleton-title { height: 14px; width: 60%; border-radius: 4px; }
-.skeleton-desc { height: 10px; width: 40%; border-radius: 4px; }
-
-/* Actual Task Cards */
-.task-card {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 16px;
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  transition: all 0.2s ease;
-  animation: taskFadeInUp 0.4s ease-out forwards;
-  opacity: 0;
-  transform: translateY(10px);
-}
-
-/* Stagger entrance */
-.task-card:nth-child(1) { animation-delay: 0.05s; }
-.task-card:nth-child(2) { animation-delay: 0.1s; }
-.task-card:nth-child(3) { animation-delay: 0.15s; }
-
-@keyframes taskFadeInUp {
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.task-checkbox-wrapper {
+.syncing-btn {
   position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  margin-top: 2px;
-}
-
-.task-checkbox {
-  appearance: none;
-  width: 20px;
-  height: 20px;
-  border-radius: 6px;
-  border: 2px solid var(--primary);
-  background: transparent;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.task-checkbox:checked {
-  background: var(--primary);
-}
-
-.task-checkbox:checked::after {
-  content: '✓';
-  color: white;
-  font-size: 14px;
-  font-weight: bold;
-}
-
-.task-checkbox:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.task-checkbox.syncing {
+  opacity: 0.8;
+  pointer-events: none;
   animation: pulse-connecting 1s infinite alternate;
 }
 
-.task-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0; /* Important for flex child wrapping */
-}
-
-.task-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text-primary);
-  line-height: 1.4;
-  word-wrap: break-word; 
-  transition: color 0.2s ease;
-}
-
-.task-card.completed .task-title {
-  text-decoration: line-through;
-  color: var(--text-muted);
-}
-
-.task-desc {
-  font-size: 12px;
-  color: var(--text-muted);
-  line-height: 1.4;
-}
-
-.task-desc:empty {
-  display: none;
+.syncing-btn::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(255,255,255,0.1);
+  border-radius: inherit;
+  animation: shimmer 1.5s infinite linear;
+  pointer-events: none;
 }

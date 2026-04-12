@@ -27,8 +27,9 @@ Now, OTPs from my secondary phone show up instantly on my laptop via a browser e
 - 🔐 **End-to-End Encryption** — All OTPs are encrypted with AES-GCM before leaving your phone
 - 🌐 **Chrome Extension** — View OTPs directly in your browser with auto-fill support
 - 📱 **Web Dashboard** — Access your latest OTP from any browser at [pin-bridge.vercel.app](https://pin-bridge.vercel.app)
+- ✅ **Pending Tasks** — Manage connection checklists and system tasks directly through the extension or web UI
 - ☁️ **Cloud Sync** — Sign in with Google to sync pairing across devices without re-scanning QR codes
-- 🟢 **Live Device Status** — See whether your phone is online or offline in real-time
+- 🟢 **Live Device Status** — See whether your phone is online, offline, or charging in real-time
 - 🔔 **Desktop Notifications** — Get notified instantly when a new OTP is received
 - ✍️ **Auto-Fill** — OTPs are automatically pasted into input fields on websites
 - 📡 **Background Sync** — The Android app runs silently in the background, even after reboots
@@ -94,7 +95,8 @@ When an SMS with an OTP lands on your Android phone, PinBridge:
 ### Step 4 — Use OTPs
 - The extension shows a notification and copies the OTP
 - Websites with OTP input fields get **auto-filled**
-- You can also click **Fetch Latest** to manually pull the most recent OTP
+- You can also click **Fetch Latest** or **Sync Signal** to manually pull the most recent status or OTP
+- Check off any active pending maintenance tasks from the web or extension checklist
 
 ---
 
@@ -135,11 +137,11 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```bash
 cd extension
 npm install
-npx webpack --mode production
+npm run build
 # Load in Chrome:
 # 1. Go to chrome://extensions
 # 2. Enable "Developer mode"
-# 3. Click "Load unpacked" → select the extension/ folder
+# 3. Click "Load unpacked" → select the extension/dist/ folder
 ```
 
 ### Web Dashboard
