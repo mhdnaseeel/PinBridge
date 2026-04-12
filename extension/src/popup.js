@@ -62,6 +62,95 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     let currentCaptchaCode = '';
 
+    // ─── TASKS MODULE LOGIC ─────────────────────────────
+    let tasksState = {
+        loading: true,
+        tasks: [
+            { id: 't1', title: 'Verify extension connection', desc: '', completed: false },
+            { id: 't2', title: 'Approve background permission', desc: 'Required for real-time background syncing.', completed: false }
+        ]
+    };
+
+    function renderTasks() {
+        const container = document.getElementById('tasksList');
+        if (!container) return;
+
+        if (tasksState.loading) {
+            container.innerHTML = `
+                <div class="task-skeleton">
+                    <div class="skeleton-checkbox skeleton-box"></div>
+                    <div class="skeleton-content">
+                        <div class="skeleton-title skeleton-box"></div>
+                        <div class="skeleton-desc skeleton-box"></div>
+                    </div>
+                </div>
+                <div class="task-skeleton">
+                    <div class="skeleton-checkbox skeleton-box"></div>
+                    <div class="skeleton-content">
+                        <div class="skeleton-title skeleton-box" style="width: 50%;"></div>
+                    </div>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = '';
+        
+        tasksState.tasks.forEach(task => {
+            const card = document.createElement('div');
+            card.className = `task-card ${task.completed ? 'completed' : ''}`;
+            card.id = `ext-task-${task.id}`;
+            card.innerHTML = `
+                <div class="task-checkbox-wrapper">
+                    <input type="checkbox" class="task-checkbox" id="ext-check-${task.id}" ${task.completed ? 'checked' : ''}>
+                </div>
+                <div class="task-content">
+                    <div class="task-title">${task.title}</div>
+                    <div class="task-desc">${task.desc}</div>
+                </div>
+            `;
+            container.appendChild(card);
+            
+            const checkbox = card.querySelector(`#ext-check-${task.id}`);
+            checkbox.addEventListener('change', (e) => toggleExtensionTask(task.id, e.target.checked));
+        });
+    }
+
+    function toggleExtensionTask(taskId, isChecked) {
+        const checkbox = document.getElementById(`ext-check-${taskId}`);
+        const card = document.getElementById(`ext-task-${taskId}`);
+        const loadingText = document.getElementById('tasksLoadingText');
+        
+        checkbox.disabled = true;
+        checkbox.classList.add('syncing');
+        if (loadingText) loadingText.style.display = 'inline-block';
+        
+        if (isChecked) card.classList.add('completed');
+        else card.classList.remove('completed');
+        
+        const task = tasksState.tasks.find(t => t.id === taskId);
+        if (task) task.completed = isChecked;
+
+        setTimeout(() => {
+            checkbox.disabled = false;
+            checkbox.classList.remove('syncing');
+            const syncingBoxes = document.querySelectorAll('.task-checkbox.syncing');
+            if (syncingBoxes.length === 0 && loadingText) {
+                loadingText.style.display = 'none';
+            }
+        }, 500);
+    }
+    
+    // Initial Render & Timer
+    renderTasks();
+    if (tasksState.loading) {
+        setTimeout(() => {
+            tasksState.loading = false;
+            renderTasks();
+        }, 1200);
+    }
+    // ─── END TASKS MODULE LOGIC ─────────────────────────
+
     // ─── CAPTCHA Helpers ────────────────────────────────
     function generateCaptcha() {
         return String(Math.floor(1000 + Math.random() * 9000)); // 4-digit number, never starts with 0
@@ -286,9 +375,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         } else if (currentServerStatus === 'connecting') {
             showConnectingStatus();
             batteryIndicator.classList.add('hidden');
-            chrome.storage.local.get(['latestOtp'], ({ latestOtp }) => {
-                if (!latestOtp) updateOtpDisplay({ isConnecting: true });
-            });
         } else {
             statusDot.className = 'dot dot-offline';
             let timeStr = 'Unknown';
@@ -333,23 +419,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // ─── OTP Display ────────────────────────────────────────
     function updateOtpDisplay(otpData, animate = true) {
-        if (!otpData || otpData.isConnecting) {
-            otpContent.textContent = '000000';
-            otpValue.className = 'security-code skeleton-box';
-            otpTime.textContent = 'Syncing...';
-            otpTime.className = 'latest-time skeleton-box';
-            otpTime.style.width = '140px';
-            otpTime.style.margin = '5px auto';
-            return;
-        }
-
-        if (!otpData.otp) return;
-        
+        if (!otpData || !otpData.otp) return;
         otpContent.textContent = otpData.otp;
-        otpValue.className = 'security-code';
-        otpTime.className = 'latest-time';
-        otpTime.style.width = '';
-        otpTime.style.margin = '';
         
         if (animate) {
             otpValue.style.animation = 'none';
@@ -466,7 +537,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const onFetchSuccess = () => {
         if (!isFetching) return;
         isFetching = false;
-        manualFetchBtn.classList.remove('syncing-btn');
         manualFetchBtn.disabled = false;
         manualFetchBtn.innerText = 'Success!';
         manualFetchBtn.style.background = '#6366f1';
@@ -480,7 +550,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         syncSignalBtn.addEventListener('click', () => {
             syncSignalBtn.disabled = true;
             syncSignalBtn.innerHTML = 'Syncing...';
-            syncSignalBtn.classList.add('syncing-btn');
             // Force reset local cache and show "Connecting..." immediately
             currentLastSeen = 0;
             currentBatteryLevel = null;
@@ -489,7 +558,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             showConnectingStatus();
             chrome.runtime.sendMessage({ type: 'syncSignal' }, () => {
                 setTimeout(() => {
-                    syncSignalBtn.classList.remove('syncing-btn');
                     syncSignalBtn.disabled = false;
                     syncSignalBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg> Sync Signal';
                     updateConnectionStatus(); // Refresh status text in case it updated
@@ -512,7 +580,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         isFetching = true;
         manualFetchBtn.disabled = true;
         manualFetchBtn.innerText = 'Fetching...';
-        manualFetchBtn.classList.add('syncing-btn');
 
         chrome.runtime.sendMessage({ type: 'manualFetch' }, (response) => {
             // Success might have been detected already via the storage listener (chrome.storage.onChanged)
@@ -530,7 +597,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     if (!isFetching) return; // Caught by late arrival listener in the meantime!
                     
                     isFetching = false;
-                    manualFetchBtn.classList.remove('syncing-btn');
                     manualFetchBtn.disabled = false;
                     
                     if (errorText.includes('Not paired')) {
