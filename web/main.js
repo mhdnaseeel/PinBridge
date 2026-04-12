@@ -69,7 +69,15 @@ let state = {
   serverStatus: null, // Authoritative status from socket server ('online'/'offline')
   latestOtp: JSON.parse(localStorage.getItem('latestOtp') || 'null'),
   signingIn: false,
-  error: null
+  error: null,
+  
+  // Tasks Module State (Skeleton Data)
+  tasksLoading: true,
+  tasks: [
+    { id: 't1', title: 'Verify pairing security', desc: 'Ensure AES-256 encryption is active and keys match.', completed: false },
+    { id: 't2', title: 'Validate continuous sync flow', desc: '', completed: false },
+    { id: 't3', title: 'Review battery monitoring system', desc: 'Checks if battery updates real-time when charging status changes on the device.', completed: false }
+  ]
 };
 
 // Active heartbeat: derive online/offline from lastSeen
@@ -472,6 +480,17 @@ function renderPaired() {
           </div>
         </div>
 
+        <!-- Tasks Module Skeleton -->
+        <div class="tasks-module" id="tasksModuleWrapper">
+          <div class="tasks-header">
+            <span>Pending Tasks</span>
+            <span id="tasksLoadingText" class="tasks-loading-text" style="display: none;">Syncing...</span>
+          </div>
+          <div id="tasksList" class="tasks-list">
+            <!-- Will be populated by renderTasks() -->
+          </div>
+        </div>
+
         <div class="footer-section" style="margin-top: 40px; display: flex; justify-content: space-between; align-items: center; width: 100%;">
           <div class="footer-links" style="color: var(--text-muted); font-size: 12px; display: flex; gap: 20px; flex-wrap: wrap;">
             <span>● Secure Channel</span>
@@ -579,6 +598,107 @@ function renderPaired() {
   }
 
   document.getElementById('signOutBtn').onclick = handleSignOut;
+
+  // Render the tasks after the base DOM is injected
+  renderTasks();
+  
+  // Simulate task loading delay
+  if (state.tasksLoading) {
+    setTimeout(() => {
+      state.tasksLoading = false;
+      renderTasks();
+    }, 1500); // 1.5s skeleton demo
+  }
+}
+
+// ─── TASKS LOGIC ────────────────────────────────────────────────
+function renderTasks() {
+  const container = document.getElementById('tasksList');
+  if (!container) return;
+
+  if (state.tasksLoading) {
+    container.innerHTML = `
+      <div class="task-skeleton">
+        <div class="skeleton-checkbox skeleton-box"></div>
+        <div class="skeleton-content">
+          <div class="skeleton-title skeleton-box"></div>
+          <div class="skeleton-desc skeleton-box"></div>
+        </div>
+      </div>
+      <div class="task-skeleton">
+        <div class="skeleton-checkbox skeleton-box"></div>
+        <div class="skeleton-content">
+          <div class="skeleton-title skeleton-box"></div>
+          <div class="skeleton-desc skeleton-box"></div>
+        </div>
+      </div>
+      <div class="task-skeleton">
+        <div class="skeleton-checkbox skeleton-box"></div>
+        <div class="skeleton-content">
+          <div class="skeleton-title skeleton-box" style="width: 50%;"></div>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = '';
+  
+  state.tasks.forEach(task => {
+    const card = el('div', { className: `task-card ${task.completed ? 'completed' : ''}`, id: `task-${task.id}` },
+      el('div', { className: 'task-checkbox-wrapper' }, 
+        el('input', { 
+          type: 'checkbox', 
+          className: 'task-checkbox', 
+          checked: task.completed ? 'checked' : null,
+          id: `check-${task.id}`
+        })
+      ),
+      el('div', { className: 'task-content' },
+        el('div', { className: 'task-title' }, task.title),
+        el('div', { className: 'task-desc' }, task.desc)
+      )
+    );
+    
+    container.appendChild(card);
+    
+    // Bind click event
+    const checkbox = card.querySelector(`#check-${task.id}`);
+    checkbox.onchange = (e) => toggleTaskStatus(task.id, e.target.checked);
+  });
+}
+
+function toggleTaskStatus(taskId, isChecked) {
+  const checkbox = document.getElementById(`check-${taskId}`);
+  const card = document.getElementById(`task-${taskId}`);
+  const loadingText = document.getElementById('tasksLoadingText');
+  
+  // Optimistic UI updates
+  checkbox.disabled = true;
+  checkbox.classList.add('syncing');
+  loadingText.style.display = 'inline-block';
+  if (isChecked) card.classList.add('completed');
+  else card.classList.remove('completed');
+  
+  // Find task and update local state optimistically
+  const task = state.tasks.find(t => t.id === taskId);
+  if (task) task.completed = isChecked;
+
+  // Simulate network request
+  setTimeout(() => {
+    // Network success simulation
+    checkbox.disabled = false;
+    checkbox.classList.remove('syncing');
+    
+    // Check if any are still syncing
+    const syncingBoxes = document.querySelectorAll('.task-checkbox.syncing');
+    if (syncingBoxes.length === 0) {
+      loadingText.style.display = 'none';
+    }
+    
+    // NOTE: To simulate failure and revert optimistic UI, we would catch errors here
+    // and revert task.completed, checkbox.checked, card.classList, and optional error toast.
+  }, 600);
 }
 
 // ─── AUTH ACTIONS ───────────────────────────────────────────────

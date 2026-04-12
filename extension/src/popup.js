@@ -62,6 +62,95 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     let currentCaptchaCode = '';
 
+    // ─── TASKS MODULE LOGIC ─────────────────────────────
+    let tasksState = {
+        loading: true,
+        tasks: [
+            { id: 't1', title: 'Verify extension connection', desc: '', completed: false },
+            { id: 't2', title: 'Approve background permission', desc: 'Required for real-time background syncing.', completed: false }
+        ]
+    };
+
+    function renderTasks() {
+        const container = document.getElementById('tasksList');
+        if (!container) return;
+
+        if (tasksState.loading) {
+            container.innerHTML = `
+                <div class="task-skeleton">
+                    <div class="skeleton-checkbox skeleton-box"></div>
+                    <div class="skeleton-content">
+                        <div class="skeleton-title skeleton-box"></div>
+                        <div class="skeleton-desc skeleton-box"></div>
+                    </div>
+                </div>
+                <div class="task-skeleton">
+                    <div class="skeleton-checkbox skeleton-box"></div>
+                    <div class="skeleton-content">
+                        <div class="skeleton-title skeleton-box" style="width: 50%;"></div>
+                    </div>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = '';
+        
+        tasksState.tasks.forEach(task => {
+            const card = document.createElement('div');
+            card.className = `task-card ${task.completed ? 'completed' : ''}`;
+            card.id = `ext-task-${task.id}`;
+            card.innerHTML = `
+                <div class="task-checkbox-wrapper">
+                    <input type="checkbox" class="task-checkbox" id="ext-check-${task.id}" ${task.completed ? 'checked' : ''}>
+                </div>
+                <div class="task-content">
+                    <div class="task-title">${task.title}</div>
+                    <div class="task-desc">${task.desc}</div>
+                </div>
+            `;
+            container.appendChild(card);
+            
+            const checkbox = card.querySelector(`#ext-check-${task.id}`);
+            checkbox.addEventListener('change', (e) => toggleExtensionTask(task.id, e.target.checked));
+        });
+    }
+
+    function toggleExtensionTask(taskId, isChecked) {
+        const checkbox = document.getElementById(`ext-check-${taskId}`);
+        const card = document.getElementById(`ext-task-${taskId}`);
+        const loadingText = document.getElementById('tasksLoadingText');
+        
+        checkbox.disabled = true;
+        checkbox.classList.add('syncing');
+        if (loadingText) loadingText.style.display = 'inline-block';
+        
+        if (isChecked) card.classList.add('completed');
+        else card.classList.remove('completed');
+        
+        const task = tasksState.tasks.find(t => t.id === taskId);
+        if (task) task.completed = isChecked;
+
+        setTimeout(() => {
+            checkbox.disabled = false;
+            checkbox.classList.remove('syncing');
+            const syncingBoxes = document.querySelectorAll('.task-checkbox.syncing');
+            if (syncingBoxes.length === 0 && loadingText) {
+                loadingText.style.display = 'none';
+            }
+        }, 500);
+    }
+    
+    // Initial Render & Timer
+    renderTasks();
+    if (tasksState.loading) {
+        setTimeout(() => {
+            tasksState.loading = false;
+            renderTasks();
+        }, 1200);
+    }
+    // ─── END TASKS MODULE LOGIC ─────────────────────────
+
     // ─── CAPTCHA Helpers ────────────────────────────────
     function generateCaptcha() {
         return String(Math.floor(1000 + Math.random() * 9000)); // 4-digit number, never starts with 0

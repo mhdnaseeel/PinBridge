@@ -1,7 +1,5 @@
 <resources>
     <string name="app_name">PinBridge</string>
-    <string name="title_pairing">Pair Device</string>
-    <string name="pairing_qr_description">Scan this QR code in the PinBridge Chrome extension to pair your device.</string>
     <!-- TODO: Replace with your actual Web Client ID from Firebase Console -->
     <string name="default_web_client_id">YOUR_WEB_CLIENT_ID_HERE.apps.googleusercontent.com</string>
 </resources>

@@ -1,0 +1,22 @@
+# .graphifyignore
+# Build artifacts
+build/
+android/.gradle/
+android/app/build/
+.gradle/
+*.iml
+.idea/
+
+# Binary files
+*.png
+*.jpg
+*.jpeg
+*.pdf
+*.zip
+*.tar.gz
+
+# Node modules (if any)
+node_modules/
+
+# Logs
+*.log

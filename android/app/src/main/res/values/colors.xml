@@ -2,21 +2,12 @@
     <!-- Premium colors from extension -->
     <color name="primary">#6366f1</color>
     <color name="primary_hover">#4f46e5</color>
-    <color name="gradient_start">#6366f1</color>
     <color name="gradient_end">#a855f7</color>
     <color name="bg_start">#f5f7fa</color>
-    <color name="bg_end">#c3cfe2</color>
-    <color name="text_main">#1f2937</color>
-    <color name="text_muted">#6b7280</color>
 
     <!-- Generic colors -->
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
 
     <!-- Legacy colors for theme compatibility -->
-    <color name="purple_200">#6366f1</color>
-    <color name="purple_500">#6366f1</color>
-    <color name="purple_700">#4f46e5</color>
-    <color name="teal_200">#10B981</color>
-    <color name="teal_700">#059669</color>
 </resources>

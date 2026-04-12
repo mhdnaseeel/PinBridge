@@ -1,0 +1,1 @@
+{"nodes": [{"id": "web_vite_config_js", "label": "vite.config.js", "file_type": "code", "source_file": "web/vite.config.js", "source_location": "L1"}], "edges": [{"source": "web_vite_config_js", "target": "vite", "relation": "imports_from", "confidence": "EXTRACTED", "source_file": "web/vite.config.js", "source_location": "L1", "weight": 1.0}]}
