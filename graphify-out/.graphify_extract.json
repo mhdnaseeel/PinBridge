@@ -1,0 +1,4657 @@
+{
+  "nodes": [
+    {
+      "id": "extension_webpack_config_js",
+      "label": "webpack.config.js",
+      "file_type": "code",
+      "source_file": "extension/webpack.config.js",
+      "source_location": "L1"
+    },
+    {
+      "id": "extension_src_popup_js",
+      "label": "popup.js",
+      "file_type": "code",
+      "source_file": "extension/src/popup.js",
+      "source_location": "L1"
+    },
+    {
+      "id": "popup_generatecaptcha",
+      "label": "generateCaptcha()",
+      "file_type": "code",
+      "source_file": "extension/src/popup.js",
+      "source_location": "L55"
+    },
+    {
+      "id": "popup_showcaptchamodal",
+      "label": "showCaptchaModal()",
+      "file_type": "code",
+      "source_file": "extension/src/popup.js",
+      "source_location": "L59"
+    },
+    {
+      "id": "popup_hidecaptchamodal",
+      "label": "hideCaptchaModal()",
+      "file_type": "code",
+      "source_file": "extension/src/popup.js",
+      "source_location": "L69"
+    },
+    {
+      "id": "popup_updatebrowserstatus",
+      "label": "updateBrowserStatus()",
+      "file_type": "code",
+      "source_file": "extension/src/popup.js",
+      "source_location": "L115"
+    },
+    {
+      "id": "popup_startcontinuoussync",
+      "label": "startContinuousSync()",
+      "file_type": "code",
+      "source_file": "extension/src/popup.js",
+      "source_location": "L134"
+    },
+    {
+      "id": "popup_stopcontinuoussync",
+      "label": "stopContinuousSync()",
+      "file_type": "code",
+      "source_file": "extension/src/popup.js",
+      "source_location": "L144"
+    },
+    {
+      "id": "popup_showpaired",
+      "label": "showPaired()",
+      "file_type": "code",
+      "source_file": "extension/src/popup.js",
+      "source_location": "L202"
+    },
+    {
+      "id": "popup_showunpaired",
+      "label": "showUnpaired()",
+      "file_type": "code",
+      "source_file": "extension/src/popup.js",
+      "source_location": "L212"
+    },
+    {
+      "id": "popup_showerror",
+      "label": "showError()",
+      "file_type": "code",
+      "source_file": "extension/src/popup.js",
+      "source_location": "L244"
+    },
+    {
+      "id": "popup_hideerror",
+      "label": "hideError()",
+      "file_type": "code",
+      "source_file": "extension/src/popup.js",
+      "source_location": "L249"
+    },
+    {
+      "id": "popup_showconnectingstatus",
+      "label": "showConnectingStatus()",
+      "file_type": "code",
+      "source_file": "extension/src/popup.js",
+      "source_location": "L254"
+    },
+    {
+      "id": "popup_updateconnectionstatus",
+      "label": "updateConnectionStatus()",
+      "file_type": "code",
+      "source_file": "extension/src/popup.js",
+      "source_location": "L260"
+    },
+    {
+      "id": "popup_updatebatterydisplay",
+      "label": "updateBatteryDisplay()",
+      "file_type": "code",
+      "source_file": "extension/src/popup.js",
+      "source_location": "L301"
+    },
+    {
+      "id": "popup_updateotpdisplay",
+      "label": "updateOtpDisplay()",
+      "file_type": "code",
+      "source_file": "extension/src/popup.js",
+      "source_location": "L321"
+    },
+    {
+      "id": "popup_startauthpolling",
+      "label": "startAuthPolling()",
+      "file_type": "code",
+      "source_file": "extension/src/popup.js",
+      "source_location": "L340"
+    },
+    {
+      "id": "popup_onfetchsuccess",
+      "label": "onFetchSuccess()",
+      "file_type": "code",
+      "source_file": "extension/src/popup.js",
+      "source_location": "L437"
+    },
+    {
+      "id": "extension_src_background_js",
+      "label": "background.js",
+      "file_type": "code",
+      "source_file": "extension/src/background.js",
+      "source_location": "L1"
+    },
+    {
+      "id": "background_waitforauth",
+      "label": "waitForAuth()",
+      "file_type": "code",
+      "source_file": "extension/src/background.js",
+      "source_location": "L39"
+    },
+    {
+      "id": "background_safesendmessage",
+      "label": "safeSendMessage()",
+      "file_type": "code",
+      "source_file": "extension/src/background.js",
+      "source_location": "L51"
+    },
+    {
+      "id": "background_startkeepalive",
+      "label": "startKeepalive()",
+      "file_type": "code",
+      "source_file": "extension/src/background.js",
+      "source_location": "L122"
+    },
+    {
+      "id": "background_stopkeepalive",
+      "label": "stopKeepalive()",
+      "file_type": "code",
+      "source_file": "extension/src/background.js",
+      "source_location": "L127"
+    },
+    {
+      "id": "background_performpairing",
+      "label": "performPairing()",
+      "file_type": "code",
+      "source_file": "extension/src/background.js",
+      "source_location": "L134"
+    },
+    {
+      "id": "background_hydrateandpush",
+      "label": "hydrateAndPush()",
+      "file_type": "code",
+      "source_file": "extension/src/background.js",
+      "source_location": "L261"
+    },
+    {
+      "id": "background_handlegooglesignin",
+      "label": "handleGoogleSignIn()",
+      "file_type": "code",
+      "source_file": "extension/src/background.js",
+      "source_location": "L313"
+    },
+    {
+      "id": "background_handlewebloginsuccess",
+      "label": "handleWebLoginSuccess()",
+      "file_type": "code",
+      "source_file": "extension/src/background.js",
+      "source_location": "L363"
+    },
+    {
+      "id": "background_handlewebpairingsuccess",
+      "label": "handleWebPairingSuccess()",
+      "file_type": "code",
+      "source_file": "extension/src/background.js",
+      "source_location": "L398"
+    },
+    {
+      "id": "background_handlemanualfetch",
+      "label": "handleManualFetch()",
+      "file_type": "code",
+      "source_file": "extension/src/background.js",
+      "source_location": "L409"
+    },
+    {
+      "id": "background_performsignoutonly",
+      "label": "performSignOutOnly()",
+      "file_type": "code",
+      "source_file": "extension/src/background.js",
+      "source_location": "L459"
+    },
+    {
+      "id": "background_cleanupfirestorepairing",
+      "label": "cleanupFirestorePairing()",
+      "file_type": "code",
+      "source_file": "extension/src/background.js",
+      "source_location": "L472"
+    },
+    {
+      "id": "background_performunpaironly",
+      "label": "performUnpairOnly()",
+      "file_type": "code",
+      "source_file": "extension/src/background.js",
+      "source_location": "L499"
+    },
+    {
+      "id": "background_performsignout",
+      "label": "performSignOut()",
+      "file_type": "code",
+      "source_file": "extension/src/background.js",
+      "source_location": "L517"
+    },
+    {
+      "id": "background_stoppresencelisteners",
+      "label": "stopPresenceListeners()",
+      "file_type": "code",
+      "source_file": "extension/src/background.js",
+      "source_location": "L541"
+    },
+    {
+      "id": "background_stopotplistener",
+      "label": "stopOtpListener()",
+      "file_type": "code",
+      "source_file": "extension/src/background.js",
+      "source_location": "L551"
+    },
+    {
+      "id": "background_stopalllisteners",
+      "label": "stopAllListeners()",
+      "file_type": "code",
+      "source_file": "extension/src/background.js",
+      "source_location": "L555"
+    },
+    {
+      "id": "background_startpresencelisteners",
+      "label": "startPresenceListeners()",
+      "file_type": "code",
+      "source_file": "extension/src/background.js",
+      "source_location": "L565"
+    },
+    {
+      "id": "background_startotplistener",
+      "label": "startOtpListener()",
+      "file_type": "code",
+      "source_file": "extension/src/background.js",
+      "source_location": "L698"
+    },
+    {
+      "id": "background_startalllisteners",
+      "label": "startAllListeners()",
+      "file_type": "code",
+      "source_file": "extension/src/background.js",
+      "source_location": "L726"
+    },
+    {
+      "id": "background_processnewotp",
+      "label": "processNewOtp()",
+      "file_type": "code",
+      "source_file": "extension/src/background.js",
+      "source_location": "L731"
+    },
+    {
+      "id": "extension_src_config_js",
+      "label": "config.js",
+      "file_type": "code",
+      "source_file": "extension/src/config.js",
+      "source_location": "L1"
+    },
+    {
+      "id": "config_isdashboardpage",
+      "label": "isDashboardPage()",
+      "file_type": "code",
+      "source_file": "extension/src/config.js",
+      "source_location": "L31"
+    },
+    {
+      "id": "extension_src_pairing_js",
+      "label": "pairing.js",
+      "file_type": "code",
+      "source_file": "extension/src/pairing.js",
+      "source_location": "L1"
+    },
+    {
+      "id": "pairing_statusarea",
+      "label": "statusArea()",
+      "file_type": "code",
+      "source_file": "extension/src/pairing.js",
+      "source_location": "L23"
+    },
+    {
+      "id": "pairing_statustext",
+      "label": "statusText()",
+      "file_type": "code",
+      "source_file": "extension/src/pairing.js",
+      "source_location": "L24"
+    },
+    {
+      "id": "pairing_countdownel",
+      "label": "countdownEl()",
+      "file_type": "code",
+      "source_file": "extension/src/pairing.js",
+      "source_location": "L25"
+    },
+    {
+      "id": "pairing_setstatus",
+      "label": "setStatus()",
+      "file_type": "code",
+      "source_file": "extension/src/pairing.js",
+      "source_location": "L27"
+    },
+    {
+      "id": "pairing_startcountdown",
+      "label": "startCountdown()",
+      "file_type": "code",
+      "source_file": "extension/src/pairing.js",
+      "source_location": "L61"
+    },
+    {
+      "id": "extension_src_content_js",
+      "label": "content.js",
+      "file_type": "code",
+      "source_file": "extension/src/content.js",
+      "source_location": "L1"
+    },
+    {
+      "id": "content_autofill",
+      "label": "autofill()",
+      "file_type": "code",
+      "source_file": "extension/src/content.js",
+      "source_location": "L90"
+    },
+    {
+      "id": "extension_src_crypto_js",
+      "label": "crypto.js",
+      "file_type": "code",
+      "source_file": "extension/src/crypto.js",
+      "source_location": "L1"
+    },
+    {
+      "id": "crypto_decryptotp",
+      "label": "decryptOtp()",
+      "file_type": "code",
+      "source_file": "extension/src/crypto.js",
+      "source_location": "L7"
+    },
+    {
+      "id": "web_vite_config_js",
+      "label": "vite.config.js",
+      "file_type": "code",
+      "source_file": "web/vite.config.js",
+      "source_location": "L1"
+    },
+    {
+      "id": "web_main_js",
+      "label": "main.js",
+      "file_type": "code",
+      "source_file": "web/main.js",
+      "source_location": "L1"
+    },
+    {
+      "id": "main_isdeviceonline",
+      "label": "isDeviceOnline()",
+      "file_type": "code",
+      "source_file": "web/main.js",
+      "source_location": "L68"
+    },
+    {
+      "id": "main_escapehtml",
+      "label": "escapeHtml()",
+      "file_type": "code",
+      "source_file": "web/main.js",
+      "source_location": "L76"
+    },
+    {
+      "id": "main_checkurlparams",
+      "label": "checkUrlParams()",
+      "file_type": "code",
+      "source_file": "web/main.js",
+      "source_location": "L92"
+    },
+    {
+      "id": "main_decryptotp",
+      "label": "decryptOtp()",
+      "file_type": "code",
+      "source_file": "web/main.js",
+      "source_location": "L112"
+    },
+    {
+      "id": "main_el",
+      "label": "el()",
+      "file_type": "code",
+      "source_file": "web/main.js",
+      "source_location": "L123"
+    },
+    {
+      "id": "main_updateui",
+      "label": "updateUI()",
+      "file_type": "code",
+      "source_file": "web/main.js",
+      "source_location": "L149"
+    },
+    {
+      "id": "main_updateconnectionindicator",
+      "label": "updateConnectionIndicator()",
+      "file_type": "code",
+      "source_file": "web/main.js",
+      "source_location": "L174"
+    },
+    {
+      "id": "main_rendersignin",
+      "label": "renderSignIn()",
+      "file_type": "code",
+      "source_file": "web/main.js",
+      "source_location": "L258"
+    },
+    {
+      "id": "main_renderunpaired",
+      "label": "renderUnpaired()",
+      "file_type": "code",
+      "source_file": "web/main.js",
+      "source_location": "L304"
+    },
+    {
+      "id": "main_renderpaired",
+      "label": "renderPaired()",
+      "file_type": "code",
+      "source_file": "web/main.js",
+      "source_location": "L355"
+    },
+    {
+      "id": "main_loginwithgoogle",
+      "label": "loginWithGoogle()",
+      "file_type": "code",
+      "source_file": "web/main.js",
+      "source_location": "L589"
+    },
+    {
+      "id": "main_listentocloudsync",
+      "label": "listenToCloudSync()",
+      "file_type": "code",
+      "source_file": "web/main.js",
+      "source_location": "L617"
+    },
+    {
+      "id": "main_handlesignout",
+      "label": "handleSignOut()",
+      "file_type": "code",
+      "source_file": "web/main.js",
+      "source_location": "L685"
+    },
+    {
+      "id": "main_startlisteners",
+      "label": "startListeners()",
+      "file_type": "code",
+      "source_file": "web/main.js",
+      "source_location": "L740"
+    },
+    {
+      "id": "main_handleforcedunpair",
+      "label": "handleForcedUnpair()",
+      "file_type": "code",
+      "source_file": "web/main.js",
+      "source_location": "L840"
+    },
+    {
+      "id": "main_stoplisteners",
+      "label": "stopListeners()",
+      "file_type": "code",
+      "source_file": "web/main.js",
+      "source_location": "L851"
+    },
+    {
+      "id": "server_index_js",
+      "label": "index.js",
+      "file_type": "code",
+      "source_file": "server/index.js",
+      "source_location": "L1"
+    },
+    {
+      "id": "index_log",
+      "label": "log()",
+      "file_type": "code",
+      "source_file": "server/index.js",
+      "source_location": "L58"
+    },
+    {
+      "id": "server_index_test_js",
+      "label": "index.test.js",
+      "file_type": "code",
+      "source_file": "server/index.test.js",
+      "source_location": "L1"
+    },
+    {
+      "id": "index_test_validateorigin",
+      "label": "validateOrigin()",
+      "file_type": "code",
+      "source_file": "server/index.test.js",
+      "source_location": "L72"
+    },
+    {
+      "id": "android_build_gradle_kts",
+      "label": "build.gradle.kts",
+      "file_type": "code",
+      "source_file": "android/build.gradle.kts",
+      "source_location": "L1"
+    },
+    {
+      "id": "android_settings_gradle_kts",
+      "label": "settings.gradle.kts",
+      "file_type": "code",
+      "source_file": "android/settings.gradle.kts",
+      "source_location": "L1"
+    },
+    {
+      "id": "android_app_build_gradle_kts",
+      "label": "build.gradle.kts",
+      "file_type": "code",
+      "source_file": "android/app/build.gradle.kts",
+      "source_location": "L1"
+    },
+    {
+      "id": "android_app_src_androidtest_java_com_pinbridge_otpmirror_otpreceivertest_kt",
+      "label": "OtpReceiverTest.kt",
+      "file_type": "code",
+      "source_file": "android/app/src/androidTest/java/com/pinbridge/otpmirror/OtpReceiverTest.kt",
+      "source_location": "L1"
+    },
+    {
+      "id": "otpreceivertest_otpreceivertest",
+      "label": "OtpReceiverTest",
+      "file_type": "code",
+      "source_file": "android/app/src/androidTest/java/com/pinbridge/otpmirror/OtpReceiverTest.kt",
+      "source_location": "L12"
+    },
+    {
+      "id": "otpreceivertest_otpreceivertest_testcurrencyexclusionandotpextraction",
+      "label": ".testCurrencyExclusionAndOtpExtraction()",
+      "file_type": "code",
+      "source_file": "android/app/src/androidTest/java/com/pinbridge/otpmirror/OtpReceiverTest.kt",
+      "source_location": "L15"
+    },
+    {
+      "id": "android_app_src_androidtest_java_com_pinbridge_otpmirror_mainactivitytest_kt",
+      "label": "MainActivityTest.kt",
+      "file_type": "code",
+      "source_file": "android/app/src/androidTest/java/com/pinbridge/otpmirror/MainActivityTest.kt",
+      "source_location": "L1"
+    },
+    {
+      "id": "mainactivitytest_mainactivitytest",
+      "label": "MainActivityTest",
+      "file_type": "code",
+      "source_file": "android/app/src/androidTest/java/com/pinbridge/otpmirror/MainActivityTest.kt",
+      "source_location": "L14"
+    },
+    {
+      "id": "mainactivitytest_mainactivitytest_clickingshowpairingqr_openspairingactivity_andshowsqr",
+      "label": ".clickingShowPairingQr_opensPairingActivity_andShowsQr()",
+      "file_type": "code",
+      "source_file": "android/app/src/androidTest/java/com/pinbridge/otpmirror/MainActivityTest.kt",
+      "source_location": "L20"
+    },
+    {
+      "id": "android_app_src_androidtest_java_com_pinbridge_otpmirror_pairingactivitytest_kt",
+      "label": "PairingActivityTest.kt",
+      "file_type": "code",
+      "source_file": "android/app/src/androidTest/java/com/pinbridge/otpmirror/PairingActivityTest.kt",
+      "source_location": "L1"
+    },
+    {
+      "id": "pairingactivitytest_pairingactivitytest",
+      "label": "PairingActivityTest",
+      "file_type": "code",
+      "source_file": "android/app/src/androidTest/java/com/pinbridge/otpmirror/PairingActivityTest.kt",
+      "source_location": "L18"
+    },
+    {
+      "id": "pairingactivitytest_pairingactivitytest_qr_code_contains_valid_deviceid_and_secret",
+      "label": ".`qr code contains valid deviceId and secret`()",
+      "file_type": "code",
+      "source_file": "android/app/src/androidTest/java/com/pinbridge/otpmirror/PairingActivityTest.kt",
+      "source_location": "L21"
+    },
+    {
+      "id": "pairingactivitytest_pairingactivitytest_decodeqr",
+      "label": ".decodeQr()",
+      "file_type": "code",
+      "source_file": "android/app/src/androidTest/java/com/pinbridge/otpmirror/PairingActivityTest.kt",
+      "source_location": "L56"
+    },
+    {
+      "id": "android_app_src_androidtest_java_com_pinbridge_otpmirror_uploadotpworkertest_kt",
+      "label": "UploadOtpWorkerTest.kt",
+      "file_type": "code",
+      "source_file": "android/app/src/androidTest/java/com/pinbridge/otpmirror/UploadOtpWorkerTest.kt",
+      "source_location": "L1"
+    },
+    {
+      "id": "uploadotpworkertest_uploadotpworkertest",
+      "label": "UploadOtpWorkerTest",
+      "file_type": "code",
+      "source_file": "android/app/src/androidTest/java/com/pinbridge/otpmirror/UploadOtpWorkerTest.kt",
+      "source_location": "L21"
+    },
+    {
+      "id": "uploadotpworkertest_uploadotpworkertest_setup",
+      "label": ".setUp()",
+      "file_type": "code",
+      "source_file": "android/app/src/androidTest/java/com/pinbridge/otpmirror/UploadOtpWorkerTest.kt",
+      "source_location": "L31"
+    },
+    {
+      "id": "uploadotpworkertest_uploadotpworkertest_teardown",
+      "label": ".tearDown()",
+      "file_type": "code",
+      "source_file": "android/app/src/androidTest/java/com/pinbridge/otpmirror/UploadOtpWorkerTest.kt",
+      "source_location": "L80"
+    },
+    {
+      "id": "uploadotpworkertest_uploadotpworkertest_worker_uploads_encrypted_otp_and_can_be_decrypted_correctly",
+      "label": ".`worker uploads encrypted otp and can be decrypted correctly`()",
+      "file_type": "code",
+      "source_file": "android/app/src/androidTest/java/com/pinbridge/otpmirror/UploadOtpWorkerTest.kt",
+      "source_location": "L88"
+    },
+    {
+      "id": "android_app_src_androidtest_java_com_pinbridge_otpmirror_e2etest_kt",
+      "label": "E2ETest.kt",
+      "file_type": "code",
+      "source_file": "android/app/src/androidTest/java/com/pinbridge/otpmirror/E2ETest.kt",
+      "source_location": "L1"
+    },
+    {
+      "id": "e2etest_e2etest",
+      "label": "E2ETest",
+      "file_type": "code",
+      "source_file": "android/app/src/androidTest/java/com/pinbridge/otpmirror/E2ETest.kt",
+      "source_location": "L34"
+    },
+    {
+      "id": "e2etest_e2etest_setup",
+      "label": ".setUp()",
+      "file_type": "code",
+      "source_file": "android/app/src/androidTest/java/com/pinbridge/otpmirror/E2ETest.kt",
+      "source_location": "L41"
+    },
+    {
+      "id": "e2etest_e2etest_teardown",
+      "label": ".tearDown()",
+      "file_type": "code",
+      "source_file": "android/app/src/androidTest/java/com/pinbridge/otpmirror/E2ETest.kt",
+      "source_location": "L59"
+    },
+    {
+      "id": "e2etest_e2etest_full_flow_from_pairing_qr_to_otp_appears_in_firestore",
+      "label": ".`full flow from pairing QR to OTP appears in Firestore`()",
+      "file_type": "code",
+      "source_file": "android/app/src/androidTest/java/com/pinbridge/otpmirror/E2ETest.kt",
+      "source_location": "L64"
+    },
+    {
+      "id": "e2etest_e2etest_decodeqr",
+      "label": ".decodeQr()",
+      "file_type": "code",
+      "source_file": "android/app/src/androidTest/java/com/pinbridge/otpmirror/E2ETest.kt",
+      "source_location": "L121"
+    },
+    {
+      "id": "android_app_src_test_java_com_pinbridge_otpmirror_constantstest_kt",
+      "label": "ConstantsTest.kt",
+      "file_type": "code",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/ConstantsTest.kt",
+      "source_location": "L1"
+    },
+    {
+      "id": "constantstest_constantstest",
+      "label": "ConstantsTest",
+      "file_type": "code",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/ConstantsTest.kt",
+      "source_location": "L6"
+    },
+    {
+      "id": "constantstest_constantstest_pref_names_are_non_empty",
+      "label": ".`pref names are non empty`()",
+      "file_type": "code",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/ConstantsTest.kt",
+      "source_location": "L8"
+    },
+    {
+      "id": "android_app_src_test_java_com_pinbridge_otpmirror_otpregextest_kt",
+      "label": "OtpRegexTest.kt",
+      "file_type": "code",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/OtpRegexTest.kt",
+      "source_location": "L1"
+    },
+    {
+      "id": "otpregextest_otpregextest",
+      "label": "OtpRegexTest",
+      "file_type": "code",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/OtpRegexTest.kt",
+      "source_location": "L10"
+    },
+    {
+      "id": "otpregextest_otpregextest_extracts_6_digit_otp_from_standard_bank_sms",
+      "label": ".`extracts 6-digit OTP from standard bank SMS`()",
+      "file_type": "code",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/OtpRegexTest.kt",
+      "source_location": "L14"
+    },
+    {
+      "id": "otpregextest_otpregextest_extracts_4_digit_code_from_short_sms",
+      "label": ".`extracts 4-digit code from short SMS`()",
+      "file_type": "code",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/OtpRegexTest.kt",
+      "source_location": "L20"
+    },
+    {
+      "id": "otpregextest_otpregextest_extracts_8_digit_code",
+      "label": ".`extracts 8-digit code`()",
+      "file_type": "code",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/OtpRegexTest.kt",
+      "source_location": "L26"
+    },
+    {
+      "id": "otpregextest_otpregextest_extracts_otp_from_google_verification_sms",
+      "label": ".`extracts OTP from Google verification SMS`()",
+      "file_type": "code",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/OtpRegexTest.kt",
+      "source_location": "L32"
+    },
+    {
+      "id": "otpregextest_otpregextest_extracts_otp_when_multiple_numbers_present_with_keyword",
+      "label": ".`extracts OTP when multiple numbers present with keyword`()",
+      "file_type": "code",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/OtpRegexTest.kt",
+      "source_location": "L38"
+    },
+    {
+      "id": "otpregextest_otpregextest_extracts_5_digit_code",
+      "label": ".`extracts 5-digit code`()",
+      "file_type": "code",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/OtpRegexTest.kt",
+      "source_location": "L44"
+    },
+    {
+      "id": "otpregextest_otpregextest_extracts_7_digit_code",
+      "label": ".`extracts 7-digit code`()",
+      "file_type": "code",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/OtpRegexTest.kt",
+      "source_location": "L50"
+    },
+    {
+      "id": "otpregextest_otpregextest_prefers_6_digit_code_over_4_digit_when_no_keywords",
+      "label": ".`prefers 6-digit code over 4-digit when no keywords`()",
+      "file_type": "code",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/OtpRegexTest.kt",
+      "source_location": "L56"
+    },
+    {
+      "id": "otpregextest_otpregextest_prefers_otp_over_earlier_number_when_keywords_are_present",
+      "label": ".`prefers OTP over earlier number when keywords are present`()",
+      "file_type": "code",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/OtpRegexTest.kt",
+      "source_location": "L65"
+    },
+    {
+      "id": "otpregextest_otpregextest_extracts_otp_when_message_has_multiple_keywords",
+      "label": ".`extracts OTP when message has multiple keywords`()",
+      "file_type": "code",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/OtpRegexTest.kt",
+      "source_location": "L73"
+    },
+    {
+      "id": "otpregextest_otpregextest_excludes_number_preceded_by_rupee_symbol",
+      "label": ".`excludes number preceded by rupee symbol`()",
+      "file_type": "code",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/OtpRegexTest.kt",
+      "source_location": "L82"
+    },
+    {
+      "id": "otpregextest_otpregextest_excludes_number_preceded_by_dollar_sign",
+      "label": ".`excludes number preceded by dollar sign`()",
+      "file_type": "code",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/OtpRegexTest.kt",
+      "source_location": "L88"
+    },
+    {
+      "id": "otpregextest_otpregextest_excludes_number_preceded_by_rs",
+      "label": ".`excludes number preceded by Rs`()",
+      "file_type": "code",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/OtpRegexTest.kt",
+      "source_location": "L94"
+    },
+    {
+      "id": "otpregextest_otpregextest_excludes_number_preceded_by_inr",
+      "label": ".`excludes number preceded by INR`()",
+      "file_type": "code",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/OtpRegexTest.kt",
+      "source_location": "L100"
+    },
+    {
+      "id": "otpregextest_otpregextest_does_not_extract_from_message_with_no_numbers",
+      "label": ".`does not extract from message with no numbers`()",
+      "file_type": "code",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/OtpRegexTest.kt",
+      "source_location": "L108"
+    },
+    {
+      "id": "otpregextest_otpregextest_does_not_extract_numbers_shorter_than_4_digits",
+      "label": ".`does not extract numbers shorter than 4 digits`()",
+      "file_type": "code",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/OtpRegexTest.kt",
+      "source_location": "L114"
+    },
+    {
+      "id": "otpregextest_otpregextest_does_not_extract_numbers_longer_than_8_digits",
+      "label": ".`does not extract numbers longer than 8 digits`()",
+      "file_type": "code",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/OtpRegexTest.kt",
+      "source_location": "L120"
+    },
+    {
+      "id": "otpregextest_otpregextest_3_digit_number_is_not_extracted",
+      "label": ".`3-digit number is not extracted`()",
+      "file_type": "code",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/OtpRegexTest.kt",
+      "source_location": "L126"
+    },
+    {
+      "id": "otpregextest_otpregextest_extracts_otp_followed_by_period",
+      "label": ".`extracts OTP followed by period`()",
+      "file_type": "code",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/OtpRegexTest.kt",
+      "source_location": "L134"
+    },
+    {
+      "id": "otpregextest_otpregextest_extracts_otp_from_multiline_sms",
+      "label": ".`extracts OTP from multiline SMS`()",
+      "file_type": "code",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/OtpRegexTest.kt",
+      "source_location": "L140"
+    },
+    {
+      "id": "android_app_src_test_java_com_pinbridge_otpmirror_exampleunittest_kt",
+      "label": "ExampleUnitTest.kt",
+      "file_type": "code",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/ExampleUnitTest.kt",
+      "source_location": "L1"
+    },
+    {
+      "id": "exampleunittest_exampleunittest",
+      "label": "ExampleUnitTest",
+      "file_type": "code",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/ExampleUnitTest.kt",
+      "source_location": "L6"
+    },
+    {
+      "id": "exampleunittest_exampleunittest_addition_iscorrect",
+      "label": ".addition_isCorrect()",
+      "file_type": "code",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/ExampleUnitTest.kt",
+      "source_location": "L7"
+    },
+    {
+      "id": "exampleunittest_exampleunittest_secret_placeholder_check",
+      "label": ".secret_placeholder_check()",
+      "file_type": "code",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/ExampleUnitTest.kt",
+      "source_location": "L12"
+    },
+    {
+      "id": "android_app_src_test_java_com_pinbridge_otpmirror_cryptoutiltest_kt",
+      "label": "CryptoUtilTest.kt",
+      "file_type": "code",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/CryptoUtilTest.kt",
+      "source_location": "L1"
+    },
+    {
+      "id": "cryptoutiltest_cryptoutiltest",
+      "label": "CryptoUtilTest",
+      "file_type": "code",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/CryptoUtilTest.kt",
+      "source_location": "L8"
+    },
+    {
+      "id": "cryptoutiltest_cryptoutiltest_randomsecret",
+      "label": ".randomSecret()",
+      "file_type": "code",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/CryptoUtilTest.kt",
+      "source_location": "L10"
+    },
+    {
+      "id": "cryptoutiltest_cryptoutiltest_encrypt_and_decrypt_with_random_secret_returns_original_otp",
+      "label": ".`encrypt and decrypt with random secret returns original OTP`()",
+      "file_type": "code",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/CryptoUtilTest.kt",
+      "source_location": "L12"
+    },
+    {
+      "id": "cryptoutiltest_cryptoutiltest_encrypt_and_decrypt_with_fixed_secret_returns_original_otp",
+      "label": ".`encrypt and decrypt with fixed secret returns original OTP`()",
+      "file_type": "code",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/CryptoUtilTest.kt",
+      "source_location": "L27"
+    },
+    {
+      "id": "cryptoutiltest_cryptoutiltest_encrypt_and_decrypt_empty_string",
+      "label": ".`encrypt and decrypt empty string`()",
+      "file_type": "code",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/CryptoUtilTest.kt",
+      "source_location": "L42"
+    },
+    {
+      "id": "cryptoutiltest_cryptoutiltest_encrypt_and_decrypt_long_input",
+      "label": ".`encrypt and decrypt long input`()",
+      "file_type": "code",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/CryptoUtilTest.kt",
+      "source_location": "L50"
+    },
+    {
+      "id": "cryptoutiltest_cryptoutiltest_decrypt_with_wrong_key_throws",
+      "label": ".`decrypt with wrong key throws`()",
+      "file_type": "code",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/CryptoUtilTest.kt",
+      "source_location": "L59"
+    },
+    {
+      "id": "cryptoutiltest_cryptoutiltest_two_encryptions_of_the_same_plaintext_produce_different_ciphertext",
+      "label": ".`two encryptions of the same plaintext produce different ciphertext`()",
+      "file_type": "code",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/CryptoUtilTest.kt",
+      "source_location": "L67"
+    },
+    {
+      "id": "android_app_src_main_java_com_pinbridge_otpmirror_uploadotpworker_kt",
+      "label": "UploadOtpWorker.kt",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/UploadOtpWorker.kt",
+      "source_location": "L1"
+    },
+    {
+      "id": "uploadotpworker_uploadotpworker",
+      "label": "UploadOtpWorker",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/UploadOtpWorker.kt",
+      "source_location": "L16"
+    },
+    {
+      "id": "uploadotpworker_uploadotpworker_dowork",
+      "label": ".doWork()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/UploadOtpWorker.kt",
+      "source_location": "L25"
+    },
+    {
+      "id": "android_app_src_main_java_com_pinbridge_otpmirror_manualcodeentryactivity_kt",
+      "label": "ManualCodeEntryActivity.kt",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/ManualCodeEntryActivity.kt",
+      "source_location": "L1"
+    },
+    {
+      "id": "manualcodeentryactivity_manualcodeentryactivity",
+      "label": "ManualCodeEntryActivity",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/ManualCodeEntryActivity.kt",
+      "source_location": "L32"
+    },
+    {
+      "id": "manualcodeentryactivity_manualcodeentryactivity_oncreate",
+      "label": ".onCreate()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/ManualCodeEntryActivity.kt",
+      "source_location": "L38"
+    },
+    {
+      "id": "manualcodeentryactivity_manualcodeentryactivity_manualcodescreen",
+      "label": ".ManualCodeScreen()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/ManualCodeEntryActivity.kt",
+      "source_location": "L47"
+    },
+    {
+      "id": "manualcodeentryactivity_manualcodeentryactivity_performpairing",
+      "label": ".performPairing()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/ManualCodeEntryActivity.kt",
+      "source_location": "L167"
+    },
+    {
+      "id": "manualcodeentryactivity_manualtheme",
+      "label": "ManualTheme()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/ManualCodeEntryActivity.kt",
+      "source_location": "L181"
+    },
+    {
+      "id": "android_app_src_main_java_com_pinbridge_otpmirror_mainactivity_kt",
+      "label": "MainActivity.kt",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/MainActivity.kt",
+      "source_location": "L1"
+    },
+    {
+      "id": "mainactivity_mainactivity",
+      "label": "MainActivity",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/MainActivity.kt",
+      "source_location": "L47"
+    },
+    {
+      "id": "mainactivity_mainactivity_checkcloudsync",
+      "label": ".checkCloudSync()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/MainActivity.kt",
+      "source_location": "L65"
+    },
+    {
+      "id": "mainactivity_mainactivity_attemptgooglesignin",
+      "label": ".attemptGoogleSignIn()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/MainActivity.kt",
+      "source_location": "L126"
+    },
+    {
+      "id": "mainactivity_mainactivity_startgooglesignin",
+      "label": ".startGoogleSignIn()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/MainActivity.kt",
+      "source_location": "L156"
+    },
+    {
+      "id": "mainactivity_mainactivity_oncreate",
+      "label": ".onCreate()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/MainActivity.kt",
+      "source_location": "L209"
+    },
+    {
+      "id": "mainactivity_mainactivity_isinternetavailable",
+      "label": ".isInternetAvailable()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/MainActivity.kt",
+      "source_location": "L220"
+    },
+    {
+      "id": "mainactivity_mainactivity_requestignorebatteryoptimizations",
+      "label": ".requestIgnoreBatteryOptimizations()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/MainActivity.kt",
+      "source_location": "L227"
+    },
+    {
+      "id": "mainactivity_mainactivity_fetchsmsandupload",
+      "label": ".fetchSmsAndUpload()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/MainActivity.kt",
+      "source_location": "L238"
+    },
+    {
+      "id": "mainactivity_mainactivity_signout",
+      "label": ".signOut()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/MainActivity.kt",
+      "source_location": "L255"
+    },
+    {
+      "id": "mainactivity_mainactivity_mainscreen",
+      "label": ".MainScreen()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/MainActivity.kt",
+      "source_location": "L269"
+    },
+    {
+      "id": "mainactivity_mainactivity_header",
+      "label": ".Header()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/MainActivity.kt",
+      "source_location": "L356"
+    },
+    {
+      "id": "android_app_src_main_java_com_pinbridge_otpmirror_pairingscanneractivity_kt",
+      "label": "PairingScannerActivity.kt",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/PairingScannerActivity.kt",
+      "source_location": "L1"
+    },
+    {
+      "id": "pairingscanneractivity_pairingscanneractivity",
+      "label": "PairingScannerActivity",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/PairingScannerActivity.kt",
+      "source_location": "L28"
+    },
+    {
+      "id": "pairingscanneractivity_pairingscanneractivity_oncreate",
+      "label": ".onCreate()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/PairingScannerActivity.kt",
+      "source_location": "L43"
+    },
+    {
+      "id": "pairingscanneractivity_pairingscanneractivity_startcamera",
+      "label": ".startCamera()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/PairingScannerActivity.kt",
+      "source_location": "L65"
+    },
+    {
+      "id": "pairingscanneractivity_pairingscanneractivity_processimageproxy",
+      "label": ".processImageProxy()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/PairingScannerActivity.kt",
+      "source_location": "L98"
+    },
+    {
+      "id": "pairingscanneractivity_pairingscanneractivity_handleqrresult",
+      "label": ".handleQrResult()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/PairingScannerActivity.kt",
+      "source_location": "L126"
+    },
+    {
+      "id": "pairingscanneractivity_pairingscanneractivity_ondestroy",
+      "label": ".onDestroy()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/PairingScannerActivity.kt",
+      "source_location": "L150"
+    },
+    {
+      "id": "pairingscanneractivity_pairingscanneractivity_showpermissiondenied",
+      "label": ".showPermissionDenied()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/PairingScannerActivity.kt",
+      "source_location": "L155"
+    },
+    {
+      "id": "android_app_src_main_java_com_pinbridge_otpmirror_pinbridgeapp_kt",
+      "label": "PinBridgeApp.kt",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/PinBridgeApp.kt",
+      "source_location": "L1"
+    },
+    {
+      "id": "pinbridgeapp_pinbridgeapp",
+      "label": "PinBridgeApp",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/PinBridgeApp.kt",
+      "source_location": "L12"
+    },
+    {
+      "id": "pinbridgeapp_pinbridgeapp_oncreate",
+      "label": ".onCreate()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/PinBridgeApp.kt",
+      "source_location": "L18"
+    },
+    {
+      "id": "android_app_src_main_java_com_pinbridge_otpmirror_smspermissionhelper_kt",
+      "label": "SmsPermissionHelper.kt",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/SmsPermissionHelper.kt",
+      "source_location": "L1"
+    },
+    {
+      "id": "smspermissionhelper_smspermissionhelper",
+      "label": "SmsPermissionHelper",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/SmsPermissionHelper.kt",
+      "source_location": "L13"
+    },
+    {
+      "id": "smspermissionhelper_smspermissionhelper_requestpermissions",
+      "label": ".requestPermissions()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/SmsPermissionHelper.kt",
+      "source_location": "L26"
+    },
+    {
+      "id": "android_app_src_main_java_com_pinbridge_otpmirror_deviceheartbeatservice_kt",
+      "label": "DeviceHeartbeatService.kt",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/DeviceHeartbeatService.kt",
+      "source_location": "L1"
+    },
+    {
+      "id": "deviceheartbeatservice_deviceheartbeatservice",
+      "label": "DeviceHeartbeatService",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/DeviceHeartbeatService.kt",
+      "source_location": "L35"
+    },
+    {
+      "id": "deviceheartbeatservice_deviceheartbeatservice_getreconnectdelay",
+      "label": ".getReconnectDelay()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/DeviceHeartbeatService.kt",
+      "source_location": "L65"
+    },
+    {
+      "id": "deviceheartbeatservice_deviceheartbeatservice_resetreconnectbackoff",
+      "label": ".resetReconnectBackoff()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/DeviceHeartbeatService.kt",
+      "source_location": "L77"
+    },
+    {
+      "id": "deviceheartbeatservice_deviceheartbeatservice_getbatteryinfo",
+      "label": ".getBatteryInfo()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/DeviceHeartbeatService.kt",
+      "source_location": "L81"
+    },
+    {
+      "id": "deviceheartbeatservice_deviceheartbeatservice_acquirewakelock",
+      "label": ".acquireWakeLock()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/DeviceHeartbeatService.kt",
+      "source_location": "L107"
+    },
+    {
+      "id": "deviceheartbeatservice_deviceheartbeatservice_releasewakelock",
+      "label": ".releaseWakeLock()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/DeviceHeartbeatService.kt",
+      "source_location": "L123"
+    },
+    {
+      "id": "deviceheartbeatservice_deviceheartbeatservice_connectsocket",
+      "label": ".connectSocket()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/DeviceHeartbeatService.kt",
+      "source_location": "L130"
+    },
+    {
+      "id": "deviceheartbeatservice_deviceheartbeatservice_schedulereconnect",
+      "label": ".scheduleReconnect()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/DeviceHeartbeatService.kt",
+      "source_location": "L201"
+    },
+    {
+      "id": "deviceheartbeatservice_deviceheartbeatservice_starttokenrefreshloop",
+      "label": ".startTokenRefreshLoop()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/DeviceHeartbeatService.kt",
+      "source_location": "L222"
+    },
+    {
+      "id": "deviceheartbeatservice_deviceheartbeatservice_stoptokenrefreshloop",
+      "label": ".stopTokenRefreshLoop()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/DeviceHeartbeatService.kt",
+      "source_location": "L241"
+    },
+    {
+      "id": "deviceheartbeatservice_deviceheartbeatservice_startheartbeatloop",
+      "label": ".startHeartbeatLoop()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/DeviceHeartbeatService.kt",
+      "source_location": "L249"
+    },
+    {
+      "id": "deviceheartbeatservice_deviceheartbeatservice_startfirestoreheartbeat",
+      "label": ".startFirestoreHeartbeat()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/DeviceHeartbeatService.kt",
+      "source_location": "L281"
+    },
+    {
+      "id": "deviceheartbeatservice_deviceheartbeatservice_stopfirestoreheartbeat",
+      "label": ".stopFirestoreHeartbeat()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/DeviceHeartbeatService.kt",
+      "source_location": "L310"
+    },
+    {
+      "id": "deviceheartbeatservice_deviceheartbeatservice_disconnectsocket",
+      "label": ".disconnectSocket()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/DeviceHeartbeatService.kt",
+      "source_location": "L315"
+    },
+    {
+      "id": "deviceheartbeatservice_onavailable",
+      "label": "onAvailable()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/DeviceHeartbeatService.kt",
+      "source_location": "L325"
+    },
+    {
+      "id": "deviceheartbeatservice_onlost",
+      "label": "onLost()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/DeviceHeartbeatService.kt",
+      "source_location": "L331"
+    },
+    {
+      "id": "deviceheartbeatservice_deviceheartbeatservice_oncreate",
+      "label": ".onCreate()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/DeviceHeartbeatService.kt",
+      "source_location": "L338"
+    },
+    {
+      "id": "deviceheartbeatservice_deviceheartbeatservice_onstartcommand",
+      "label": ".onStartCommand()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/DeviceHeartbeatService.kt",
+      "source_location": "L365"
+    },
+    {
+      "id": "deviceheartbeatservice_deviceheartbeatservice_ontaskremoved",
+      "label": ".onTaskRemoved()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/DeviceHeartbeatService.kt",
+      "source_location": "L403"
+    },
+    {
+      "id": "deviceheartbeatservice_deviceheartbeatservice_isinternetavailable",
+      "label": ".isInternetAvailable()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/DeviceHeartbeatService.kt",
+      "source_location": "L423"
+    },
+    {
+      "id": "deviceheartbeatservice_deviceheartbeatservice_ondestroy",
+      "label": ".onDestroy()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/DeviceHeartbeatService.kt",
+      "source_location": "L431"
+    },
+    {
+      "id": "deviceheartbeatservice_deviceheartbeatservice_onbind",
+      "label": ".onBind()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/DeviceHeartbeatService.kt",
+      "source_location": "L444"
+    },
+    {
+      "id": "deviceheartbeatservice_deviceheartbeatservice_createnotificationchannel",
+      "label": ".createNotificationChannel()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/DeviceHeartbeatService.kt",
+      "source_location": "L446"
+    },
+    {
+      "id": "deviceheartbeatservice_deviceheartbeatservice_createnotification",
+      "label": ".createNotification()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/DeviceHeartbeatService.kt",
+      "source_location": "L462"
+    },
+    {
+      "id": "deviceheartbeatservice_start",
+      "label": "start()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/DeviceHeartbeatService.kt",
+      "source_location": "L489"
+    },
+    {
+      "id": "deviceheartbeatservice_stop",
+      "label": "stop()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/DeviceHeartbeatService.kt",
+      "source_location": "L496"
+    },
+    {
+      "id": "android_app_src_main_java_com_pinbridge_otpmirror_cryptoutil_kt",
+      "label": "CryptoUtil.kt",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/CryptoUtil.kt",
+      "source_location": "L1"
+    },
+    {
+      "id": "cryptoutil_cryptoutil",
+      "label": "CryptoUtil",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/CryptoUtil.kt",
+      "source_location": "L9"
+    },
+    {
+      "id": "cryptoutil_encrypteddata",
+      "label": "EncryptedData",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/CryptoUtil.kt",
+      "source_location": "L14"
+    },
+    {
+      "id": "cryptoutil_cryptoutil_encrypt",
+      "label": ".encrypt()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/CryptoUtil.kt",
+      "source_location": "L16"
+    },
+    {
+      "id": "cryptoutil_cryptoutil_decrypt",
+      "label": ".decrypt()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/CryptoUtil.kt",
+      "source_location": "L33"
+    },
+    {
+      "id": "android_app_src_main_java_com_pinbridge_otpmirror_otpreceiver_kt",
+      "label": "OtpReceiver.kt",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/OtpReceiver.kt",
+      "source_location": "L1"
+    },
+    {
+      "id": "otpreceiver_otpreceiver",
+      "label": "OtpReceiver",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/OtpReceiver.kt",
+      "source_location": "L11"
+    },
+    {
+      "id": "otpreceiver_otpreceiver_onreceive",
+      "label": ".onReceive()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/OtpReceiver.kt",
+      "source_location": "L13"
+    },
+    {
+      "id": "android_app_src_main_java_com_pinbridge_otpmirror_otpuploader_kt",
+      "label": "OtpUploader.kt",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/OtpUploader.kt",
+      "source_location": "L1"
+    },
+    {
+      "id": "otpuploader_auth",
+      "label": "auth()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/OtpUploader.kt",
+      "source_location": "L19"
+    },
+    {
+      "id": "otpuploader_db",
+      "label": "db()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/OtpUploader.kt",
+      "source_location": "L20"
+    },
+    {
+      "id": "otpuploader_sharedprefs",
+      "label": "sharedPrefs()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/OtpUploader.kt",
+      "source_location": "L21"
+    },
+    {
+      "id": "otpuploader_otpuploader",
+      "label": "OtpUploader",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/OtpUploader.kt",
+      "source_location": "L24"
+    },
+    {
+      "id": "otpuploader_otpuploader_directupload",
+      "label": ".directUpload()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/OtpUploader.kt",
+      "source_location": "L27"
+    },
+    {
+      "id": "otpuploader_otpuploader_enqueue",
+      "label": ".enqueue()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/OtpUploader.kt",
+      "source_location": "L59"
+    },
+    {
+      "id": "android_app_src_main_java_com_pinbridge_otpmirror_smsretriever_kt",
+      "label": "SmsRetriever.kt",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/SmsRetriever.kt",
+      "source_location": "L1"
+    },
+    {
+      "id": "smsretriever_smsretriever",
+      "label": "SmsRetriever",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/SmsRetriever.kt",
+      "source_location": "L7"
+    },
+    {
+      "id": "smsretriever_smsretriever_getlatestotp",
+      "label": ".getLatestOtp()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/SmsRetriever.kt",
+      "source_location": "L10"
+    },
+    {
+      "id": "android_app_src_main_java_com_pinbridge_otpmirror_bootreceiver_kt",
+      "label": "BootReceiver.kt",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/BootReceiver.kt",
+      "source_location": "L1"
+    },
+    {
+      "id": "bootreceiver_bootreceiver",
+      "label": "BootReceiver",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/BootReceiver.kt",
+      "source_location": "L14"
+    },
+    {
+      "id": "bootreceiver_bootreceiver_onreceive",
+      "label": ".onReceive()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/BootReceiver.kt",
+      "source_location": "L18"
+    },
+    {
+      "id": "android_app_src_main_java_com_pinbridge_otpmirror_constants_kt",
+      "label": "Constants.kt",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/Constants.kt",
+      "source_location": "L1"
+    },
+    {
+      "id": "constants_constants",
+      "label": "Constants",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/Constants.kt",
+      "source_location": "L3"
+    },
+    {
+      "id": "android_app_src_main_java_com_pinbridge_otpmirror_otpextractor_kt",
+      "label": "OtpExtractor.kt",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/OtpExtractor.kt",
+      "source_location": "L1"
+    },
+    {
+      "id": "otpextractor_otpextractor",
+      "label": "OtpExtractor",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/OtpExtractor.kt",
+      "source_location": "L15"
+    },
+    {
+      "id": "otpextractor_otpextractor_extractotp",
+      "label": ".extractOtp()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/OtpExtractor.kt",
+      "source_location": "L27"
+    },
+    {
+      "id": "otpextractor_otpextractor_isexcludednumber",
+      "label": ".isExcludedNumber()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/OtpExtractor.kt",
+      "source_location": "L65"
+    },
+    {
+      "id": "android_app_src_main_java_com_pinbridge_otpmirror_ui_screens_connectedscreen_kt",
+      "label": "ConnectedScreen.kt",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/ui/screens/ConnectedScreen.kt",
+      "source_location": "L1"
+    },
+    {
+      "id": "connectedscreen_connectedview",
+      "label": "ConnectedView()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/ui/screens/ConnectedScreen.kt",
+      "source_location": "L25"
+    },
+    {
+      "id": "android_app_src_main_java_com_pinbridge_otpmirror_ui_screens_disconnectedscreen_kt",
+      "label": "DisconnectedScreen.kt",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/ui/screens/DisconnectedScreen.kt",
+      "source_location": "L1"
+    },
+    {
+      "id": "disconnectedscreen_disconnectedview",
+      "label": "DisconnectedView()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/ui/screens/DisconnectedScreen.kt",
+      "source_location": "L16"
+    },
+    {
+      "id": "android_app_src_main_java_com_pinbridge_otpmirror_ui_screens_signinscreen_kt",
+      "label": "SignInScreen.kt",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/ui/screens/SignInScreen.kt",
+      "source_location": "L1"
+    },
+    {
+      "id": "signinscreen_signinview",
+      "label": "SignInView()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/ui/screens/SignInScreen.kt",
+      "source_location": "L21"
+    },
+    {
+      "id": "android_app_src_main_java_com_pinbridge_otpmirror_ui_components_statusitem_kt",
+      "label": "StatusItem.kt",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/ui/components/StatusItem.kt",
+      "source_location": "L1"
+    },
+    {
+      "id": "statusitem_statusitem",
+      "label": "StatusItem()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/ui/components/StatusItem.kt",
+      "source_location": "L15"
+    },
+    {
+      "id": "android_app_src_main_java_com_pinbridge_otpmirror_ui_components_helpstepitem_kt",
+      "label": "HelpStepItem.kt",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/ui/components/HelpStepItem.kt",
+      "source_location": "L1"
+    },
+    {
+      "id": "helpstepitem_helpstepitem",
+      "label": "HelpStepItem()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/ui/components/HelpStepItem.kt",
+      "source_location": "L16"
+    },
+    {
+      "id": "android_app_src_main_java_com_pinbridge_otpmirror_ui_theme_theme_kt",
+      "label": "Theme.kt",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/ui/theme/Theme.kt",
+      "source_location": "L1"
+    },
+    {
+      "id": "theme_pinbridgetheme",
+      "label": "PinBridgeTheme()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/ui/theme/Theme.kt",
+      "source_location": "L8"
+    },
+    {
+      "id": "android_app_src_main_java_com_pinbridge_otpmirror_di_appmodule_kt",
+      "label": "AppModule.kt",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/di/AppModule.kt",
+      "source_location": "L1"
+    },
+    {
+      "id": "appmodule_appmodule",
+      "label": "AppModule",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/di/AppModule.kt",
+      "source_location": "L17"
+    },
+    {
+      "id": "appmodule_appmodule_providefirebaseauth",
+      "label": ".provideFirebaseAuth()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/di/AppModule.kt",
+      "source_location": "L21"
+    },
+    {
+      "id": "appmodule_appmodule_providefirestore",
+      "label": ".provideFirestore()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/di/AppModule.kt",
+      "source_location": "L25"
+    },
+    {
+      "id": "appmodule_appmodule_provideencryptedsharedpreferences",
+      "label": ".provideEncryptedSharedPreferences()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/di/AppModule.kt",
+      "source_location": "L29"
+    },
+    {
+      "id": "appmodule_appmodule_providepairingrepository",
+      "label": ".providePairingRepository()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/di/AppModule.kt",
+      "source_location": "L45"
+    },
+    {
+      "id": "android_app_src_main_java_com_pinbridge_otpmirror_data_pairingrepository_kt",
+      "label": "PairingRepository.kt",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/data/PairingRepository.kt",
+      "source_location": "L1"
+    },
+    {
+      "id": "pairingrepository_pairingrepository",
+      "label": "PairingRepository",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/data/PairingRepository.kt",
+      "source_location": "L22"
+    },
+    {
+      "id": "pairingrepository_pairingrepository_pairwithqr",
+      "label": ".pairWithQr()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/data/PairingRepository.kt",
+      "source_location": "L24"
+    },
+    {
+      "id": "pairingrepository_pairingrepository_pairwithcode",
+      "label": ".pairWithCode()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/data/PairingRepository.kt",
+      "source_location": "L25"
+    },
+    {
+      "id": "pairingrepository_pairingrepository_unpair",
+      "label": ".unpair()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/data/PairingRepository.kt",
+      "source_location": "L26"
+    },
+    {
+      "id": "pairingrepository_pairingrepository_ispaired",
+      "label": ".isPaired()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/data/PairingRepository.kt",
+      "source_location": "L27"
+    },
+    {
+      "id": "pairingrepository_pairingrepository_getdeviceid",
+      "label": ".getDeviceId()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/data/PairingRepository.kt",
+      "source_location": "L28"
+    },
+    {
+      "id": "pairingrepository_pairingrepository_getsecret",
+      "label": ".getSecret()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/data/PairingRepository.kt",
+      "source_location": "L29"
+    },
+    {
+      "id": "pairingrepository_pairingrepositoryimpl",
+      "label": "PairingRepositoryImpl",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/data/PairingRepository.kt",
+      "source_location": "L33"
+    },
+    {
+      "id": "pairingrepository_pairingrepositoryimpl_startheartbeatifpaired",
+      "label": ".startHeartbeatIfPaired()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/data/PairingRepository.kt",
+      "source_location": "L56"
+    },
+    {
+      "id": "pairingrepository_pairingrepositoryimpl_startstatuslistener",
+      "label": ".startStatusListener()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/data/PairingRepository.kt",
+      "source_location": "L64"
+    },
+    {
+      "id": "pairingrepository_pairingrepositoryimpl_clearlocalcredentials",
+      "label": ".clearLocalCredentials()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/data/PairingRepository.kt",
+      "source_location": "L102"
+    },
+    {
+      "id": "pairingrepository_pairingrepositoryimpl_pairwithqr",
+      "label": ".pairWithQr()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/data/PairingRepository.kt",
+      "source_location": "L117"
+    },
+    {
+      "id": "pairingrepository_pairingrepositoryimpl_pairwithcode",
+      "label": ".pairWithCode()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/data/PairingRepository.kt",
+      "source_location": "L136"
+    },
+    {
+      "id": "pairingrepository_pairingrepositoryimpl_validategoogleaccountmatch",
+      "label": ".validateGoogleAccountMatch()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/data/PairingRepository.kt",
+      "source_location": "L173"
+    },
+    {
+      "id": "pairingrepository_pairingrepositoryimpl_completepairing",
+      "label": ".completePairing()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/data/PairingRepository.kt",
+      "source_location": "L186"
+    },
+    {
+      "id": "pairingrepository_pairingrepositoryimpl_unpair",
+      "label": ".unpair()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/data/PairingRepository.kt",
+      "source_location": "L213"
+    },
+    {
+      "id": "pairingrepository_pairingrepositoryimpl_ispaired",
+      "label": ".isPaired()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/data/PairingRepository.kt",
+      "source_location": "L246"
+    },
+    {
+      "id": "pairingrepository_pairingrepositoryimpl_getdeviceid",
+      "label": ".getDeviceId()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/data/PairingRepository.kt",
+      "source_location": "L250"
+    },
+    {
+      "id": "pairingrepository_pairingrepositoryimpl_getsecret",
+      "label": ".getSecret()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/data/PairingRepository.kt",
+      "source_location": "L254"
+    },
+    {
+      "id": "pairingrepository_pairingrepositoryimpl_savecredentials",
+      "label": ".saveCredentials()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/data/PairingRepository.kt",
+      "source_location": "L258"
+    },
+    {
+      "id": "pairingrepository_pairingrepositoryimpl_syncpairingtocloud",
+      "label": ".syncPairingToCloud()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/data/PairingRepository.kt",
+      "source_location": "L271"
+    },
+    {
+      "id": "pairingrepository_pairingrepositoryimpl_deletecloudsyncdoc",
+      "label": ".deleteCloudSyncDoc()",
+      "file_type": "code",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/data/PairingRepository.kt",
+      "source_location": "L295"
+    },
+    {
+      "id": "functions_lib_index_js",
+      "label": "index.js",
+      "file_type": "code",
+      "source_file": "functions/lib/index.js",
+      "source_location": "L1"
+    },
+    {
+      "id": "functions_lib_src_index_js",
+      "label": "index.js",
+      "file_type": "code",
+      "source_file": "functions/lib/src/index.js",
+      "source_location": "L1"
+    },
+    {
+      "id": "functions_src_index_ts",
+      "label": "index.ts",
+      "file_type": "code",
+      "source_file": "functions/src/index.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "e2e_playwright_config_js",
+      "label": "playwright.config.js",
+      "file_type": "code",
+      "source_file": "e2e/playwright.config.js",
+      "source_location": "L1"
+    },
+    {
+      "id": "e2e_tests_dashboard_spec_js",
+      "label": "dashboard.spec.js",
+      "file_type": "code",
+      "source_file": "e2e/tests/dashboard.spec.js",
+      "source_location": "L1"
+    },
+    {
+      "id": "e2e_tests_extension_spec_js",
+      "label": "extension.spec.js",
+      "file_type": "code",
+      "source_file": "e2e/tests/extension.spec.js",
+      "source_location": "L1"
+    },
+    {
+      "id": "firebase_firestore",
+      "label": "Firebase Firestore",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "presence_server",
+      "label": "Presence Server",
+      "file_type": "document",
+      "source_file": "server/index.js",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "aes_256_gcm_encryption",
+      "label": "AES-256-GCM Encryption",
+      "file_type": "document",
+      "source_file": "security_audit.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "ecdh_key_agreement",
+      "label": "ECDH Key Agreement",
+      "file_type": "document",
+      "source_file": "docs/PAIRING_FLOW.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "firebase_crashlytics_monitoring",
+      "label": "Firebase Crashlytics Monitoring",
+      "file_type": "document",
+      "source_file": "SCORECARD.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "otp_mirroring_flow",
+      "label": "OTP Mirroring Flow",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "extension_src_popup_js",
+      "target": "popup_generatecaptcha",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/popup.js",
+      "source_location": "L55",
+      "weight": 1.0
+    },
+    {
+      "source": "extension_src_popup_js",
+      "target": "popup_showcaptchamodal",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/popup.js",
+      "source_location": "L59",
+      "weight": 1.0
+    },
+    {
+      "source": "extension_src_popup_js",
+      "target": "popup_hidecaptchamodal",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/popup.js",
+      "source_location": "L69",
+      "weight": 1.0
+    },
+    {
+      "source": "extension_src_popup_js",
+      "target": "popup_updatebrowserstatus",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/popup.js",
+      "source_location": "L115",
+      "weight": 1.0
+    },
+    {
+      "source": "extension_src_popup_js",
+      "target": "popup_startcontinuoussync",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/popup.js",
+      "source_location": "L134",
+      "weight": 1.0
+    },
+    {
+      "source": "extension_src_popup_js",
+      "target": "popup_stopcontinuoussync",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/popup.js",
+      "source_location": "L144",
+      "weight": 1.0
+    },
+    {
+      "source": "extension_src_popup_js",
+      "target": "popup_showpaired",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/popup.js",
+      "source_location": "L202",
+      "weight": 1.0
+    },
+    {
+      "source": "extension_src_popup_js",
+      "target": "popup_showunpaired",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/popup.js",
+      "source_location": "L212",
+      "weight": 1.0
+    },
+    {
+      "source": "extension_src_popup_js",
+      "target": "popup_showerror",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/popup.js",
+      "source_location": "L244",
+      "weight": 1.0
+    },
+    {
+      "source": "extension_src_popup_js",
+      "target": "popup_hideerror",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/popup.js",
+      "source_location": "L249",
+      "weight": 1.0
+    },
+    {
+      "source": "extension_src_popup_js",
+      "target": "popup_showconnectingstatus",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/popup.js",
+      "source_location": "L254",
+      "weight": 1.0
+    },
+    {
+      "source": "extension_src_popup_js",
+      "target": "popup_updateconnectionstatus",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/popup.js",
+      "source_location": "L260",
+      "weight": 1.0
+    },
+    {
+      "source": "extension_src_popup_js",
+      "target": "popup_updatebatterydisplay",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/popup.js",
+      "source_location": "L301",
+      "weight": 1.0
+    },
+    {
+      "source": "extension_src_popup_js",
+      "target": "popup_updateotpdisplay",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/popup.js",
+      "source_location": "L321",
+      "weight": 1.0
+    },
+    {
+      "source": "extension_src_popup_js",
+      "target": "popup_startauthpolling",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/popup.js",
+      "source_location": "L340",
+      "weight": 1.0
+    },
+    {
+      "source": "extension_src_popup_js",
+      "target": "popup_onfetchsuccess",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/popup.js",
+      "source_location": "L437",
+      "weight": 1.0
+    },
+    {
+      "source": "popup_showcaptchamodal",
+      "target": "popup_generatecaptcha",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/popup.js",
+      "source_location": "L60",
+      "weight": 1.0
+    },
+    {
+      "source": "popup_updateconnectionstatus",
+      "target": "popup_showconnectingstatus",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/popup.js",
+      "source_location": "L276",
+      "weight": 1.0
+    },
+    {
+      "source": "popup_updateconnectionstatus",
+      "target": "popup_updatebatterydisplay",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/popup.js",
+      "source_location": "L288",
+      "weight": 1.0
+    },
+    {
+      "source": "extension_src_background_js",
+      "target": "app",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/background.js",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "extension_src_background_js",
+      "target": "auth",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/background.js",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "extension_src_background_js",
+      "target": "firestore",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/background.js",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "extension_src_background_js",
+      "target": "crypto",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/background.js",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "extension_src_background_js",
+      "target": "socket_io_client",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/background.js",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "extension_src_background_js",
+      "target": "config",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/background.js",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "extension_src_background_js",
+      "target": "background_waitforauth",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/background.js",
+      "source_location": "L39",
+      "weight": 1.0
+    },
+    {
+      "source": "extension_src_background_js",
+      "target": "background_safesendmessage",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/background.js",
+      "source_location": "L51",
+      "weight": 1.0
+    },
+    {
+      "source": "extension_src_background_js",
+      "target": "background_startkeepalive",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/background.js",
+      "source_location": "L122",
+      "weight": 1.0
+    },
+    {
+      "source": "extension_src_background_js",
+      "target": "background_stopkeepalive",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/background.js",
+      "source_location": "L127",
+      "weight": 1.0
+    },
+    {
+      "source": "extension_src_background_js",
+      "target": "background_performpairing",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/background.js",
+      "source_location": "L134",
+      "weight": 1.0
+    },
+    {
+      "source": "extension_src_background_js",
+      "target": "background_hydrateandpush",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/background.js",
+      "source_location": "L261",
+      "weight": 1.0
+    },
+    {
+      "source": "extension_src_background_js",
+      "target": "background_handlegooglesignin",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/background.js",
+      "source_location": "L313",
+      "weight": 1.0
+    },
+    {
+      "source": "extension_src_background_js",
+      "target": "background_handlewebloginsuccess",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/background.js",
+      "source_location": "L363",
+      "weight": 1.0
+    },
+    {
+      "source": "extension_src_background_js",
+      "target": "background_handlewebpairingsuccess",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/background.js",
+      "source_location": "L398",
+      "weight": 1.0
+    },
+    {
+      "source": "extension_src_background_js",
+      "target": "background_handlemanualfetch",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/background.js",
+      "source_location": "L409",
+      "weight": 1.0
+    },
+    {
+      "source": "extension_src_background_js",
+      "target": "background_performsignoutonly",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/background.js",
+      "source_location": "L459",
+      "weight": 1.0
+    },
+    {
+      "source": "extension_src_background_js",
+      "target": "background_cleanupfirestorepairing",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/background.js",
+      "source_location": "L472",
+      "weight": 1.0
+    },
+    {
+      "source": "extension_src_background_js",
+      "target": "background_performunpaironly",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/background.js",
+      "source_location": "L499",
+      "weight": 1.0
+    },
+    {
+      "source": "extension_src_background_js",
+      "target": "background_performsignout",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/background.js",
+      "source_location": "L517",
+      "weight": 1.0
+    },
+    {
+      "source": "extension_src_background_js",
+      "target": "background_stoppresencelisteners",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/background.js",
+      "source_location": "L541",
+      "weight": 1.0
+    },
+    {
+      "source": "extension_src_background_js",
+      "target": "background_stopotplistener",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/background.js",
+      "source_location": "L551",
+      "weight": 1.0
+    },
+    {
+      "source": "extension_src_background_js",
+      "target": "background_stopalllisteners",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/background.js",
+      "source_location": "L555",
+      "weight": 1.0
+    },
+    {
+      "source": "extension_src_background_js",
+      "target": "background_startpresencelisteners",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/background.js",
+      "source_location": "L565",
+      "weight": 1.0
+    },
+    {
+      "source": "extension_src_background_js",
+      "target": "background_startotplistener",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/background.js",
+      "source_location": "L698",
+      "weight": 1.0
+    },
+    {
+      "source": "extension_src_background_js",
+      "target": "background_startalllisteners",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/background.js",
+      "source_location": "L726",
+      "weight": 1.0
+    },
+    {
+      "source": "extension_src_background_js",
+      "target": "background_processnewotp",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/background.js",
+      "source_location": "L731",
+      "weight": 1.0
+    },
+    {
+      "source": "background_performpairing",
+      "target": "background_waitforauth",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/background.js",
+      "source_location": "L138",
+      "weight": 1.0
+    },
+    {
+      "source": "background_performpairing",
+      "target": "background_startalllisteners",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/background.js",
+      "source_location": "L153",
+      "weight": 1.0
+    },
+    {
+      "source": "background_performpairing",
+      "target": "background_safesendmessage",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/background.js",
+      "source_location": "L157",
+      "weight": 1.0
+    },
+    {
+      "source": "background_hydrateandpush",
+      "target": "background_safesendmessage",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/background.js",
+      "source_location": "L287",
+      "weight": 1.0
+    },
+    {
+      "source": "background_hydrateandpush",
+      "target": "background_startpresencelisteners",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/background.js",
+      "source_location": "L299",
+      "weight": 1.0
+    },
+    {
+      "source": "background_handlewebloginsuccess",
+      "target": "background_startalllisteners",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/background.js",
+      "source_location": "L383",
+      "weight": 1.0
+    },
+    {
+      "source": "background_handlewebloginsuccess",
+      "target": "background_safesendmessage",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/background.js",
+      "source_location": "L384",
+      "weight": 1.0
+    },
+    {
+      "source": "background_handlewebpairingsuccess",
+      "target": "background_startalllisteners",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/background.js",
+      "source_location": "L405",
+      "weight": 1.0
+    },
+    {
+      "source": "background_handlewebpairingsuccess",
+      "target": "background_safesendmessage",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/background.js",
+      "source_location": "L406",
+      "weight": 1.0
+    },
+    {
+      "source": "background_handlemanualfetch",
+      "target": "background_waitforauth",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/background.js",
+      "source_location": "L418",
+      "weight": 1.0
+    },
+    {
+      "source": "background_performunpaironly",
+      "target": "background_stopalllisteners",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/background.js",
+      "source_location": "L504",
+      "weight": 1.0
+    },
+    {
+      "source": "background_performunpaironly",
+      "target": "background_safesendmessage",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/background.js",
+      "source_location": "L508",
+      "weight": 1.0
+    },
+    {
+      "source": "background_performunpaironly",
+      "target": "background_cleanupfirestorepairing",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/background.js",
+      "source_location": "L512",
+      "weight": 1.0
+    },
+    {
+      "source": "background_performsignout",
+      "target": "background_stopalllisteners",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/background.js",
+      "source_location": "L524",
+      "weight": 1.0
+    },
+    {
+      "source": "background_performsignout",
+      "target": "background_safesendmessage",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/background.js",
+      "source_location": "L532",
+      "weight": 1.0
+    },
+    {
+      "source": "background_performsignout",
+      "target": "background_cleanupfirestorepairing",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/background.js",
+      "source_location": "L536",
+      "weight": 1.0
+    },
+    {
+      "source": "background_stoppresencelisteners",
+      "target": "background_stopkeepalive",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/background.js",
+      "source_location": "L548",
+      "weight": 1.0
+    },
+    {
+      "source": "background_stopalllisteners",
+      "target": "background_stoppresencelisteners",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/background.js",
+      "source_location": "L556",
+      "weight": 1.0
+    },
+    {
+      "source": "background_stopalllisteners",
+      "target": "background_stopotplistener",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/background.js",
+      "source_location": "L557",
+      "weight": 1.0
+    },
+    {
+      "source": "background_startpresencelisteners",
+      "target": "background_stoppresencelisteners",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/background.js",
+      "source_location": "L579",
+      "weight": 1.0
+    },
+    {
+      "source": "background_startpresencelisteners",
+      "target": "background_startkeepalive",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/background.js",
+      "source_location": "L599",
+      "weight": 1.0
+    },
+    {
+      "source": "background_startotplistener",
+      "target": "background_stopotplistener",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/background.js",
+      "source_location": "L702",
+      "weight": 1.0
+    },
+    {
+      "source": "background_startalllisteners",
+      "target": "background_startpresencelisteners",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/background.js",
+      "source_location": "L727",
+      "weight": 1.0
+    },
+    {
+      "source": "background_startalllisteners",
+      "target": "background_startotplistener",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/background.js",
+      "source_location": "L728",
+      "weight": 1.0
+    },
+    {
+      "source": "background_processnewotp",
+      "target": "background_safesendmessage",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/background.js",
+      "source_location": "L760",
+      "weight": 1.0
+    },
+    {
+      "source": "extension_src_config_js",
+      "target": "config_isdashboardpage",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/config.js",
+      "source_location": "L31",
+      "weight": 1.0
+    },
+    {
+      "source": "extension_src_pairing_js",
+      "target": "app",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/pairing.js",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "extension_src_pairing_js",
+      "target": "auth",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/pairing.js",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "extension_src_pairing_js",
+      "target": "firestore",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/pairing.js",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "extension_src_pairing_js",
+      "target": "qrcode",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/pairing.js",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "extension_src_pairing_js",
+      "target": "config",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/pairing.js",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "extension_src_pairing_js",
+      "target": "pairing_statusarea",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/pairing.js",
+      "source_location": "L23",
+      "weight": 1.0
+    },
+    {
+      "source": "extension_src_pairing_js",
+      "target": "pairing_statustext",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/pairing.js",
+      "source_location": "L24",
+      "weight": 1.0
+    },
+    {
+      "source": "extension_src_pairing_js",
+      "target": "pairing_countdownel",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/pairing.js",
+      "source_location": "L25",
+      "weight": 1.0
+    },
+    {
+      "source": "extension_src_pairing_js",
+      "target": "pairing_setstatus",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/pairing.js",
+      "source_location": "L27",
+      "weight": 1.0
+    },
+    {
+      "source": "extension_src_pairing_js",
+      "target": "pairing_startcountdown",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/pairing.js",
+      "source_location": "L61",
+      "weight": 1.0
+    },
+    {
+      "source": "pairing_setstatus",
+      "target": "pairing_statusarea",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/pairing.js",
+      "source_location": "L28",
+      "weight": 1.0
+    },
+    {
+      "source": "pairing_setstatus",
+      "target": "pairing_statustext",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/pairing.js",
+      "source_location": "L29",
+      "weight": 1.0
+    },
+    {
+      "source": "extension_src_content_js",
+      "target": "content_autofill",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/content.js",
+      "source_location": "L90",
+      "weight": 1.0
+    },
+    {
+      "source": "extension_src_crypto_js",
+      "target": "crypto_decryptotp",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "extension/src/crypto.js",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "web_vite_config_js",
+      "target": "vite",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "web/vite.config.js",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "web_main_js",
+      "target": "style_css",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "web/main.js",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "web_main_js",
+      "target": "app",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "web/main.js",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "web_main_js",
+      "target": "firestore",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "web/main.js",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "web_main_js",
+      "target": "auth",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "web/main.js",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "web_main_js",
+      "target": "app_check",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "web/main.js",
+      "source_location": "L21",
+      "weight": 1.0
+    },
+    {
+      "source": "web_main_js",
+      "target": "socket_io_client",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "web/main.js",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "web_main_js",
+      "target": "main_isdeviceonline",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "web/main.js",
+      "source_location": "L68",
+      "weight": 1.0
+    },
+    {
+      "source": "web_main_js",
+      "target": "main_escapehtml",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "web/main.js",
+      "source_location": "L76",
+      "weight": 1.0
+    },
+    {
+      "source": "web_main_js",
+      "target": "main_checkurlparams",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "web/main.js",
+      "source_location": "L92",
+      "weight": 1.0
+    },
+    {
+      "source": "web_main_js",
+      "target": "main_decryptotp",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "web/main.js",
+      "source_location": "L112",
+      "weight": 1.0
+    },
+    {
+      "source": "web_main_js",
+      "target": "main_el",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "web/main.js",
+      "source_location": "L123",
+      "weight": 1.0
+    },
+    {
+      "source": "web_main_js",
+      "target": "main_updateui",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "web/main.js",
+      "source_location": "L149",
+      "weight": 1.0
+    },
+    {
+      "source": "web_main_js",
+      "target": "main_updateconnectionindicator",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "web/main.js",
+      "source_location": "L174",
+      "weight": 1.0
+    },
+    {
+      "source": "web_main_js",
+      "target": "main_rendersignin",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "web/main.js",
+      "source_location": "L258",
+      "weight": 1.0
+    },
+    {
+      "source": "web_main_js",
+      "target": "main_renderunpaired",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "web/main.js",
+      "source_location": "L304",
+      "weight": 1.0
+    },
+    {
+      "source": "web_main_js",
+      "target": "main_renderpaired",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "web/main.js",
+      "source_location": "L355",
+      "weight": 1.0
+    },
+    {
+      "source": "web_main_js",
+      "target": "main_loginwithgoogle",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "web/main.js",
+      "source_location": "L589",
+      "weight": 1.0
+    },
+    {
+      "source": "web_main_js",
+      "target": "main_listentocloudsync",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "web/main.js",
+      "source_location": "L617",
+      "weight": 1.0
+    },
+    {
+      "source": "web_main_js",
+      "target": "main_handlesignout",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "web/main.js",
+      "source_location": "L685",
+      "weight": 1.0
+    },
+    {
+      "source": "web_main_js",
+      "target": "main_startlisteners",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "web/main.js",
+      "source_location": "L740",
+      "weight": 1.0
+    },
+    {
+      "source": "web_main_js",
+      "target": "main_handleforcedunpair",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "web/main.js",
+      "source_location": "L840",
+      "weight": 1.0
+    },
+    {
+      "source": "web_main_js",
+      "target": "main_stoplisteners",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "web/main.js",
+      "source_location": "L851",
+      "weight": 1.0
+    },
+    {
+      "source": "main_updateui",
+      "target": "main_rendersignin",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "web/main.js",
+      "source_location": "L151",
+      "weight": 1.0
+    },
+    {
+      "source": "main_updateui",
+      "target": "main_updateconnectionindicator",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "web/main.js",
+      "source_location": "L156",
+      "weight": 1.0
+    },
+    {
+      "source": "main_updateui",
+      "target": "main_renderpaired",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "web/main.js",
+      "source_location": "L166",
+      "weight": 1.0
+    },
+    {
+      "source": "main_updateui",
+      "target": "main_renderunpaired",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "web/main.js",
+      "source_location": "L169",
+      "weight": 1.0
+    },
+    {
+      "source": "main_updateconnectionindicator",
+      "target": "main_isdeviceonline",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "web/main.js",
+      "source_location": "L186",
+      "weight": 1.0
+    },
+    {
+      "source": "main_rendersignin",
+      "target": "main_el",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "web/main.js",
+      "source_location": "L261",
+      "weight": 1.0
+    },
+    {
+      "source": "main_renderunpaired",
+      "target": "main_escapehtml",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "web/main.js",
+      "source_location": "L315",
+      "weight": 1.0
+    },
+    {
+      "source": "main_renderpaired",
+      "target": "main_isdeviceonline",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "web/main.js",
+      "source_location": "L356",
+      "weight": 1.0
+    },
+    {
+      "source": "main_renderpaired",
+      "target": "main_escapehtml",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "web/main.js",
+      "source_location": "L402",
+      "weight": 1.0
+    },
+    {
+      "source": "main_loginwithgoogle",
+      "target": "main_updateui",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "web/main.js",
+      "source_location": "L592",
+      "weight": 1.0
+    },
+    {
+      "source": "main_handlesignout",
+      "target": "main_stoplisteners",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "web/main.js",
+      "source_location": "L686",
+      "weight": 1.0
+    },
+    {
+      "source": "main_handlesignout",
+      "target": "main_updateui",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "web/main.js",
+      "source_location": "L699",
+      "weight": 1.0
+    },
+    {
+      "source": "main_startlisteners",
+      "target": "main_stoplisteners",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "web/main.js",
+      "source_location": "L742",
+      "weight": 1.0
+    },
+    {
+      "source": "main_startlisteners",
+      "target": "main_updateui",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "web/main.js",
+      "source_location": "L747",
+      "weight": 1.0
+    },
+    {
+      "source": "main_handleforcedunpair",
+      "target": "main_stoplisteners",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "web/main.js",
+      "source_location": "L841",
+      "weight": 1.0
+    },
+    {
+      "source": "main_handleforcedunpair",
+      "target": "main_updateui",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "web/main.js",
+      "source_location": "L848",
+      "weight": 1.0
+    },
+    {
+      "source": "server_index_js",
+      "target": "index_log",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/index.js",
+      "source_location": "L58",
+      "weight": 1.0
+    },
+    {
+      "source": "server_index_test_js",
+      "target": "index_test_validateorigin",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/index.test.js",
+      "source_location": "L72",
+      "weight": 1.0
+    },
+    {
+      "source": "android_app_src_androidtest_java_com_pinbridge_otpmirror_otpreceivertest_kt",
+      "target": "otpreceivertest_otpreceivertest",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/androidTest/java/com/pinbridge/otpmirror/OtpReceiverTest.kt",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "otpreceivertest_otpreceivertest",
+      "target": "otpreceivertest_otpreceivertest_testcurrencyexclusionandotpextraction",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/androidTest/java/com/pinbridge/otpmirror/OtpReceiverTest.kt",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "android_app_src_androidtest_java_com_pinbridge_otpmirror_mainactivitytest_kt",
+      "target": "mainactivitytest_mainactivitytest",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/androidTest/java/com/pinbridge/otpmirror/MainActivityTest.kt",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "mainactivitytest_mainactivitytest",
+      "target": "mainactivitytest_mainactivitytest_clickingshowpairingqr_openspairingactivity_andshowsqr",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/androidTest/java/com/pinbridge/otpmirror/MainActivityTest.kt",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "android_app_src_androidtest_java_com_pinbridge_otpmirror_pairingactivitytest_kt",
+      "target": "pairingactivitytest_pairingactivitytest",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/androidTest/java/com/pinbridge/otpmirror/PairingActivityTest.kt",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "pairingactivitytest_pairingactivitytest",
+      "target": "pairingactivitytest_pairingactivitytest_qr_code_contains_valid_deviceid_and_secret",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/androidTest/java/com/pinbridge/otpmirror/PairingActivityTest.kt",
+      "source_location": "L21",
+      "weight": 1.0
+    },
+    {
+      "source": "pairingactivitytest_pairingactivitytest",
+      "target": "pairingactivitytest_pairingactivitytest_decodeqr",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/androidTest/java/com/pinbridge/otpmirror/PairingActivityTest.kt",
+      "source_location": "L56",
+      "weight": 1.0
+    },
+    {
+      "source": "android_app_src_androidtest_java_com_pinbridge_otpmirror_uploadotpworkertest_kt",
+      "target": "uploadotpworkertest_uploadotpworkertest",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/androidTest/java/com/pinbridge/otpmirror/UploadOtpWorkerTest.kt",
+      "source_location": "L21",
+      "weight": 1.0
+    },
+    {
+      "source": "uploadotpworkertest_uploadotpworkertest",
+      "target": "uploadotpworkertest_uploadotpworkertest_setup",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/androidTest/java/com/pinbridge/otpmirror/UploadOtpWorkerTest.kt",
+      "source_location": "L31",
+      "weight": 1.0
+    },
+    {
+      "source": "uploadotpworkertest_uploadotpworkertest",
+      "target": "uploadotpworkertest_uploadotpworkertest_teardown",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/androidTest/java/com/pinbridge/otpmirror/UploadOtpWorkerTest.kt",
+      "source_location": "L80",
+      "weight": 1.0
+    },
+    {
+      "source": "uploadotpworkertest_uploadotpworkertest",
+      "target": "uploadotpworkertest_uploadotpworkertest_worker_uploads_encrypted_otp_and_can_be_decrypted_correctly",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/androidTest/java/com/pinbridge/otpmirror/UploadOtpWorkerTest.kt",
+      "source_location": "L88",
+      "weight": 1.0
+    },
+    {
+      "source": "android_app_src_androidtest_java_com_pinbridge_otpmirror_e2etest_kt",
+      "target": "e2etest_e2etest",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/androidTest/java/com/pinbridge/otpmirror/E2ETest.kt",
+      "source_location": "L34",
+      "weight": 1.0
+    },
+    {
+      "source": "e2etest_e2etest",
+      "target": "e2etest_e2etest_setup",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/androidTest/java/com/pinbridge/otpmirror/E2ETest.kt",
+      "source_location": "L41",
+      "weight": 1.0
+    },
+    {
+      "source": "e2etest_e2etest",
+      "target": "e2etest_e2etest_teardown",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/androidTest/java/com/pinbridge/otpmirror/E2ETest.kt",
+      "source_location": "L59",
+      "weight": 1.0
+    },
+    {
+      "source": "e2etest_e2etest",
+      "target": "e2etest_e2etest_full_flow_from_pairing_qr_to_otp_appears_in_firestore",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/androidTest/java/com/pinbridge/otpmirror/E2ETest.kt",
+      "source_location": "L64",
+      "weight": 1.0
+    },
+    {
+      "source": "e2etest_e2etest",
+      "target": "e2etest_e2etest_decodeqr",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/androidTest/java/com/pinbridge/otpmirror/E2ETest.kt",
+      "source_location": "L121",
+      "weight": 1.0
+    },
+    {
+      "source": "android_app_src_test_java_com_pinbridge_otpmirror_constantstest_kt",
+      "target": "constantstest_constantstest",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/ConstantsTest.kt",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "constantstest_constantstest",
+      "target": "constantstest_constantstest_pref_names_are_non_empty",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/ConstantsTest.kt",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "android_app_src_test_java_com_pinbridge_otpmirror_otpregextest_kt",
+      "target": "otpregextest_otpregextest",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/OtpRegexTest.kt",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "otpregextest_otpregextest",
+      "target": "otpregextest_otpregextest_extracts_6_digit_otp_from_standard_bank_sms",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/OtpRegexTest.kt",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "otpregextest_otpregextest",
+      "target": "otpregextest_otpregextest_extracts_4_digit_code_from_short_sms",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/OtpRegexTest.kt",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "otpregextest_otpregextest",
+      "target": "otpregextest_otpregextest_extracts_8_digit_code",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/OtpRegexTest.kt",
+      "source_location": "L26",
+      "weight": 1.0
+    },
+    {
+      "source": "otpregextest_otpregextest",
+      "target": "otpregextest_otpregextest_extracts_otp_from_google_verification_sms",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/OtpRegexTest.kt",
+      "source_location": "L32",
+      "weight": 1.0
+    },
+    {
+      "source": "otpregextest_otpregextest",
+      "target": "otpregextest_otpregextest_extracts_otp_when_multiple_numbers_present_with_keyword",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/OtpRegexTest.kt",
+      "source_location": "L38",
+      "weight": 1.0
+    },
+    {
+      "source": "otpregextest_otpregextest",
+      "target": "otpregextest_otpregextest_extracts_5_digit_code",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/OtpRegexTest.kt",
+      "source_location": "L44",
+      "weight": 1.0
+    },
+    {
+      "source": "otpregextest_otpregextest",
+      "target": "otpregextest_otpregextest_extracts_7_digit_code",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/OtpRegexTest.kt",
+      "source_location": "L50",
+      "weight": 1.0
+    },
+    {
+      "source": "otpregextest_otpregextest",
+      "target": "otpregextest_otpregextest_prefers_6_digit_code_over_4_digit_when_no_keywords",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/OtpRegexTest.kt",
+      "source_location": "L56",
+      "weight": 1.0
+    },
+    {
+      "source": "otpregextest_otpregextest",
+      "target": "otpregextest_otpregextest_prefers_otp_over_earlier_number_when_keywords_are_present",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/OtpRegexTest.kt",
+      "source_location": "L65",
+      "weight": 1.0
+    },
+    {
+      "source": "otpregextest_otpregextest",
+      "target": "otpregextest_otpregextest_extracts_otp_when_message_has_multiple_keywords",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/OtpRegexTest.kt",
+      "source_location": "L73",
+      "weight": 1.0
+    },
+    {
+      "source": "otpregextest_otpregextest",
+      "target": "otpregextest_otpregextest_excludes_number_preceded_by_rupee_symbol",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/OtpRegexTest.kt",
+      "source_location": "L82",
+      "weight": 1.0
+    },
+    {
+      "source": "otpregextest_otpregextest",
+      "target": "otpregextest_otpregextest_excludes_number_preceded_by_dollar_sign",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/OtpRegexTest.kt",
+      "source_location": "L88",
+      "weight": 1.0
+    },
+    {
+      "source": "otpregextest_otpregextest",
+      "target": "otpregextest_otpregextest_excludes_number_preceded_by_rs",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/OtpRegexTest.kt",
+      "source_location": "L94",
+      "weight": 1.0
+    },
+    {
+      "source": "otpregextest_otpregextest",
+      "target": "otpregextest_otpregextest_excludes_number_preceded_by_inr",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/OtpRegexTest.kt",
+      "source_location": "L100",
+      "weight": 1.0
+    },
+    {
+      "source": "otpregextest_otpregextest",
+      "target": "otpregextest_otpregextest_does_not_extract_from_message_with_no_numbers",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/OtpRegexTest.kt",
+      "source_location": "L108",
+      "weight": 1.0
+    },
+    {
+      "source": "otpregextest_otpregextest",
+      "target": "otpregextest_otpregextest_does_not_extract_numbers_shorter_than_4_digits",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/OtpRegexTest.kt",
+      "source_location": "L114",
+      "weight": 1.0
+    },
+    {
+      "source": "otpregextest_otpregextest",
+      "target": "otpregextest_otpregextest_does_not_extract_numbers_longer_than_8_digits",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/OtpRegexTest.kt",
+      "source_location": "L120",
+      "weight": 1.0
+    },
+    {
+      "source": "otpregextest_otpregextest",
+      "target": "otpregextest_otpregextest_3_digit_number_is_not_extracted",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/OtpRegexTest.kt",
+      "source_location": "L126",
+      "weight": 1.0
+    },
+    {
+      "source": "otpregextest_otpregextest",
+      "target": "otpregextest_otpregextest_extracts_otp_followed_by_period",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/OtpRegexTest.kt",
+      "source_location": "L134",
+      "weight": 1.0
+    },
+    {
+      "source": "otpregextest_otpregextest",
+      "target": "otpregextest_otpregextest_extracts_otp_from_multiline_sms",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/OtpRegexTest.kt",
+      "source_location": "L140",
+      "weight": 1.0
+    },
+    {
+      "source": "android_app_src_test_java_com_pinbridge_otpmirror_exampleunittest_kt",
+      "target": "exampleunittest_exampleunittest",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/ExampleUnitTest.kt",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "exampleunittest_exampleunittest",
+      "target": "exampleunittest_exampleunittest_addition_iscorrect",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/ExampleUnitTest.kt",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "exampleunittest_exampleunittest",
+      "target": "exampleunittest_exampleunittest_secret_placeholder_check",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/ExampleUnitTest.kt",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "android_app_src_test_java_com_pinbridge_otpmirror_cryptoutiltest_kt",
+      "target": "cryptoutiltest_cryptoutiltest",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/CryptoUtilTest.kt",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "cryptoutiltest_cryptoutiltest",
+      "target": "cryptoutiltest_cryptoutiltest_randomsecret",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/CryptoUtilTest.kt",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "cryptoutiltest_cryptoutiltest",
+      "target": "cryptoutiltest_cryptoutiltest_encrypt_and_decrypt_with_random_secret_returns_original_otp",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/CryptoUtilTest.kt",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "cryptoutiltest_cryptoutiltest",
+      "target": "cryptoutiltest_cryptoutiltest_encrypt_and_decrypt_with_fixed_secret_returns_original_otp",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/CryptoUtilTest.kt",
+      "source_location": "L27",
+      "weight": 1.0
+    },
+    {
+      "source": "cryptoutiltest_cryptoutiltest",
+      "target": "cryptoutiltest_cryptoutiltest_encrypt_and_decrypt_empty_string",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/CryptoUtilTest.kt",
+      "source_location": "L42",
+      "weight": 1.0
+    },
+    {
+      "source": "cryptoutiltest_cryptoutiltest",
+      "target": "cryptoutiltest_cryptoutiltest_encrypt_and_decrypt_long_input",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/CryptoUtilTest.kt",
+      "source_location": "L50",
+      "weight": 1.0
+    },
+    {
+      "source": "cryptoutiltest_cryptoutiltest",
+      "target": "cryptoutiltest_cryptoutiltest_decrypt_with_wrong_key_throws",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/CryptoUtilTest.kt",
+      "source_location": "L59",
+      "weight": 1.0
+    },
+    {
+      "source": "cryptoutiltest_cryptoutiltest",
+      "target": "cryptoutiltest_cryptoutiltest_two_encryptions_of_the_same_plaintext_produce_different_ciphertext",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/CryptoUtilTest.kt",
+      "source_location": "L67",
+      "weight": 1.0
+    },
+    {
+      "source": "android_app_src_main_java_com_pinbridge_otpmirror_uploadotpworker_kt",
+      "target": "uploadotpworker_uploadotpworker",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/UploadOtpWorker.kt",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "uploadotpworker_uploadotpworker",
+      "target": "uploadotpworker_uploadotpworker_dowork",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/UploadOtpWorker.kt",
+      "source_location": "L25",
+      "weight": 1.0
+    },
+    {
+      "source": "android_app_src_main_java_com_pinbridge_otpmirror_manualcodeentryactivity_kt",
+      "target": "manualcodeentryactivity_manualcodeentryactivity",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/ManualCodeEntryActivity.kt",
+      "source_location": "L32",
+      "weight": 1.0
+    },
+    {
+      "source": "manualcodeentryactivity_manualcodeentryactivity",
+      "target": "manualcodeentryactivity_manualcodeentryactivity_oncreate",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/ManualCodeEntryActivity.kt",
+      "source_location": "L38",
+      "weight": 1.0
+    },
+    {
+      "source": "manualcodeentryactivity_manualcodeentryactivity",
+      "target": "manualcodeentryactivity_manualcodeentryactivity_manualcodescreen",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/ManualCodeEntryActivity.kt",
+      "source_location": "L47",
+      "weight": 1.0
+    },
+    {
+      "source": "manualcodeentryactivity_manualcodeentryactivity",
+      "target": "manualcodeentryactivity_manualcodeentryactivity_performpairing",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/ManualCodeEntryActivity.kt",
+      "source_location": "L167",
+      "weight": 1.0
+    },
+    {
+      "source": "android_app_src_main_java_com_pinbridge_otpmirror_manualcodeentryactivity_kt",
+      "target": "manualcodeentryactivity_manualtheme",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/ManualCodeEntryActivity.kt",
+      "source_location": "L181",
+      "weight": 1.0
+    },
+    {
+      "source": "android_app_src_main_java_com_pinbridge_otpmirror_mainactivity_kt",
+      "target": "mainactivity_mainactivity",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/MainActivity.kt",
+      "source_location": "L47",
+      "weight": 1.0
+    },
+    {
+      "source": "mainactivity_mainactivity",
+      "target": "mainactivity_mainactivity_checkcloudsync",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/MainActivity.kt",
+      "source_location": "L65",
+      "weight": 1.0
+    },
+    {
+      "source": "mainactivity_mainactivity",
+      "target": "mainactivity_mainactivity_attemptgooglesignin",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/MainActivity.kt",
+      "source_location": "L126",
+      "weight": 1.0
+    },
+    {
+      "source": "mainactivity_mainactivity",
+      "target": "mainactivity_mainactivity_startgooglesignin",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/MainActivity.kt",
+      "source_location": "L156",
+      "weight": 1.0
+    },
+    {
+      "source": "mainactivity_mainactivity",
+      "target": "mainactivity_mainactivity_oncreate",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/MainActivity.kt",
+      "source_location": "L209",
+      "weight": 1.0
+    },
+    {
+      "source": "mainactivity_mainactivity",
+      "target": "mainactivity_mainactivity_isinternetavailable",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/MainActivity.kt",
+      "source_location": "L220",
+      "weight": 1.0
+    },
+    {
+      "source": "mainactivity_mainactivity",
+      "target": "mainactivity_mainactivity_requestignorebatteryoptimizations",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/MainActivity.kt",
+      "source_location": "L227",
+      "weight": 1.0
+    },
+    {
+      "source": "mainactivity_mainactivity",
+      "target": "mainactivity_mainactivity_fetchsmsandupload",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/MainActivity.kt",
+      "source_location": "L238",
+      "weight": 1.0
+    },
+    {
+      "source": "mainactivity_mainactivity",
+      "target": "mainactivity_mainactivity_signout",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/MainActivity.kt",
+      "source_location": "L255",
+      "weight": 1.0
+    },
+    {
+      "source": "mainactivity_mainactivity",
+      "target": "mainactivity_mainactivity_mainscreen",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/MainActivity.kt",
+      "source_location": "L269",
+      "weight": 1.0
+    },
+    {
+      "source": "mainactivity_mainactivity",
+      "target": "mainactivity_mainactivity_header",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/MainActivity.kt",
+      "source_location": "L356",
+      "weight": 1.0
+    },
+    {
+      "source": "android_app_src_main_java_com_pinbridge_otpmirror_pairingscanneractivity_kt",
+      "target": "pairingscanneractivity_pairingscanneractivity",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/PairingScannerActivity.kt",
+      "source_location": "L28",
+      "weight": 1.0
+    },
+    {
+      "source": "pairingscanneractivity_pairingscanneractivity",
+      "target": "pairingscanneractivity_pairingscanneractivity_oncreate",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/PairingScannerActivity.kt",
+      "source_location": "L43",
+      "weight": 1.0
+    },
+    {
+      "source": "pairingscanneractivity_pairingscanneractivity",
+      "target": "pairingscanneractivity_pairingscanneractivity_startcamera",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/PairingScannerActivity.kt",
+      "source_location": "L65",
+      "weight": 1.0
+    },
+    {
+      "source": "pairingscanneractivity_pairingscanneractivity",
+      "target": "pairingscanneractivity_pairingscanneractivity_processimageproxy",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/PairingScannerActivity.kt",
+      "source_location": "L98",
+      "weight": 1.0
+    },
+    {
+      "source": "pairingscanneractivity_pairingscanneractivity",
+      "target": "pairingscanneractivity_pairingscanneractivity_handleqrresult",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/PairingScannerActivity.kt",
+      "source_location": "L126",
+      "weight": 1.0
+    },
+    {
+      "source": "pairingscanneractivity_pairingscanneractivity",
+      "target": "pairingscanneractivity_pairingscanneractivity_ondestroy",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/PairingScannerActivity.kt",
+      "source_location": "L150",
+      "weight": 1.0
+    },
+    {
+      "source": "pairingscanneractivity_pairingscanneractivity",
+      "target": "pairingscanneractivity_pairingscanneractivity_showpermissiondenied",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/PairingScannerActivity.kt",
+      "source_location": "L155",
+      "weight": 1.0
+    },
+    {
+      "source": "android_app_src_main_java_com_pinbridge_otpmirror_pinbridgeapp_kt",
+      "target": "pinbridgeapp_pinbridgeapp",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/PinBridgeApp.kt",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "pinbridgeapp_pinbridgeapp",
+      "target": "pinbridgeapp_pinbridgeapp_oncreate",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/PinBridgeApp.kt",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "android_app_src_main_java_com_pinbridge_otpmirror_smspermissionhelper_kt",
+      "target": "smspermissionhelper_smspermissionhelper",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/SmsPermissionHelper.kt",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "smspermissionhelper_smspermissionhelper",
+      "target": "smspermissionhelper_smspermissionhelper_requestpermissions",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/SmsPermissionHelper.kt",
+      "source_location": "L26",
+      "weight": 1.0
+    },
+    {
+      "source": "android_app_src_main_java_com_pinbridge_otpmirror_deviceheartbeatservice_kt",
+      "target": "deviceheartbeatservice_deviceheartbeatservice",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/DeviceHeartbeatService.kt",
+      "source_location": "L35",
+      "weight": 1.0
+    },
+    {
+      "source": "deviceheartbeatservice_deviceheartbeatservice",
+      "target": "deviceheartbeatservice_deviceheartbeatservice_getreconnectdelay",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/DeviceHeartbeatService.kt",
+      "source_location": "L65",
+      "weight": 1.0
+    },
+    {
+      "source": "deviceheartbeatservice_deviceheartbeatservice",
+      "target": "deviceheartbeatservice_deviceheartbeatservice_resetreconnectbackoff",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/DeviceHeartbeatService.kt",
+      "source_location": "L77",
+      "weight": 1.0
+    },
+    {
+      "source": "deviceheartbeatservice_deviceheartbeatservice",
+      "target": "deviceheartbeatservice_deviceheartbeatservice_getbatteryinfo",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/DeviceHeartbeatService.kt",
+      "source_location": "L81",
+      "weight": 1.0
+    },
+    {
+      "source": "deviceheartbeatservice_deviceheartbeatservice",
+      "target": "deviceheartbeatservice_deviceheartbeatservice_acquirewakelock",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/DeviceHeartbeatService.kt",
+      "source_location": "L107",
+      "weight": 1.0
+    },
+    {
+      "source": "deviceheartbeatservice_deviceheartbeatservice",
+      "target": "deviceheartbeatservice_deviceheartbeatservice_releasewakelock",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/DeviceHeartbeatService.kt",
+      "source_location": "L123",
+      "weight": 1.0
+    },
+    {
+      "source": "deviceheartbeatservice_deviceheartbeatservice",
+      "target": "deviceheartbeatservice_deviceheartbeatservice_connectsocket",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/DeviceHeartbeatService.kt",
+      "source_location": "L130",
+      "weight": 1.0
+    },
+    {
+      "source": "deviceheartbeatservice_deviceheartbeatservice",
+      "target": "deviceheartbeatservice_deviceheartbeatservice_schedulereconnect",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/DeviceHeartbeatService.kt",
+      "source_location": "L201",
+      "weight": 1.0
+    },
+    {
+      "source": "deviceheartbeatservice_deviceheartbeatservice",
+      "target": "deviceheartbeatservice_deviceheartbeatservice_starttokenrefreshloop",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/DeviceHeartbeatService.kt",
+      "source_location": "L222",
+      "weight": 1.0
+    },
+    {
+      "source": "deviceheartbeatservice_deviceheartbeatservice",
+      "target": "deviceheartbeatservice_deviceheartbeatservice_stoptokenrefreshloop",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/DeviceHeartbeatService.kt",
+      "source_location": "L241",
+      "weight": 1.0
+    },
+    {
+      "source": "deviceheartbeatservice_deviceheartbeatservice",
+      "target": "deviceheartbeatservice_deviceheartbeatservice_startheartbeatloop",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/DeviceHeartbeatService.kt",
+      "source_location": "L249",
+      "weight": 1.0
+    },
+    {
+      "source": "deviceheartbeatservice_deviceheartbeatservice",
+      "target": "deviceheartbeatservice_deviceheartbeatservice_startfirestoreheartbeat",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/DeviceHeartbeatService.kt",
+      "source_location": "L281",
+      "weight": 1.0
+    },
+    {
+      "source": "deviceheartbeatservice_deviceheartbeatservice",
+      "target": "deviceheartbeatservice_deviceheartbeatservice_stopfirestoreheartbeat",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/DeviceHeartbeatService.kt",
+      "source_location": "L310",
+      "weight": 1.0
+    },
+    {
+      "source": "deviceheartbeatservice_deviceheartbeatservice",
+      "target": "deviceheartbeatservice_deviceheartbeatservice_disconnectsocket",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/DeviceHeartbeatService.kt",
+      "source_location": "L315",
+      "weight": 1.0
+    },
+    {
+      "source": "android_app_src_main_java_com_pinbridge_otpmirror_deviceheartbeatservice_kt",
+      "target": "deviceheartbeatservice_onavailable",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/DeviceHeartbeatService.kt",
+      "source_location": "L325",
+      "weight": 1.0
+    },
+    {
+      "source": "android_app_src_main_java_com_pinbridge_otpmirror_deviceheartbeatservice_kt",
+      "target": "deviceheartbeatservice_onlost",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/DeviceHeartbeatService.kt",
+      "source_location": "L331",
+      "weight": 1.0
+    },
+    {
+      "source": "deviceheartbeatservice_deviceheartbeatservice",
+      "target": "deviceheartbeatservice_deviceheartbeatservice_oncreate",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/DeviceHeartbeatService.kt",
+      "source_location": "L338",
+      "weight": 1.0
+    },
+    {
+      "source": "deviceheartbeatservice_deviceheartbeatservice",
+      "target": "deviceheartbeatservice_deviceheartbeatservice_onstartcommand",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/DeviceHeartbeatService.kt",
+      "source_location": "L365",
+      "weight": 1.0
+    },
+    {
+      "source": "deviceheartbeatservice_deviceheartbeatservice",
+      "target": "deviceheartbeatservice_deviceheartbeatservice_ontaskremoved",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/DeviceHeartbeatService.kt",
+      "source_location": "L403",
+      "weight": 1.0
+    },
+    {
+      "source": "deviceheartbeatservice_deviceheartbeatservice",
+      "target": "deviceheartbeatservice_deviceheartbeatservice_isinternetavailable",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/DeviceHeartbeatService.kt",
+      "source_location": "L423",
+      "weight": 1.0
+    },
+    {
+      "source": "deviceheartbeatservice_deviceheartbeatservice",
+      "target": "deviceheartbeatservice_deviceheartbeatservice_ondestroy",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/DeviceHeartbeatService.kt",
+      "source_location": "L431",
+      "weight": 1.0
+    },
+    {
+      "source": "deviceheartbeatservice_deviceheartbeatservice",
+      "target": "deviceheartbeatservice_deviceheartbeatservice_onbind",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/DeviceHeartbeatService.kt",
+      "source_location": "L444",
+      "weight": 1.0
+    },
+    {
+      "source": "deviceheartbeatservice_deviceheartbeatservice",
+      "target": "deviceheartbeatservice_deviceheartbeatservice_createnotificationchannel",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/DeviceHeartbeatService.kt",
+      "source_location": "L446",
+      "weight": 1.0
+    },
+    {
+      "source": "deviceheartbeatservice_deviceheartbeatservice",
+      "target": "deviceheartbeatservice_deviceheartbeatservice_createnotification",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/DeviceHeartbeatService.kt",
+      "source_location": "L462",
+      "weight": 1.0
+    },
+    {
+      "source": "android_app_src_main_java_com_pinbridge_otpmirror_deviceheartbeatservice_kt",
+      "target": "deviceheartbeatservice_start",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/DeviceHeartbeatService.kt",
+      "source_location": "L489",
+      "weight": 1.0
+    },
+    {
+      "source": "android_app_src_main_java_com_pinbridge_otpmirror_deviceheartbeatservice_kt",
+      "target": "deviceheartbeatservice_stop",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/DeviceHeartbeatService.kt",
+      "source_location": "L496",
+      "weight": 1.0
+    },
+    {
+      "source": "android_app_src_main_java_com_pinbridge_otpmirror_cryptoutil_kt",
+      "target": "cryptoutil_cryptoutil",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/CryptoUtil.kt",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "android_app_src_main_java_com_pinbridge_otpmirror_cryptoutil_kt",
+      "target": "cryptoutil_encrypteddata",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/CryptoUtil.kt",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "cryptoutil_cryptoutil",
+      "target": "cryptoutil_cryptoutil_encrypt",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/CryptoUtil.kt",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "cryptoutil_cryptoutil",
+      "target": "cryptoutil_cryptoutil_decrypt",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/CryptoUtil.kt",
+      "source_location": "L33",
+      "weight": 1.0
+    },
+    {
+      "source": "android_app_src_main_java_com_pinbridge_otpmirror_otpreceiver_kt",
+      "target": "otpreceiver_otpreceiver",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/OtpReceiver.kt",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "otpreceiver_otpreceiver",
+      "target": "otpreceiver_otpreceiver_onreceive",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/OtpReceiver.kt",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "android_app_src_main_java_com_pinbridge_otpmirror_otpuploader_kt",
+      "target": "otpuploader_auth",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/OtpUploader.kt",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "android_app_src_main_java_com_pinbridge_otpmirror_otpuploader_kt",
+      "target": "otpuploader_db",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/OtpUploader.kt",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "android_app_src_main_java_com_pinbridge_otpmirror_otpuploader_kt",
+      "target": "otpuploader_sharedprefs",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/OtpUploader.kt",
+      "source_location": "L21",
+      "weight": 1.0
+    },
+    {
+      "source": "android_app_src_main_java_com_pinbridge_otpmirror_otpuploader_kt",
+      "target": "otpuploader_otpuploader",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/OtpUploader.kt",
+      "source_location": "L24",
+      "weight": 1.0
+    },
+    {
+      "source": "otpuploader_otpuploader",
+      "target": "otpuploader_otpuploader_directupload",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/OtpUploader.kt",
+      "source_location": "L27",
+      "weight": 1.0
+    },
+    {
+      "source": "otpuploader_otpuploader",
+      "target": "otpuploader_otpuploader_enqueue",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/OtpUploader.kt",
+      "source_location": "L59",
+      "weight": 1.0
+    },
+    {
+      "source": "android_app_src_main_java_com_pinbridge_otpmirror_smsretriever_kt",
+      "target": "smsretriever_smsretriever",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/SmsRetriever.kt",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "smsretriever_smsretriever",
+      "target": "smsretriever_smsretriever_getlatestotp",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/SmsRetriever.kt",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "android_app_src_main_java_com_pinbridge_otpmirror_bootreceiver_kt",
+      "target": "bootreceiver_bootreceiver",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/BootReceiver.kt",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "bootreceiver_bootreceiver",
+      "target": "bootreceiver_bootreceiver_onreceive",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/BootReceiver.kt",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "android_app_src_main_java_com_pinbridge_otpmirror_constants_kt",
+      "target": "constants_constants",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/Constants.kt",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "android_app_src_main_java_com_pinbridge_otpmirror_otpextractor_kt",
+      "target": "otpextractor_otpextractor",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/OtpExtractor.kt",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "otpextractor_otpextractor",
+      "target": "otpextractor_otpextractor_extractotp",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/OtpExtractor.kt",
+      "source_location": "L27",
+      "weight": 1.0
+    },
+    {
+      "source": "otpextractor_otpextractor",
+      "target": "otpextractor_otpextractor_isexcludednumber",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/OtpExtractor.kt",
+      "source_location": "L65",
+      "weight": 1.0
+    },
+    {
+      "source": "android_app_src_main_java_com_pinbridge_otpmirror_ui_screens_connectedscreen_kt",
+      "target": "connectedscreen_connectedview",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/ui/screens/ConnectedScreen.kt",
+      "source_location": "L25",
+      "weight": 1.0
+    },
+    {
+      "source": "android_app_src_main_java_com_pinbridge_otpmirror_ui_screens_disconnectedscreen_kt",
+      "target": "disconnectedscreen_disconnectedview",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/ui/screens/DisconnectedScreen.kt",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "android_app_src_main_java_com_pinbridge_otpmirror_ui_screens_signinscreen_kt",
+      "target": "signinscreen_signinview",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/ui/screens/SignInScreen.kt",
+      "source_location": "L21",
+      "weight": 1.0
+    },
+    {
+      "source": "android_app_src_main_java_com_pinbridge_otpmirror_ui_components_statusitem_kt",
+      "target": "statusitem_statusitem",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/ui/components/StatusItem.kt",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "android_app_src_main_java_com_pinbridge_otpmirror_ui_components_helpstepitem_kt",
+      "target": "helpstepitem_helpstepitem",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/ui/components/HelpStepItem.kt",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "android_app_src_main_java_com_pinbridge_otpmirror_ui_theme_theme_kt",
+      "target": "theme_pinbridgetheme",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/ui/theme/Theme.kt",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "android_app_src_main_java_com_pinbridge_otpmirror_di_appmodule_kt",
+      "target": "appmodule_appmodule",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/di/AppModule.kt",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "appmodule_appmodule",
+      "target": "appmodule_appmodule_providefirebaseauth",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/di/AppModule.kt",
+      "source_location": "L21",
+      "weight": 1.0
+    },
+    {
+      "source": "appmodule_appmodule",
+      "target": "appmodule_appmodule_providefirestore",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/di/AppModule.kt",
+      "source_location": "L25",
+      "weight": 1.0
+    },
+    {
+      "source": "appmodule_appmodule",
+      "target": "appmodule_appmodule_provideencryptedsharedpreferences",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/di/AppModule.kt",
+      "source_location": "L29",
+      "weight": 1.0
+    },
+    {
+      "source": "appmodule_appmodule",
+      "target": "appmodule_appmodule_providepairingrepository",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/di/AppModule.kt",
+      "source_location": "L45",
+      "weight": 1.0
+    },
+    {
+      "source": "android_app_src_main_java_com_pinbridge_otpmirror_data_pairingrepository_kt",
+      "target": "pairingrepository_pairingrepository",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/data/PairingRepository.kt",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "pairingrepository_pairingrepository",
+      "target": "pairingrepository_pairingrepository_pairwithqr",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/data/PairingRepository.kt",
+      "source_location": "L24",
+      "weight": 1.0
+    },
+    {
+      "source": "pairingrepository_pairingrepository",
+      "target": "pairingrepository_pairingrepository_pairwithcode",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/data/PairingRepository.kt",
+      "source_location": "L25",
+      "weight": 1.0
+    },
+    {
+      "source": "pairingrepository_pairingrepository",
+      "target": "pairingrepository_pairingrepository_unpair",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/data/PairingRepository.kt",
+      "source_location": "L26",
+      "weight": 1.0
+    },
+    {
+      "source": "pairingrepository_pairingrepository",
+      "target": "pairingrepository_pairingrepository_ispaired",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/data/PairingRepository.kt",
+      "source_location": "L27",
+      "weight": 1.0
+    },
+    {
+      "source": "pairingrepository_pairingrepository",
+      "target": "pairingrepository_pairingrepository_getdeviceid",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/data/PairingRepository.kt",
+      "source_location": "L28",
+      "weight": 1.0
+    },
+    {
+      "source": "pairingrepository_pairingrepository",
+      "target": "pairingrepository_pairingrepository_getsecret",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/data/PairingRepository.kt",
+      "source_location": "L29",
+      "weight": 1.0
+    },
+    {
+      "source": "android_app_src_main_java_com_pinbridge_otpmirror_data_pairingrepository_kt",
+      "target": "pairingrepository_pairingrepositoryimpl",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/data/PairingRepository.kt",
+      "source_location": "L33",
+      "weight": 1.0
+    },
+    {
+      "source": "pairingrepository_pairingrepositoryimpl",
+      "target": "pairingrepository_pairingrepositoryimpl_startheartbeatifpaired",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/data/PairingRepository.kt",
+      "source_location": "L56",
+      "weight": 1.0
+    },
+    {
+      "source": "pairingrepository_pairingrepositoryimpl",
+      "target": "pairingrepository_pairingrepositoryimpl_startstatuslistener",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/data/PairingRepository.kt",
+      "source_location": "L64",
+      "weight": 1.0
+    },
+    {
+      "source": "pairingrepository_pairingrepositoryimpl",
+      "target": "pairingrepository_pairingrepositoryimpl_clearlocalcredentials",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/data/PairingRepository.kt",
+      "source_location": "L102",
+      "weight": 1.0
+    },
+    {
+      "source": "pairingrepository_pairingrepositoryimpl",
+      "target": "pairingrepository_pairingrepositoryimpl_pairwithqr",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/data/PairingRepository.kt",
+      "source_location": "L117",
+      "weight": 1.0
+    },
+    {
+      "source": "pairingrepository_pairingrepositoryimpl",
+      "target": "pairingrepository_pairingrepositoryimpl_pairwithcode",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/data/PairingRepository.kt",
+      "source_location": "L136",
+      "weight": 1.0
+    },
+    {
+      "source": "pairingrepository_pairingrepositoryimpl",
+      "target": "pairingrepository_pairingrepositoryimpl_validategoogleaccountmatch",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/data/PairingRepository.kt",
+      "source_location": "L173",
+      "weight": 1.0
+    },
+    {
+      "source": "pairingrepository_pairingrepositoryimpl",
+      "target": "pairingrepository_pairingrepositoryimpl_completepairing",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/data/PairingRepository.kt",
+      "source_location": "L186",
+      "weight": 1.0
+    },
+    {
+      "source": "pairingrepository_pairingrepositoryimpl",
+      "target": "pairingrepository_pairingrepositoryimpl_unpair",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/data/PairingRepository.kt",
+      "source_location": "L213",
+      "weight": 1.0
+    },
+    {
+      "source": "pairingrepository_pairingrepositoryimpl",
+      "target": "pairingrepository_pairingrepositoryimpl_ispaired",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/data/PairingRepository.kt",
+      "source_location": "L246",
+      "weight": 1.0
+    },
+    {
+      "source": "pairingrepository_pairingrepositoryimpl",
+      "target": "pairingrepository_pairingrepositoryimpl_getdeviceid",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/data/PairingRepository.kt",
+      "source_location": "L250",
+      "weight": 1.0
+    },
+    {
+      "source": "pairingrepository_pairingrepositoryimpl",
+      "target": "pairingrepository_pairingrepositoryimpl_getsecret",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/data/PairingRepository.kt",
+      "source_location": "L254",
+      "weight": 1.0
+    },
+    {
+      "source": "pairingrepository_pairingrepositoryimpl",
+      "target": "pairingrepository_pairingrepositoryimpl_savecredentials",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/data/PairingRepository.kt",
+      "source_location": "L258",
+      "weight": 1.0
+    },
+    {
+      "source": "pairingrepository_pairingrepositoryimpl",
+      "target": "pairingrepository_pairingrepositoryimpl_syncpairingtocloud",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/data/PairingRepository.kt",
+      "source_location": "L271",
+      "weight": 1.0
+    },
+    {
+      "source": "pairingrepository_pairingrepositoryimpl",
+      "target": "pairingrepository_pairingrepositoryimpl_deletecloudsyncdoc",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/data/PairingRepository.kt",
+      "source_location": "L295",
+      "weight": 1.0
+    },
+    {
+      "source": "functions_src_index_ts",
+      "target": "firebase_functions",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "functions/src/index.ts",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "functions_src_index_ts",
+      "target": "firebase_admin",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "functions/src/index.ts",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "e2e_playwright_config_js",
+      "target": "test",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "e2e/playwright.config.js",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "e2e_playwright_config_js",
+      "target": "path",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "e2e/playwright.config.js",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "e2e_playwright_config_js",
+      "target": "url",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "e2e/playwright.config.js",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "e2e_tests_dashboard_spec_js",
+      "target": "test",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "e2e/tests/dashboard.spec.js",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "e2e_tests_extension_spec_js",
+      "target": "test",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "e2e/tests/extension.spec.js",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "firebase_firestore",
+      "target": "otp_mirroring_flow",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "aes_256_gcm_encryption",
+      "target": "otp_mirroring_flow",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "security_audit.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "ecdh_key_agreement",
+      "target": "otp_mirroring_flow",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/PAIRING_FLOW.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "presence_server",
+      "target": "firebase_firestore",
+      "relation": "shares_data_with",
+      "confidence": "INFERRED",
+      "confidence_score": 0.9,
+      "source_file": "technical_audit.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "firebase_crashlytics_monitoring",
+      "target": "otp_mirroring_flow",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "SCORECARD.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [],
+  "input_tokens": 0,
+  "output_tokens": 0
+}

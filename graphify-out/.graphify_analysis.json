@@ -1,0 +1,565 @@
+{
+  "communities": {
+    "0": [
+      "android_app_src_main_java_com_pinbridge_otpmirror_deviceheartbeatservice_kt",
+      "deviceheartbeatservice_deviceheartbeatservice",
+      "deviceheartbeatservice_deviceheartbeatservice_acquirewakelock",
+      "deviceheartbeatservice_deviceheartbeatservice_connectsocket",
+      "deviceheartbeatservice_deviceheartbeatservice_createnotification",
+      "deviceheartbeatservice_deviceheartbeatservice_createnotificationchannel",
+      "deviceheartbeatservice_deviceheartbeatservice_disconnectsocket",
+      "deviceheartbeatservice_deviceheartbeatservice_getbatteryinfo",
+      "deviceheartbeatservice_deviceheartbeatservice_getreconnectdelay",
+      "deviceheartbeatservice_deviceheartbeatservice_isinternetavailable",
+      "deviceheartbeatservice_deviceheartbeatservice_onbind",
+      "deviceheartbeatservice_deviceheartbeatservice_oncreate",
+      "deviceheartbeatservice_deviceheartbeatservice_ondestroy",
+      "deviceheartbeatservice_deviceheartbeatservice_onstartcommand",
+      "deviceheartbeatservice_deviceheartbeatservice_ontaskremoved",
+      "deviceheartbeatservice_deviceheartbeatservice_releasewakelock",
+      "deviceheartbeatservice_deviceheartbeatservice_resetreconnectbackoff",
+      "deviceheartbeatservice_deviceheartbeatservice_schedulereconnect",
+      "deviceheartbeatservice_deviceheartbeatservice_startfirestoreheartbeat",
+      "deviceheartbeatservice_deviceheartbeatservice_startheartbeatloop",
+      "deviceheartbeatservice_deviceheartbeatservice_starttokenrefreshloop",
+      "deviceheartbeatservice_deviceheartbeatservice_stopfirestoreheartbeat",
+      "deviceheartbeatservice_deviceheartbeatservice_stoptokenrefreshloop",
+      "deviceheartbeatservice_onavailable",
+      "deviceheartbeatservice_onlost",
+      "deviceheartbeatservice_start",
+      "deviceheartbeatservice_stop"
+    ],
+    "1": [
+      "android_app_src_main_java_com_pinbridge_otpmirror_data_pairingrepository_kt",
+      "pairingrepository_pairingrepository",
+      "pairingrepository_pairingrepository_getdeviceid",
+      "pairingrepository_pairingrepository_getsecret",
+      "pairingrepository_pairingrepository_ispaired",
+      "pairingrepository_pairingrepository_pairwithcode",
+      "pairingrepository_pairingrepository_pairwithqr",
+      "pairingrepository_pairingrepository_unpair",
+      "pairingrepository_pairingrepositoryimpl",
+      "pairingrepository_pairingrepositoryimpl_clearlocalcredentials",
+      "pairingrepository_pairingrepositoryimpl_completepairing",
+      "pairingrepository_pairingrepositoryimpl_deletecloudsyncdoc",
+      "pairingrepository_pairingrepositoryimpl_getdeviceid",
+      "pairingrepository_pairingrepositoryimpl_getsecret",
+      "pairingrepository_pairingrepositoryimpl_ispaired",
+      "pairingrepository_pairingrepositoryimpl_pairwithcode",
+      "pairingrepository_pairingrepositoryimpl_pairwithqr",
+      "pairingrepository_pairingrepositoryimpl_savecredentials",
+      "pairingrepository_pairingrepositoryimpl_startheartbeatifpaired",
+      "pairingrepository_pairingrepositoryimpl_startstatuslistener",
+      "pairingrepository_pairingrepositoryimpl_syncpairingtocloud",
+      "pairingrepository_pairingrepositoryimpl_unpair",
+      "pairingrepository_pairingrepositoryimpl_validategoogleaccountmatch"
+    ],
+    "2": [
+      "background_cleanupfirestorepairing",
+      "background_handlegooglesignin",
+      "background_handlemanualfetch",
+      "background_handlewebloginsuccess",
+      "background_handlewebpairingsuccess",
+      "background_hydrateandpush",
+      "background_performpairing",
+      "background_performsignout",
+      "background_performsignoutonly",
+      "background_performunpaironly",
+      "background_processnewotp",
+      "background_safesendmessage",
+      "background_startalllisteners",
+      "background_startkeepalive",
+      "background_startotplistener",
+      "background_startpresencelisteners",
+      "background_stopalllisteners",
+      "background_stopkeepalive",
+      "background_stopotplistener",
+      "background_stoppresencelisteners",
+      "background_waitforauth",
+      "extension_src_background_js"
+    ],
+    "3": [
+      "android_app_src_test_java_com_pinbridge_otpmirror_otpregextest_kt",
+      "otpregextest_otpregextest",
+      "otpregextest_otpregextest_3_digit_number_is_not_extracted",
+      "otpregextest_otpregextest_does_not_extract_from_message_with_no_numbers",
+      "otpregextest_otpregextest_does_not_extract_numbers_longer_than_8_digits",
+      "otpregextest_otpregextest_does_not_extract_numbers_shorter_than_4_digits",
+      "otpregextest_otpregextest_excludes_number_preceded_by_dollar_sign",
+      "otpregextest_otpregextest_excludes_number_preceded_by_inr",
+      "otpregextest_otpregextest_excludes_number_preceded_by_rs",
+      "otpregextest_otpregextest_excludes_number_preceded_by_rupee_symbol",
+      "otpregextest_otpregextest_extracts_4_digit_code_from_short_sms",
+      "otpregextest_otpregextest_extracts_5_digit_code",
+      "otpregextest_otpregextest_extracts_6_digit_otp_from_standard_bank_sms",
+      "otpregextest_otpregextest_extracts_7_digit_code",
+      "otpregextest_otpregextest_extracts_8_digit_code",
+      "otpregextest_otpregextest_extracts_otp_followed_by_period",
+      "otpregextest_otpregextest_extracts_otp_from_google_verification_sms",
+      "otpregextest_otpregextest_extracts_otp_from_multiline_sms",
+      "otpregextest_otpregextest_extracts_otp_when_message_has_multiple_keywords",
+      "otpregextest_otpregextest_extracts_otp_when_multiple_numbers_present_with_keyword",
+      "otpregextest_otpregextest_prefers_6_digit_code_over_4_digit_when_no_keywords",
+      "otpregextest_otpregextest_prefers_otp_over_earlier_number_when_keywords_are_present"
+    ],
+    "4": [
+      "extension_src_popup_js",
+      "popup_generatecaptcha",
+      "popup_hidecaptchamodal",
+      "popup_hideerror",
+      "popup_onfetchsuccess",
+      "popup_showcaptchamodal",
+      "popup_showconnectingstatus",
+      "popup_showerror",
+      "popup_showpaired",
+      "popup_showunpaired",
+      "popup_startauthpolling",
+      "popup_startcontinuoussync",
+      "popup_stopcontinuoussync",
+      "popup_updatebatterydisplay",
+      "popup_updatebrowserstatus",
+      "popup_updateconnectionstatus",
+      "popup_updateotpdisplay"
+    ],
+    "5": [
+      "main_checkurlparams",
+      "main_decryptotp",
+      "main_el",
+      "main_escapehtml",
+      "main_handleforcedunpair",
+      "main_handlesignout",
+      "main_isdeviceonline",
+      "main_listentocloudsync",
+      "main_loginwithgoogle",
+      "main_renderpaired",
+      "main_rendersignin",
+      "main_renderunpaired",
+      "main_startlisteners",
+      "main_stoplisteners",
+      "main_updateconnectionindicator",
+      "main_updateui",
+      "web_main_js"
+    ],
+    "6": [
+      "android_app_src_main_java_com_pinbridge_otpmirror_mainactivity_kt",
+      "mainactivity_mainactivity",
+      "mainactivity_mainactivity_attemptgooglesignin",
+      "mainactivity_mainactivity_checkcloudsync",
+      "mainactivity_mainactivity_fetchsmsandupload",
+      "mainactivity_mainactivity_header",
+      "mainactivity_mainactivity_isinternetavailable",
+      "mainactivity_mainactivity_mainscreen",
+      "mainactivity_mainactivity_oncreate",
+      "mainactivity_mainactivity_requestignorebatteryoptimizations",
+      "mainactivity_mainactivity_signout",
+      "mainactivity_mainactivity_startgooglesignin"
+    ],
+    "7": [
+      "android_app_src_test_java_com_pinbridge_otpmirror_cryptoutiltest_kt",
+      "cryptoutiltest_cryptoutiltest",
+      "cryptoutiltest_cryptoutiltest_decrypt_with_wrong_key_throws",
+      "cryptoutiltest_cryptoutiltest_encrypt_and_decrypt_empty_string",
+      "cryptoutiltest_cryptoutiltest_encrypt_and_decrypt_long_input",
+      "cryptoutiltest_cryptoutiltest_encrypt_and_decrypt_with_fixed_secret_returns_original_otp",
+      "cryptoutiltest_cryptoutiltest_encrypt_and_decrypt_with_random_secret_returns_original_otp",
+      "cryptoutiltest_cryptoutiltest_randomsecret",
+      "cryptoutiltest_cryptoutiltest_two_encryptions_of_the_same_plaintext_produce_different_ciphertext"
+    ],
+    "8": [
+      "android_app_src_main_java_com_pinbridge_otpmirror_pairingscanneractivity_kt",
+      "pairingscanneractivity_pairingscanneractivity",
+      "pairingscanneractivity_pairingscanneractivity_handleqrresult",
+      "pairingscanneractivity_pairingscanneractivity_oncreate",
+      "pairingscanneractivity_pairingscanneractivity_ondestroy",
+      "pairingscanneractivity_pairingscanneractivity_processimageproxy",
+      "pairingscanneractivity_pairingscanneractivity_showpermissiondenied",
+      "pairingscanneractivity_pairingscanneractivity_startcamera"
+    ],
+    "9": [
+      "android_app_src_main_java_com_pinbridge_otpmirror_otpuploader_kt",
+      "otpuploader_auth",
+      "otpuploader_db",
+      "otpuploader_otpuploader",
+      "otpuploader_otpuploader_directupload",
+      "otpuploader_otpuploader_enqueue",
+      "otpuploader_sharedprefs"
+    ],
+    "10": [
+      "extension_src_pairing_js",
+      "pairing_countdownel",
+      "pairing_setstatus",
+      "pairing_startcountdown",
+      "pairing_statusarea",
+      "pairing_statustext"
+    ],
+    "11": [
+      "android_app_src_androidtest_java_com_pinbridge_otpmirror_e2etest_kt",
+      "e2etest_e2etest",
+      "e2etest_e2etest_decodeqr",
+      "e2etest_e2etest_full_flow_from_pairing_qr_to_otp_appears_in_firestore",
+      "e2etest_e2etest_setup",
+      "e2etest_e2etest_teardown"
+    ],
+    "12": [
+      "android_app_src_main_java_com_pinbridge_otpmirror_manualcodeentryactivity_kt",
+      "manualcodeentryactivity_manualcodeentryactivity",
+      "manualcodeentryactivity_manualcodeentryactivity_manualcodescreen",
+      "manualcodeentryactivity_manualcodeentryactivity_oncreate",
+      "manualcodeentryactivity_manualcodeentryactivity_performpairing",
+      "manualcodeentryactivity_manualtheme"
+    ],
+    "13": [
+      "android_app_src_main_java_com_pinbridge_otpmirror_di_appmodule_kt",
+      "appmodule_appmodule",
+      "appmodule_appmodule_provideencryptedsharedpreferences",
+      "appmodule_appmodule_providefirebaseauth",
+      "appmodule_appmodule_providefirestore",
+      "appmodule_appmodule_providepairingrepository"
+    ],
+    "14": [
+      "aes_256_gcm_encryption",
+      "ecdh_key_agreement",
+      "firebase_crashlytics_monitoring",
+      "firebase_firestore",
+      "otp_mirroring_flow",
+      "presence_server"
+    ],
+    "15": [
+      "android_app_src_androidtest_java_com_pinbridge_otpmirror_uploadotpworkertest_kt",
+      "uploadotpworkertest_uploadotpworkertest",
+      "uploadotpworkertest_uploadotpworkertest_setup",
+      "uploadotpworkertest_uploadotpworkertest_teardown",
+      "uploadotpworkertest_uploadotpworkertest_worker_uploads_encrypted_otp_and_can_be_decrypted_correctly"
+    ],
+    "16": [
+      "android_app_src_main_java_com_pinbridge_otpmirror_cryptoutil_kt",
+      "cryptoutil_cryptoutil",
+      "cryptoutil_cryptoutil_decrypt",
+      "cryptoutil_cryptoutil_encrypt",
+      "cryptoutil_encrypteddata"
+    ],
+    "17": [
+      "android_app_src_androidtest_java_com_pinbridge_otpmirror_pairingactivitytest_kt",
+      "pairingactivitytest_pairingactivitytest",
+      "pairingactivitytest_pairingactivitytest_decodeqr",
+      "pairingactivitytest_pairingactivitytest_qr_code_contains_valid_deviceid_and_secret"
+    ],
+    "18": [
+      "android_app_src_test_java_com_pinbridge_otpmirror_exampleunittest_kt",
+      "exampleunittest_exampleunittest",
+      "exampleunittest_exampleunittest_addition_iscorrect",
+      "exampleunittest_exampleunittest_secret_placeholder_check"
+    ],
+    "19": [
+      "android_app_src_main_java_com_pinbridge_otpmirror_otpextractor_kt",
+      "otpextractor_otpextractor",
+      "otpextractor_otpextractor_extractotp",
+      "otpextractor_otpextractor_isexcludednumber"
+    ],
+    "20": [
+      "android_app_src_androidtest_java_com_pinbridge_otpmirror_otpreceivertest_kt",
+      "otpreceivertest_otpreceivertest",
+      "otpreceivertest_otpreceivertest_testcurrencyexclusionandotpextraction"
+    ],
+    "21": [
+      "android_app_src_androidtest_java_com_pinbridge_otpmirror_mainactivitytest_kt",
+      "mainactivitytest_mainactivitytest",
+      "mainactivitytest_mainactivitytest_clickingshowpairingqr_openspairingactivity_andshowsqr"
+    ],
+    "22": [
+      "android_app_src_test_java_com_pinbridge_otpmirror_constantstest_kt",
+      "constantstest_constantstest",
+      "constantstest_constantstest_pref_names_are_non_empty"
+    ],
+    "23": [
+      "android_app_src_main_java_com_pinbridge_otpmirror_uploadotpworker_kt",
+      "uploadotpworker_uploadotpworker",
+      "uploadotpworker_uploadotpworker_dowork"
+    ],
+    "24": [
+      "android_app_src_main_java_com_pinbridge_otpmirror_pinbridgeapp_kt",
+      "pinbridgeapp_pinbridgeapp",
+      "pinbridgeapp_pinbridgeapp_oncreate"
+    ],
+    "25": [
+      "android_app_src_main_java_com_pinbridge_otpmirror_smspermissionhelper_kt",
+      "smspermissionhelper_smspermissionhelper",
+      "smspermissionhelper_smspermissionhelper_requestpermissions"
+    ],
+    "26": [
+      "android_app_src_main_java_com_pinbridge_otpmirror_otpreceiver_kt",
+      "otpreceiver_otpreceiver",
+      "otpreceiver_otpreceiver_onreceive"
+    ],
+    "27": [
+      "android_app_src_main_java_com_pinbridge_otpmirror_smsretriever_kt",
+      "smsretriever_smsretriever",
+      "smsretriever_smsretriever_getlatestotp"
+    ],
+    "28": [
+      "android_app_src_main_java_com_pinbridge_otpmirror_bootreceiver_kt",
+      "bootreceiver_bootreceiver",
+      "bootreceiver_bootreceiver_onreceive"
+    ],
+    "29": [
+      "config_isdashboardpage",
+      "extension_src_config_js"
+    ],
+    "30": [
+      "content_autofill",
+      "extension_src_content_js"
+    ],
+    "31": [
+      "crypto_decryptotp",
+      "extension_src_crypto_js"
+    ],
+    "32": [
+      "index_log",
+      "server_index_js"
+    ],
+    "33": [
+      "index_test_validateorigin",
+      "server_index_test_js"
+    ],
+    "34": [
+      "android_app_src_main_java_com_pinbridge_otpmirror_constants_kt",
+      "constants_constants"
+    ],
+    "35": [
+      "android_app_src_main_java_com_pinbridge_otpmirror_ui_screens_connectedscreen_kt",
+      "connectedscreen_connectedview"
+    ],
+    "36": [
+      "android_app_src_main_java_com_pinbridge_otpmirror_ui_screens_disconnectedscreen_kt",
+      "disconnectedscreen_disconnectedview"
+    ],
+    "37": [
+      "android_app_src_main_java_com_pinbridge_otpmirror_ui_screens_signinscreen_kt",
+      "signinscreen_signinview"
+    ],
+    "38": [
+      "android_app_src_main_java_com_pinbridge_otpmirror_ui_components_statusitem_kt",
+      "statusitem_statusitem"
+    ],
+    "39": [
+      "android_app_src_main_java_com_pinbridge_otpmirror_ui_components_helpstepitem_kt",
+      "helpstepitem_helpstepitem"
+    ],
+    "40": [
+      "android_app_src_main_java_com_pinbridge_otpmirror_ui_theme_theme_kt",
+      "theme_pinbridgetheme"
+    ],
+    "41": [
+      "extension_webpack_config_js"
+    ],
+    "42": [
+      "web_vite_config_js"
+    ],
+    "43": [
+      "android_build_gradle_kts"
+    ],
+    "44": [
+      "android_settings_gradle_kts"
+    ],
+    "45": [
+      "android_app_build_gradle_kts"
+    ],
+    "46": [
+      "functions_lib_index_js"
+    ],
+    "47": [
+      "functions_lib_src_index_js"
+    ],
+    "48": [
+      "functions_src_index_ts"
+    ],
+    "49": [
+      "e2e_playwright_config_js"
+    ],
+    "50": [
+      "e2e_tests_dashboard_spec_js"
+    ],
+    "51": [
+      "e2e_tests_extension_spec_js"
+    ]
+  },
+  "cohesion": {
+    "0": 0.07,
+    "1": 0.09,
+    "2": 0.2,
+    "3": 0.09,
+    "4": 0.14,
+    "5": 0.24,
+    "6": 0.17,
+    "7": 0.22,
+    "8": 0.25,
+    "9": 0.29,
+    "10": 0.47,
+    "11": 0.33,
+    "12": 0.33,
+    "13": 0.33,
+    "14": 0.33,
+    "15": 0.4,
+    "16": 0.4,
+    "17": 0.5,
+    "18": 0.5,
+    "19": 0.5,
+    "20": 0.67,
+    "21": 0.67,
+    "22": 0.67,
+    "23": 0.67,
+    "24": 0.67,
+    "25": 0.67,
+    "26": 0.67,
+    "27": 0.67,
+    "28": 0.67,
+    "29": 1.0,
+    "30": 1.0,
+    "31": 1.0,
+    "32": 1.0,
+    "33": 1.0,
+    "34": 1.0,
+    "35": 1.0,
+    "36": 1.0,
+    "37": 1.0,
+    "38": 1.0,
+    "39": 1.0,
+    "40": 1.0,
+    "41": 1.0,
+    "42": 1.0,
+    "43": 1.0,
+    "44": 1.0,
+    "45": 1.0,
+    "46": 1.0,
+    "47": 1.0,
+    "48": 1.0,
+    "49": 1.0,
+    "50": 1.0,
+    "51": 1.0
+  },
+  "gods": [
+    {
+      "id": "deviceheartbeatservice_deviceheartbeatservice",
+      "label": "DeviceHeartbeatService",
+      "edges": 22
+    },
+    {
+      "id": "otpregextest_otpregextest",
+      "label": "OtpRegexTest",
+      "edges": 21
+    },
+    {
+      "id": "pairingrepository_pairingrepositoryimpl",
+      "label": "PairingRepositoryImpl",
+      "edges": 15
+    },
+    {
+      "id": "mainactivity_mainactivity",
+      "label": "MainActivity",
+      "edges": 11
+    },
+    {
+      "id": "main_updateui",
+      "label": "updateUI()",
+      "edges": 9
+    },
+    {
+      "id": "background_safesendmessage",
+      "label": "safeSendMessage()",
+      "edges": 8
+    },
+    {
+      "id": "cryptoutiltest_cryptoutiltest",
+      "label": "CryptoUtilTest",
+      "edges": 8
+    },
+    {
+      "id": "pairingscanneractivity_pairingscanneractivity",
+      "label": "PairingScannerActivity",
+      "edges": 7
+    },
+    {
+      "id": "pairingrepository_pairingrepository",
+      "label": "PairingRepository",
+      "edges": 7
+    },
+    {
+      "id": "background_startalllisteners",
+      "label": "startAllListeners()",
+      "edges": 6
+    }
+  ],
+  "surprises": [
+    {
+      "source": "Presence Server",
+      "target": "Firebase Firestore",
+      "source_files": [
+        "server/index.js",
+        "README.md"
+      ],
+      "confidence": "INFERRED",
+      "relation": "shares_data_with",
+      "why": "inferred connection - not explicitly stated in source; crosses file types (doc \u2194 code); connects across different repos/directories"
+    },
+    {
+      "source": "AES-256-GCM Encryption",
+      "target": "OTP Mirroring Flow",
+      "source_files": [
+        "security_audit.md",
+        "README.md"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "rationale_for",
+      "why": "connects across different repos/directories"
+    },
+    {
+      "source": "ECDH Key Agreement",
+      "target": "OTP Mirroring Flow",
+      "source_files": [
+        "docs/PAIRING_FLOW.md",
+        "README.md"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "references",
+      "why": "connects across different repos/directories"
+    },
+    {
+      "source": "Firebase Crashlytics Monitoring",
+      "target": "OTP Mirroring Flow",
+      "source_files": [
+        "SCORECARD.md",
+        "README.md"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "references",
+      "why": "connects across different repos/directories"
+    }
+  ],
+  "questions": [
+    {
+      "type": "isolated_nodes",
+      "question": "What connects `EncryptedData`, `Constants`, `Presence Server` to the rest of the system?",
+      "why": "6 weakly-connected nodes found - possible documentation gaps or missing edges."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `Community 0` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.07 - nodes in this community are weakly interconnected."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `Community 1` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.09 - nodes in this community are weakly interconnected."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `Community 3` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.09 - nodes in this community are weakly interconnected."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `Community 4` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.14 - nodes in this community are weakly interconnected."
+    }
+  ]
+}

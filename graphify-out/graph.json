@@ -1,23 +1,7 @@
 {
   "directed": false,
   "multigraph": false,
-  "graph": {
-    "hyperedges": [
-      {
-        "id": "otp_mirroring_flow",
-        "label": "OTP Mirroring Flow",
-        "nodes": [
-          "readme_pinbridge",
-          "production_audit_work_manager",
-          "technical_audit_presence_server"
-        ],
-        "relation": "participate_in",
-        "confidence": "EXTRACTED",
-        "confidence_score": 1.0,
-        "source_file": "README.md"
-      }
-    ]
-  },
+  "graph": {},
   "nodes": [
     {
       "label": "webpack.config.js",
@@ -25,7 +9,7 @@
       "source_file": "extension/webpack.config.js",
       "source_location": "L1",
       "id": "extension_webpack_config_js",
-      "community": 42
+      "community": 41
     },
     {
       "label": "popup.js",
@@ -39,7 +23,7 @@
       "label": "generateCaptcha()",
       "file_type": "code",
       "source_file": "extension/src/popup.js",
-      "source_location": "L66",
+      "source_location": "L55",
       "id": "popup_generatecaptcha",
       "community": 4
     },
@@ -47,7 +31,7 @@
       "label": "showCaptchaModal()",
       "file_type": "code",
       "source_file": "extension/src/popup.js",
-      "source_location": "L70",
+      "source_location": "L59",
       "id": "popup_showcaptchamodal",
       "community": 4
     },
@@ -55,7 +39,7 @@
       "label": "hideCaptchaModal()",
       "file_type": "code",
       "source_file": "extension/src/popup.js",
-      "source_location": "L80",
+      "source_location": "L69",
       "id": "popup_hidecaptchamodal",
       "community": 4
     },
@@ -63,7 +47,7 @@
       "label": "updateBrowserStatus()",
       "file_type": "code",
       "source_file": "extension/src/popup.js",
-      "source_location": "L126",
+      "source_location": "L115",
       "id": "popup_updatebrowserstatus",
       "community": 4
     },
@@ -71,7 +55,7 @@
       "label": "startContinuousSync()",
       "file_type": "code",
       "source_file": "extension/src/popup.js",
-      "source_location": "L145",
+      "source_location": "L134",
       "id": "popup_startcontinuoussync",
       "community": 4
     },
@@ -79,7 +63,7 @@
       "label": "stopContinuousSync()",
       "file_type": "code",
       "source_file": "extension/src/popup.js",
-      "source_location": "L155",
+      "source_location": "L144",
       "id": "popup_stopcontinuoussync",
       "community": 4
     },
@@ -87,7 +71,7 @@
       "label": "showPaired()",
       "file_type": "code",
       "source_file": "extension/src/popup.js",
-      "source_location": "L213",
+      "source_location": "L202",
       "id": "popup_showpaired",
       "community": 4
     },
@@ -95,7 +79,7 @@
       "label": "showUnpaired()",
       "file_type": "code",
       "source_file": "extension/src/popup.js",
-      "source_location": "L223",
+      "source_location": "L212",
       "id": "popup_showunpaired",
       "community": 4
     },
@@ -103,7 +87,7 @@
       "label": "showError()",
       "file_type": "code",
       "source_file": "extension/src/popup.js",
-      "source_location": "L255",
+      "source_location": "L244",
       "id": "popup_showerror",
       "community": 4
     },
@@ -111,7 +95,7 @@
       "label": "hideError()",
       "file_type": "code",
       "source_file": "extension/src/popup.js",
-      "source_location": "L260",
+      "source_location": "L249",
       "id": "popup_hideerror",
       "community": 4
     },
@@ -119,7 +103,7 @@
       "label": "showConnectingStatus()",
       "file_type": "code",
       "source_file": "extension/src/popup.js",
-      "source_location": "L265",
+      "source_location": "L254",
       "id": "popup_showconnectingstatus",
       "community": 4
     },
@@ -127,7 +111,7 @@
       "label": "updateConnectionStatus()",
       "file_type": "code",
       "source_file": "extension/src/popup.js",
-      "source_location": "L271",
+      "source_location": "L260",
       "id": "popup_updateconnectionstatus",
       "community": 4
     },
@@ -135,7 +119,7 @@
       "label": "updateBatteryDisplay()",
       "file_type": "code",
       "source_file": "extension/src/popup.js",
-      "source_location": "L312",
+      "source_location": "L301",
       "id": "popup_updatebatterydisplay",
       "community": 4
     },
@@ -143,7 +127,7 @@
       "label": "updateOtpDisplay()",
       "file_type": "code",
       "source_file": "extension/src/popup.js",
-      "source_location": "L332",
+      "source_location": "L321",
       "id": "popup_updateotpdisplay",
       "community": 4
     },
@@ -151,7 +135,7 @@
       "label": "startAuthPolling()",
       "file_type": "code",
       "source_file": "extension/src/popup.js",
-      "source_location": "L351",
+      "source_location": "L340",
       "id": "popup_startauthpolling",
       "community": 4
     },
@@ -159,7 +143,7 @@
       "label": "onFetchSuccess()",
       "file_type": "code",
       "source_file": "extension/src/popup.js",
-      "source_location": "L448",
+      "source_location": "L437",
       "id": "popup_onfetchsuccess",
       "community": 4
     },
@@ -175,7 +159,7 @@
       "label": "waitForAuth()",
       "file_type": "code",
       "source_file": "extension/src/background.js",
-      "source_location": "L50",
+      "source_location": "L39",
       "id": "background_waitforauth",
       "community": 2
     },
@@ -183,7 +167,7 @@
       "label": "safeSendMessage()",
       "file_type": "code",
       "source_file": "extension/src/background.js",
-      "source_location": "L62",
+      "source_location": "L51",
       "id": "background_safesendmessage",
       "community": 2
     },
@@ -191,7 +175,7 @@
       "label": "startKeepalive()",
       "file_type": "code",
       "source_file": "extension/src/background.js",
-      "source_location": "L133",
+      "source_location": "L122",
       "id": "background_startkeepalive",
       "community": 2
     },
@@ -199,7 +183,7 @@
       "label": "stopKeepalive()",
       "file_type": "code",
       "source_file": "extension/src/background.js",
-      "source_location": "L138",
+      "source_location": "L127",
       "id": "background_stopkeepalive",
       "community": 2
     },
@@ -207,7 +191,7 @@
       "label": "performPairing()",
       "file_type": "code",
       "source_file": "extension/src/background.js",
-      "source_location": "L145",
+      "source_location": "L134",
       "id": "background_performpairing",
       "community": 2
     },
@@ -215,7 +199,7 @@
       "label": "hydrateAndPush()",
       "file_type": "code",
       "source_file": "extension/src/background.js",
-      "source_location": "L272",
+      "source_location": "L261",
       "id": "background_hydrateandpush",
       "community": 2
     },
@@ -223,7 +207,7 @@
       "label": "handleGoogleSignIn()",
       "file_type": "code",
       "source_file": "extension/src/background.js",
-      "source_location": "L324",
+      "source_location": "L313",
       "id": "background_handlegooglesignin",
       "community": 2
     },
@@ -231,7 +215,7 @@
       "label": "handleWebLoginSuccess()",
       "file_type": "code",
       "source_file": "extension/src/background.js",
-      "source_location": "L374",
+      "source_location": "L363",
       "id": "background_handlewebloginsuccess",
       "community": 2
     },
@@ -239,7 +223,7 @@
       "label": "handleWebPairingSuccess()",
       "file_type": "code",
       "source_file": "extension/src/background.js",
-      "source_location": "L409",
+      "source_location": "L398",
       "id": "background_handlewebpairingsuccess",
       "community": 2
     },
@@ -247,7 +231,7 @@
       "label": "handleManualFetch()",
       "file_type": "code",
       "source_file": "extension/src/background.js",
-      "source_location": "L420",
+      "source_location": "L409",
       "id": "background_handlemanualfetch",
       "community": 2
     },
@@ -255,7 +239,7 @@
       "label": "performSignOutOnly()",
       "file_type": "code",
       "source_file": "extension/src/background.js",
-      "source_location": "L470",
+      "source_location": "L459",
       "id": "background_performsignoutonly",
       "community": 2
     },
@@ -263,7 +247,7 @@
       "label": "cleanupFirestorePairing()",
       "file_type": "code",
       "source_file": "extension/src/background.js",
-      "source_location": "L483",
+      "source_location": "L472",
       "id": "background_cleanupfirestorepairing",
       "community": 2
     },
@@ -271,7 +255,7 @@
       "label": "performUnpairOnly()",
       "file_type": "code",
       "source_file": "extension/src/background.js",
-      "source_location": "L510",
+      "source_location": "L499",
       "id": "background_performunpaironly",
       "community": 2
     },
@@ -279,7 +263,7 @@
       "label": "performSignOut()",
       "file_type": "code",
       "source_file": "extension/src/background.js",
-      "source_location": "L528",
+      "source_location": "L517",
       "id": "background_performsignout",
       "community": 2
     },
@@ -287,7 +271,7 @@
       "label": "stopPresenceListeners()",
       "file_type": "code",
       "source_file": "extension/src/background.js",
-      "source_location": "L552",
+      "source_location": "L541",
       "id": "background_stoppresencelisteners",
       "community": 2
     },
@@ -295,7 +279,7 @@
       "label": "stopOtpListener()",
       "file_type": "code",
       "source_file": "extension/src/background.js",
-      "source_location": "L562",
+      "source_location": "L551",
       "id": "background_stopotplistener",
       "community": 2
     },
@@ -303,7 +287,7 @@
       "label": "stopAllListeners()",
       "file_type": "code",
       "source_file": "extension/src/background.js",
-      "source_location": "L566",
+      "source_location": "L555",
       "id": "background_stopalllisteners",
       "community": 2
     },
@@ -311,7 +295,7 @@
       "label": "startPresenceListeners()",
       "file_type": "code",
       "source_file": "extension/src/background.js",
-      "source_location": "L576",
+      "source_location": "L565",
       "id": "background_startpresencelisteners",
       "community": 2
     },
@@ -319,7 +303,7 @@
       "label": "startOtpListener()",
       "file_type": "code",
       "source_file": "extension/src/background.js",
-      "source_location": "L699",
+      "source_location": "L698",
       "id": "background_startotplistener",
       "community": 2
     },
@@ -327,7 +311,7 @@
       "label": "startAllListeners()",
       "file_type": "code",
       "source_file": "extension/src/background.js",
-      "source_location": "L724",
+      "source_location": "L726",
       "id": "background_startalllisteners",
       "community": 2
     },
@@ -335,7 +319,7 @@
       "label": "processNewOtp()",
       "file_type": "code",
       "source_file": "extension/src/background.js",
-      "source_location": "L729",
+      "source_location": "L731",
       "id": "background_processnewotp",
       "community": 2
     },
@@ -351,7 +335,7 @@
       "label": "isDashboardPage()",
       "file_type": "code",
       "source_file": "extension/src/config.js",
-      "source_location": "L33",
+      "source_location": "L31",
       "id": "config_isdashboardpage",
       "community": 29
     },
@@ -367,7 +351,7 @@
       "label": "statusArea()",
       "file_type": "code",
       "source_file": "extension/src/pairing.js",
-      "source_location": "L33",
+      "source_location": "L23",
       "id": "pairing_statusarea",
       "community": 10
     },
@@ -375,7 +359,7 @@
       "label": "statusText()",
       "file_type": "code",
       "source_file": "extension/src/pairing.js",
-      "source_location": "L34",
+      "source_location": "L24",
       "id": "pairing_statustext",
       "community": 10
     },
@@ -383,7 +367,7 @@
       "label": "countdownEl()",
       "file_type": "code",
       "source_file": "extension/src/pairing.js",
-      "source_location": "L35",
+      "source_location": "L25",
       "id": "pairing_countdownel",
       "community": 10
     },
@@ -391,7 +375,7 @@
       "label": "setStatus()",
       "file_type": "code",
       "source_file": "extension/src/pairing.js",
-      "source_location": "L37",
+      "source_location": "L27",
       "id": "pairing_setstatus",
       "community": 10
     },
@@ -399,7 +383,7 @@
       "label": "startCountdown()",
       "file_type": "code",
       "source_file": "extension/src/pairing.js",
-      "source_location": "L71",
+      "source_location": "L61",
       "id": "pairing_startcountdown",
       "community": 10
     },
@@ -441,7 +425,7 @@
       "source_file": "web/vite.config.js",
       "source_location": "L1",
       "id": "web_vite_config_js",
-      "community": 43
+      "community": 42
     },
     {
       "label": "main.js",
@@ -455,7 +439,7 @@
       "label": "isDeviceOnline()",
       "file_type": "code",
       "source_file": "web/main.js",
-      "source_location": "L77",
+      "source_location": "L68",
       "id": "main_isdeviceonline",
       "community": 5
     },
@@ -463,7 +447,7 @@
       "label": "escapeHtml()",
       "file_type": "code",
       "source_file": "web/main.js",
-      "source_location": "L85",
+      "source_location": "L76",
       "id": "main_escapehtml",
       "community": 5
     },
@@ -471,7 +455,7 @@
       "label": "checkUrlParams()",
       "file_type": "code",
       "source_file": "web/main.js",
-      "source_location": "L101",
+      "source_location": "L92",
       "id": "main_checkurlparams",
       "community": 5
     },
@@ -479,7 +463,7 @@
       "label": "decryptOtp()",
       "file_type": "code",
       "source_file": "web/main.js",
-      "source_location": "L121",
+      "source_location": "L112",
       "id": "main_decryptotp",
       "community": 5
     },
@@ -487,7 +471,7 @@
       "label": "el()",
       "file_type": "code",
       "source_file": "web/main.js",
-      "source_location": "L132",
+      "source_location": "L123",
       "id": "main_el",
       "community": 5
     },
@@ -495,7 +479,7 @@
       "label": "updateUI()",
       "file_type": "code",
       "source_file": "web/main.js",
-      "source_location": "L158",
+      "source_location": "L149",
       "id": "main_updateui",
       "community": 5
     },
@@ -503,7 +487,7 @@
       "label": "updateConnectionIndicator()",
       "file_type": "code",
       "source_file": "web/main.js",
-      "source_location": "L183",
+      "source_location": "L174",
       "id": "main_updateconnectionindicator",
       "community": 5
     },
@@ -511,7 +495,7 @@
       "label": "renderSignIn()",
       "file_type": "code",
       "source_file": "web/main.js",
-      "source_location": "L267",
+      "source_location": "L258",
       "id": "main_rendersignin",
       "community": 5
     },
@@ -519,7 +503,7 @@
       "label": "renderUnpaired()",
       "file_type": "code",
       "source_file": "web/main.js",
-      "source_location": "L313",
+      "source_location": "L304",
       "id": "main_renderunpaired",
       "community": 5
     },
@@ -527,7 +511,7 @@
       "label": "renderPaired()",
       "file_type": "code",
       "source_file": "web/main.js",
-      "source_location": "L364",
+      "source_location": "L355",
       "id": "main_renderpaired",
       "community": 5
     },
@@ -535,7 +519,7 @@
       "label": "loginWithGoogle()",
       "file_type": "code",
       "source_file": "web/main.js",
-      "source_location": "L586",
+      "source_location": "L589",
       "id": "main_loginwithgoogle",
       "community": 5
     },
@@ -543,7 +527,7 @@
       "label": "listenToCloudSync()",
       "file_type": "code",
       "source_file": "web/main.js",
-      "source_location": "L614",
+      "source_location": "L617",
       "id": "main_listentocloudsync",
       "community": 5
     },
@@ -551,7 +535,7 @@
       "label": "handleSignOut()",
       "file_type": "code",
       "source_file": "web/main.js",
-      "source_location": "L682",
+      "source_location": "L685",
       "id": "main_handlesignout",
       "community": 5
     },
@@ -559,7 +543,7 @@
       "label": "startListeners()",
       "file_type": "code",
       "source_file": "web/main.js",
-      "source_location": "L737",
+      "source_location": "L740",
       "id": "main_startlisteners",
       "community": 5
     },
@@ -567,7 +551,7 @@
       "label": "handleForcedUnpair()",
       "file_type": "code",
       "source_file": "web/main.js",
-      "source_location": "L837",
+      "source_location": "L840",
       "id": "main_handleforcedunpair",
       "community": 5
     },
@@ -575,7 +559,7 @@
       "label": "stopListeners()",
       "file_type": "code",
       "source_file": "web/main.js",
-      "source_location": "L848",
+      "source_location": "L851",
       "id": "main_stoplisteners",
       "community": 5
     },
@@ -591,17 +575,9 @@
       "label": "log()",
       "file_type": "code",
       "source_file": "server/index.js",
-      "source_location": "L60",
+      "source_location": "L58",
       "id": "index_log",
       "community": 32
-    },
-    {
-      "label": "instrument.js",
-      "file_type": "code",
-      "source_file": "server/instrument.js",
-      "source_location": "L1",
-      "id": "server_instrument_js",
-      "community": 44
     },
     {
       "label": "index.test.js",
@@ -625,7 +601,7 @@
       "source_file": "android/build.gradle.kts",
       "source_location": "L1",
       "id": "android_build_gradle_kts",
-      "community": 45
+      "community": 43
     },
     {
       "label": "settings.gradle.kts",
@@ -633,7 +609,7 @@
       "source_file": "android/settings.gradle.kts",
       "source_location": "L1",
       "id": "android_settings_gradle_kts",
-      "community": 46
+      "community": 44
     },
     {
       "label": "build.gradle.kts",
@@ -641,7 +617,7 @@
       "source_file": "android/app/build.gradle.kts",
       "source_location": "L1",
       "id": "android_app_build_gradle_kts",
-      "community": 47
+      "community": 45
     },
     {
       "label": "OtpReceiverTest.kt",
@@ -649,7 +625,7 @@
       "source_file": "android/app/src/androidTest/java/com/pinbridge/otpmirror/OtpReceiverTest.kt",
       "source_location": "L1",
       "id": "android_app_src_androidtest_java_com_pinbridge_otpmirror_otpreceivertest_kt",
-      "community": 19
+      "community": 20
     },
     {
       "label": "OtpReceiverTest",
@@ -657,7 +633,7 @@
       "source_file": "android/app/src/androidTest/java/com/pinbridge/otpmirror/OtpReceiverTest.kt",
       "source_location": "L12",
       "id": "otpreceivertest_otpreceivertest",
-      "community": 19
+      "community": 20
     },
     {
       "label": ".testCurrencyExclusionAndOtpExtraction()",
@@ -665,7 +641,7 @@
       "source_file": "android/app/src/androidTest/java/com/pinbridge/otpmirror/OtpReceiverTest.kt",
       "source_location": "L15",
       "id": "otpreceivertest_otpreceivertest_testcurrencyexclusionandotpextraction",
-      "community": 19
+      "community": 20
     },
     {
       "label": "MainActivityTest.kt",
@@ -673,7 +649,7 @@
       "source_file": "android/app/src/androidTest/java/com/pinbridge/otpmirror/MainActivityTest.kt",
       "source_location": "L1",
       "id": "android_app_src_androidtest_java_com_pinbridge_otpmirror_mainactivitytest_kt",
-      "community": 20
+      "community": 21
     },
     {
       "label": "MainActivityTest",
@@ -681,7 +657,7 @@
       "source_file": "android/app/src/androidTest/java/com/pinbridge/otpmirror/MainActivityTest.kt",
       "source_location": "L14",
       "id": "mainactivitytest_mainactivitytest",
-      "community": 20
+      "community": 21
     },
     {
       "label": ".clickingShowPairingQr_opensPairingActivity_andShowsQr()",
@@ -689,7 +665,7 @@
       "source_file": "android/app/src/androidTest/java/com/pinbridge/otpmirror/MainActivityTest.kt",
       "source_location": "L20",
       "id": "mainactivitytest_mainactivitytest_clickingshowpairingqr_openspairingactivity_andshowsqr",
-      "community": 20
+      "community": 21
     },
     {
       "label": "PairingActivityTest.kt",
@@ -697,7 +673,7 @@
       "source_file": "android/app/src/androidTest/java/com/pinbridge/otpmirror/PairingActivityTest.kt",
       "source_location": "L1",
       "id": "android_app_src_androidtest_java_com_pinbridge_otpmirror_pairingactivitytest_kt",
-      "community": 16
+      "community": 17
     },
     {
       "label": "PairingActivityTest",
@@ -705,7 +681,7 @@
       "source_file": "android/app/src/androidTest/java/com/pinbridge/otpmirror/PairingActivityTest.kt",
       "source_location": "L18",
       "id": "pairingactivitytest_pairingactivitytest",
-      "community": 16
+      "community": 17
     },
     {
       "label": ".`qr code contains valid deviceId and secret`()",
@@ -713,7 +689,7 @@
       "source_file": "android/app/src/androidTest/java/com/pinbridge/otpmirror/PairingActivityTest.kt",
       "source_location": "L21",
       "id": "pairingactivitytest_pairingactivitytest_qr_code_contains_valid_deviceid_and_secret",
-      "community": 16
+      "community": 17
     },
     {
       "label": ".decodeQr()",
@@ -721,7 +697,7 @@
       "source_file": "android/app/src/androidTest/java/com/pinbridge/otpmirror/PairingActivityTest.kt",
       "source_location": "L56",
       "id": "pairingactivitytest_pairingactivitytest_decodeqr",
-      "community": 16
+      "community": 17
     },
     {
       "label": "UploadOtpWorkerTest.kt",
@@ -729,7 +705,7 @@
       "source_file": "android/app/src/androidTest/java/com/pinbridge/otpmirror/UploadOtpWorkerTest.kt",
       "source_location": "L1",
       "id": "android_app_src_androidtest_java_com_pinbridge_otpmirror_uploadotpworkertest_kt",
-      "community": 14
+      "community": 15
     },
     {
       "label": "UploadOtpWorkerTest",
@@ -737,7 +713,7 @@
       "source_file": "android/app/src/androidTest/java/com/pinbridge/otpmirror/UploadOtpWorkerTest.kt",
       "source_location": "L21",
       "id": "uploadotpworkertest_uploadotpworkertest",
-      "community": 14
+      "community": 15
     },
     {
       "label": ".setUp()",
@@ -745,7 +721,7 @@
       "source_file": "android/app/src/androidTest/java/com/pinbridge/otpmirror/UploadOtpWorkerTest.kt",
       "source_location": "L31",
       "id": "uploadotpworkertest_uploadotpworkertest_setup",
-      "community": 14
+      "community": 15
     },
     {
       "label": ".tearDown()",
@@ -753,7 +729,7 @@
       "source_file": "android/app/src/androidTest/java/com/pinbridge/otpmirror/UploadOtpWorkerTest.kt",
       "source_location": "L80",
       "id": "uploadotpworkertest_uploadotpworkertest_teardown",
-      "community": 14
+      "community": 15
     },
     {
       "label": ".`worker uploads encrypted otp and can be decrypted correctly`()",
@@ -761,7 +737,7 @@
       "source_file": "android/app/src/androidTest/java/com/pinbridge/otpmirror/UploadOtpWorkerTest.kt",
       "source_location": "L88",
       "id": "uploadotpworkertest_uploadotpworkertest_worker_uploads_encrypted_otp_and_can_be_decrypted_correctly",
-      "community": 14
+      "community": 15
     },
     {
       "label": "E2ETest.kt",
@@ -817,7 +793,7 @@
       "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/ConstantsTest.kt",
       "source_location": "L1",
       "id": "android_app_src_test_java_com_pinbridge_otpmirror_constantstest_kt",
-      "community": 21
+      "community": 22
     },
     {
       "label": "ConstantsTest",
@@ -825,7 +801,7 @@
       "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/ConstantsTest.kt",
       "source_location": "L6",
       "id": "constantstest_constantstest",
-      "community": 21
+      "community": 22
     },
     {
       "label": ".`pref names are non empty`()",
@@ -833,7 +809,7 @@
       "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/ConstantsTest.kt",
       "source_location": "L8",
       "id": "constantstest_constantstest_pref_names_are_non_empty",
-      "community": 21
+      "community": 22
     },
     {
       "label": "OtpRegexTest.kt",
@@ -1017,7 +993,7 @@
       "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/ExampleUnitTest.kt",
       "source_location": "L1",
       "id": "android_app_src_test_java_com_pinbridge_otpmirror_exampleunittest_kt",
-      "community": 17
+      "community": 18
     },
     {
       "label": "ExampleUnitTest",
@@ -1025,7 +1001,7 @@
       "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/ExampleUnitTest.kt",
       "source_location": "L6",
       "id": "exampleunittest_exampleunittest",
-      "community": 17
+      "community": 18
     },
     {
       "label": ".addition_isCorrect()",
@@ -1033,7 +1009,7 @@
       "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/ExampleUnitTest.kt",
       "source_location": "L7",
       "id": "exampleunittest_exampleunittest_addition_iscorrect",
-      "community": 17
+      "community": 18
     },
     {
       "label": ".secret_placeholder_check()",
@@ -1041,7 +1017,7 @@
       "source_file": "android/app/src/test/java/com/pinbridge/otpmirror/ExampleUnitTest.kt",
       "source_location": "L12",
       "id": "exampleunittest_exampleunittest_secret_placeholder_check",
-      "community": 17
+      "community": 18
     },
     {
       "label": "CryptoUtilTest.kt",
@@ -1121,7 +1097,7 @@
       "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/UploadOtpWorker.kt",
       "source_location": "L1",
       "id": "android_app_src_main_java_com_pinbridge_otpmirror_uploadotpworker_kt",
-      "community": 22
+      "community": 23
     },
     {
       "label": "UploadOtpWorker",
@@ -1129,7 +1105,7 @@
       "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/UploadOtpWorker.kt",
       "source_location": "L16",
       "id": "uploadotpworker_uploadotpworker",
-      "community": 22
+      "community": 23
     },
     {
       "label": ".doWork()",
@@ -1137,7 +1113,7 @@
       "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/UploadOtpWorker.kt",
       "source_location": "L25",
       "id": "uploadotpworker_uploadotpworker_dowork",
-      "community": 22
+      "community": 23
     },
     {
       "label": "ManualCodeEntryActivity.kt",
@@ -1353,7 +1329,7 @@
       "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/PinBridgeApp.kt",
       "source_location": "L1",
       "id": "android_app_src_main_java_com_pinbridge_otpmirror_pinbridgeapp_kt",
-      "community": 23
+      "community": 24
     },
     {
       "label": "PinBridgeApp",
@@ -1361,7 +1337,7 @@
       "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/PinBridgeApp.kt",
       "source_location": "L12",
       "id": "pinbridgeapp_pinbridgeapp",
-      "community": 23
+      "community": 24
     },
     {
       "label": ".onCreate()",
@@ -1369,7 +1345,7 @@
       "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/PinBridgeApp.kt",
       "source_location": "L18",
       "id": "pinbridgeapp_pinbridgeapp_oncreate",
-      "community": 23
+      "community": 24
     },
     {
       "label": "SmsPermissionHelper.kt",
@@ -1377,7 +1353,7 @@
       "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/SmsPermissionHelper.kt",
       "source_location": "L1",
       "id": "android_app_src_main_java_com_pinbridge_otpmirror_smspermissionhelper_kt",
-      "community": 24
+      "community": 25
     },
     {
       "label": "SmsPermissionHelper",
@@ -1385,7 +1361,7 @@
       "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/SmsPermissionHelper.kt",
       "source_location": "L13",
       "id": "smspermissionhelper_smspermissionhelper",
-      "community": 24
+      "community": 25
     },
     {
       "label": ".requestPermissions()",
@@ -1393,7 +1369,7 @@
       "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/SmsPermissionHelper.kt",
       "source_location": "L26",
       "id": "smspermissionhelper_smspermissionhelper_requestpermissions",
-      "community": 24
+      "community": 25
     },
     {
       "label": "DeviceHeartbeatService.kt",
@@ -1617,7 +1593,7 @@
       "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/CryptoUtil.kt",
       "source_location": "L1",
       "id": "android_app_src_main_java_com_pinbridge_otpmirror_cryptoutil_kt",
-      "community": 15
+      "community": 16
     },
     {
       "label": "CryptoUtil",
@@ -1625,7 +1601,7 @@
       "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/CryptoUtil.kt",
       "source_location": "L9",
       "id": "cryptoutil_cryptoutil",
-      "community": 15
+      "community": 16
     },
     {
       "label": "EncryptedData",
@@ -1633,7 +1609,7 @@
       "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/CryptoUtil.kt",
       "source_location": "L14",
       "id": "cryptoutil_encrypteddata",
-      "community": 15
+      "community": 16
     },
     {
       "label": ".encrypt()",
@@ -1641,7 +1617,7 @@
       "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/CryptoUtil.kt",
       "source_location": "L16",
       "id": "cryptoutil_cryptoutil_encrypt",
-      "community": 15
+      "community": 16
     },
     {
       "label": ".decrypt()",
@@ -1649,7 +1625,7 @@
       "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/CryptoUtil.kt",
       "source_location": "L33",
       "id": "cryptoutil_cryptoutil_decrypt",
-      "community": 15
+      "community": 16
     },
     {
       "label": "OtpReceiver.kt",
@@ -1657,7 +1633,7 @@
       "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/OtpReceiver.kt",
       "source_location": "L1",
       "id": "android_app_src_main_java_com_pinbridge_otpmirror_otpreceiver_kt",
-      "community": 25
+      "community": 26
     },
     {
       "label": "OtpReceiver",
@@ -1665,7 +1641,7 @@
       "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/OtpReceiver.kt",
       "source_location": "L11",
       "id": "otpreceiver_otpreceiver",
-      "community": 25
+      "community": 26
     },
     {
       "label": ".onReceive()",
@@ -1673,7 +1649,7 @@
       "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/OtpReceiver.kt",
       "source_location": "L13",
       "id": "otpreceiver_otpreceiver_onreceive",
-      "community": 25
+      "community": 26
     },
     {
       "label": "OtpUploader.kt",
@@ -1737,7 +1713,7 @@
       "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/SmsRetriever.kt",
       "source_location": "L1",
       "id": "android_app_src_main_java_com_pinbridge_otpmirror_smsretriever_kt",
-      "community": 26
+      "community": 27
     },
     {
       "label": "SmsRetriever",
@@ -1745,7 +1721,7 @@
       "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/SmsRetriever.kt",
       "source_location": "L7",
       "id": "smsretriever_smsretriever",
-      "community": 26
+      "community": 27
     },
     {
       "label": ".getLatestOtp()",
@@ -1753,7 +1729,7 @@
       "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/SmsRetriever.kt",
       "source_location": "L10",
       "id": "smsretriever_smsretriever_getlatestotp",
-      "community": 26
+      "community": 27
     },
     {
       "label": "BootReceiver.kt",
@@ -1761,7 +1737,7 @@
       "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/BootReceiver.kt",
       "source_location": "L1",
       "id": "android_app_src_main_java_com_pinbridge_otpmirror_bootreceiver_kt",
-      "community": 27
+      "community": 28
     },
     {
       "label": "BootReceiver",
@@ -1769,7 +1745,7 @@
       "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/BootReceiver.kt",
       "source_location": "L14",
       "id": "bootreceiver_bootreceiver",
-      "community": 27
+      "community": 28
     },
     {
       "label": ".onReceive()",
@@ -1777,7 +1753,7 @@
       "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/BootReceiver.kt",
       "source_location": "L18",
       "id": "bootreceiver_bootreceiver_onreceive",
-      "community": 27
+      "community": 28
     },
     {
       "label": "Constants.kt",
@@ -1801,7 +1777,7 @@
       "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/OtpExtractor.kt",
       "source_location": "L1",
       "id": "android_app_src_main_java_com_pinbridge_otpmirror_otpextractor_kt",
-      "community": 18
+      "community": 19
     },
     {
       "label": "OtpExtractor",
@@ -1809,7 +1785,7 @@
       "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/OtpExtractor.kt",
       "source_location": "L15",
       "id": "otpextractor_otpextractor",
-      "community": 18
+      "community": 19
     },
     {
       "label": ".extractOtp()",
@@ -1817,7 +1793,7 @@
       "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/OtpExtractor.kt",
       "source_location": "L27",
       "id": "otpextractor_otpextractor_extractotp",
-      "community": 18
+      "community": 19
     },
     {
       "label": ".isExcludedNumber()",
@@ -1825,7 +1801,7 @@
       "source_file": "android/app/src/main/java/com/pinbridge/otpmirror/OtpExtractor.kt",
       "source_location": "L65",
       "id": "otpextractor_otpextractor_isexcludednumber",
-      "community": 18
+      "community": 19
     },
     {
       "label": "ConnectedScreen.kt",
@@ -2161,7 +2137,7 @@
       "source_file": "functions/lib/index.js",
       "source_location": "L1",
       "id": "functions_lib_index_js",
-      "community": 48
+      "community": 46
     },
     {
       "label": "index.js",
@@ -2169,7 +2145,7 @@
       "source_file": "functions/lib/src/index.js",
       "source_location": "L1",
       "id": "functions_lib_src_index_js",
-      "community": 49
+      "community": 47
     },
     {
       "label": "index.ts",
@@ -2177,7 +2153,7 @@
       "source_file": "functions/src/index.ts",
       "source_location": "L1",
       "id": "functions_src_index_ts",
-      "community": 50
+      "community": 48
     },
     {
       "label": "playwright.config.js",
@@ -2185,7 +2161,7 @@
       "source_file": "e2e/playwright.config.js",
       "source_location": "L1",
       "id": "e2e_playwright_config_js",
-      "community": 51
+      "community": 49
     },
     {
       "label": "dashboard.spec.js",
@@ -2193,7 +2169,7 @@
       "source_file": "e2e/tests/dashboard.spec.js",
       "source_location": "L1",
       "id": "e2e_tests_dashboard_spec_js",
-      "community": 52
+      "community": 50
     },
     {
       "label": "extension.spec.js",
@@ -2201,71 +2177,79 @@
       "source_file": "e2e/tests/extension.spec.js",
       "source_location": "L1",
       "id": "e2e_tests_extension_spec_js",
-      "community": 53
+      "community": 51
     },
     {
-      "label": "PinBridge System",
+      "label": "Firebase Firestore",
       "file_type": "document",
       "source_file": "README.md",
       "source_location": null,
-      "id": "readme_pinbridge",
-      "community": 28
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "firebase_firestore",
+      "community": 14
     },
     {
       "label": "Presence Server",
       "file_type": "document",
-      "source_file": "technical_audit.md",
+      "source_file": "server/index.js",
       "source_location": null,
-      "id": "technical_audit_presence_server",
-      "community": 28
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "presence_server",
+      "community": 14
     },
     {
-      "label": "Vulnerability V-04: Insecure Secret Exchange",
+      "label": "AES-256-GCM Encryption",
       "file_type": "document",
       "source_file": "security_audit.md",
       "source_location": null,
-      "id": "security_audit_v_04",
-      "community": 41
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "aes_256_gcm_encryption",
+      "community": 14
     },
     {
       "label": "ECDH Key Agreement",
       "file_type": "document",
       "source_file": "docs/PAIRING_FLOW.md",
       "source_location": null,
-      "id": "docs_pairing_flow_ecdh",
-      "community": 41
-    },
-    {
-      "label": "Android WorkManager Implementation",
-      "file_type": "document",
-      "source_file": "production_audit.md",
-      "source_location": null,
-      "id": "production_audit_work_manager",
-      "community": 54
-    },
-    {
-      "label": "Playwright E2E Test Failure",
-      "file_type": "document",
-      "source_file": "e2e/.../error-context.md",
-      "source_location": null,
-      "id": "e2e_error_context_playwright",
-      "community": 55
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "ecdh_key_agreement",
+      "community": 14
     },
     {
       "label": "Firebase Crashlytics Monitoring",
       "file_type": "document",
       "source_file": "SCORECARD.md",
       "source_location": null,
-      "id": "scorecard_monitoring",
-      "community": 56
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "firebase_crashlytics_monitoring",
+      "community": 14
     },
     {
-      "label": "Render/Firebase Deployment",
+      "label": "OTP Mirroring Flow",
       "file_type": "document",
-      "source_file": "RUNBOOK.md",
+      "source_file": "README.md",
       "source_location": null,
-      "id": "runbook_deployment",
-      "community": 28
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null,
+      "id": "otp_mirroring_flow",
+      "community": 14
     }
   ],
   "links": [
@@ -2273,7 +2257,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/popup.js",
-      "source_location": "L66",
+      "source_location": "L55",
       "weight": 1.0,
       "_src": "extension_src_popup_js",
       "_tgt": "popup_generatecaptcha",
@@ -2285,7 +2269,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/popup.js",
-      "source_location": "L70",
+      "source_location": "L59",
       "weight": 1.0,
       "_src": "extension_src_popup_js",
       "_tgt": "popup_showcaptchamodal",
@@ -2297,7 +2281,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/popup.js",
-      "source_location": "L80",
+      "source_location": "L69",
       "weight": 1.0,
       "_src": "extension_src_popup_js",
       "_tgt": "popup_hidecaptchamodal",
@@ -2309,7 +2293,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/popup.js",
-      "source_location": "L126",
+      "source_location": "L115",
       "weight": 1.0,
       "_src": "extension_src_popup_js",
       "_tgt": "popup_updatebrowserstatus",
@@ -2321,7 +2305,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/popup.js",
-      "source_location": "L145",
+      "source_location": "L134",
       "weight": 1.0,
       "_src": "extension_src_popup_js",
       "_tgt": "popup_startcontinuoussync",
@@ -2333,7 +2317,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/popup.js",
-      "source_location": "L155",
+      "source_location": "L144",
       "weight": 1.0,
       "_src": "extension_src_popup_js",
       "_tgt": "popup_stopcontinuoussync",
@@ -2345,7 +2329,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/popup.js",
-      "source_location": "L213",
+      "source_location": "L202",
       "weight": 1.0,
       "_src": "extension_src_popup_js",
       "_tgt": "popup_showpaired",
@@ -2357,7 +2341,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/popup.js",
-      "source_location": "L223",
+      "source_location": "L212",
       "weight": 1.0,
       "_src": "extension_src_popup_js",
       "_tgt": "popup_showunpaired",
@@ -2369,7 +2353,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/popup.js",
-      "source_location": "L255",
+      "source_location": "L244",
       "weight": 1.0,
       "_src": "extension_src_popup_js",
       "_tgt": "popup_showerror",
@@ -2381,7 +2365,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/popup.js",
-      "source_location": "L260",
+      "source_location": "L249",
       "weight": 1.0,
       "_src": "extension_src_popup_js",
       "_tgt": "popup_hideerror",
@@ -2393,7 +2377,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/popup.js",
-      "source_location": "L265",
+      "source_location": "L254",
       "weight": 1.0,
       "_src": "extension_src_popup_js",
       "_tgt": "popup_showconnectingstatus",
@@ -2405,7 +2389,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/popup.js",
-      "source_location": "L271",
+      "source_location": "L260",
       "weight": 1.0,
       "_src": "extension_src_popup_js",
       "_tgt": "popup_updateconnectionstatus",
@@ -2417,7 +2401,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/popup.js",
-      "source_location": "L312",
+      "source_location": "L301",
       "weight": 1.0,
       "_src": "extension_src_popup_js",
       "_tgt": "popup_updatebatterydisplay",
@@ -2429,7 +2413,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/popup.js",
-      "source_location": "L332",
+      "source_location": "L321",
       "weight": 1.0,
       "_src": "extension_src_popup_js",
       "_tgt": "popup_updateotpdisplay",
@@ -2441,7 +2425,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/popup.js",
-      "source_location": "L351",
+      "source_location": "L340",
       "weight": 1.0,
       "_src": "extension_src_popup_js",
       "_tgt": "popup_startauthpolling",
@@ -2453,7 +2437,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/popup.js",
-      "source_location": "L448",
+      "source_location": "L437",
       "weight": 1.0,
       "_src": "extension_src_popup_js",
       "_tgt": "popup_onfetchsuccess",
@@ -2465,7 +2449,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/popup.js",
-      "source_location": "L71",
+      "source_location": "L60",
       "weight": 1.0,
       "_src": "popup_showcaptchamodal",
       "_tgt": "popup_generatecaptcha",
@@ -2477,7 +2461,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/popup.js",
-      "source_location": "L287",
+      "source_location": "L276",
       "weight": 1.0,
       "_src": "popup_updateconnectionstatus",
       "_tgt": "popup_showconnectingstatus",
@@ -2489,7 +2473,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/popup.js",
-      "source_location": "L299",
+      "source_location": "L288",
       "weight": 1.0,
       "_src": "popup_updateconnectionstatus",
       "_tgt": "popup_updatebatterydisplay",
@@ -2501,7 +2485,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/background.js",
-      "source_location": "L50",
+      "source_location": "L39",
       "weight": 1.0,
       "_src": "extension_src_background_js",
       "_tgt": "background_waitforauth",
@@ -2513,7 +2497,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/background.js",
-      "source_location": "L62",
+      "source_location": "L51",
       "weight": 1.0,
       "_src": "extension_src_background_js",
       "_tgt": "background_safesendmessage",
@@ -2525,7 +2509,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/background.js",
-      "source_location": "L133",
+      "source_location": "L122",
       "weight": 1.0,
       "_src": "extension_src_background_js",
       "_tgt": "background_startkeepalive",
@@ -2537,7 +2521,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/background.js",
-      "source_location": "L138",
+      "source_location": "L127",
       "weight": 1.0,
       "_src": "extension_src_background_js",
       "_tgt": "background_stopkeepalive",
@@ -2549,7 +2533,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/background.js",
-      "source_location": "L145",
+      "source_location": "L134",
       "weight": 1.0,
       "_src": "extension_src_background_js",
       "_tgt": "background_performpairing",
@@ -2561,7 +2545,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/background.js",
-      "source_location": "L272",
+      "source_location": "L261",
       "weight": 1.0,
       "_src": "extension_src_background_js",
       "_tgt": "background_hydrateandpush",
@@ -2573,7 +2557,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/background.js",
-      "source_location": "L324",
+      "source_location": "L313",
       "weight": 1.0,
       "_src": "extension_src_background_js",
       "_tgt": "background_handlegooglesignin",
@@ -2585,7 +2569,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/background.js",
-      "source_location": "L374",
+      "source_location": "L363",
       "weight": 1.0,
       "_src": "extension_src_background_js",
       "_tgt": "background_handlewebloginsuccess",
@@ -2597,7 +2581,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/background.js",
-      "source_location": "L409",
+      "source_location": "L398",
       "weight": 1.0,
       "_src": "extension_src_background_js",
       "_tgt": "background_handlewebpairingsuccess",
@@ -2609,7 +2593,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/background.js",
-      "source_location": "L420",
+      "source_location": "L409",
       "weight": 1.0,
       "_src": "extension_src_background_js",
       "_tgt": "background_handlemanualfetch",
@@ -2621,7 +2605,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/background.js",
-      "source_location": "L470",
+      "source_location": "L459",
       "weight": 1.0,
       "_src": "extension_src_background_js",
       "_tgt": "background_performsignoutonly",
@@ -2633,7 +2617,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/background.js",
-      "source_location": "L483",
+      "source_location": "L472",
       "weight": 1.0,
       "_src": "extension_src_background_js",
       "_tgt": "background_cleanupfirestorepairing",
@@ -2645,7 +2629,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/background.js",
-      "source_location": "L510",
+      "source_location": "L499",
       "weight": 1.0,
       "_src": "extension_src_background_js",
       "_tgt": "background_performunpaironly",
@@ -2657,7 +2641,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/background.js",
-      "source_location": "L528",
+      "source_location": "L517",
       "weight": 1.0,
       "_src": "extension_src_background_js",
       "_tgt": "background_performsignout",
@@ -2669,7 +2653,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/background.js",
-      "source_location": "L552",
+      "source_location": "L541",
       "weight": 1.0,
       "_src": "extension_src_background_js",
       "_tgt": "background_stoppresencelisteners",
@@ -2681,7 +2665,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/background.js",
-      "source_location": "L562",
+      "source_location": "L551",
       "weight": 1.0,
       "_src": "extension_src_background_js",
       "_tgt": "background_stopotplistener",
@@ -2693,7 +2677,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/background.js",
-      "source_location": "L566",
+      "source_location": "L555",
       "weight": 1.0,
       "_src": "extension_src_background_js",
       "_tgt": "background_stopalllisteners",
@@ -2705,7 +2689,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/background.js",
-      "source_location": "L576",
+      "source_location": "L565",
       "weight": 1.0,
       "_src": "extension_src_background_js",
       "_tgt": "background_startpresencelisteners",
@@ -2717,7 +2701,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/background.js",
-      "source_location": "L699",
+      "source_location": "L698",
       "weight": 1.0,
       "_src": "extension_src_background_js",
       "_tgt": "background_startotplistener",
@@ -2729,7 +2713,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/background.js",
-      "source_location": "L724",
+      "source_location": "L726",
       "weight": 1.0,
       "_src": "extension_src_background_js",
       "_tgt": "background_startalllisteners",
@@ -2741,7 +2725,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/background.js",
-      "source_location": "L729",
+      "source_location": "L731",
       "weight": 1.0,
       "_src": "extension_src_background_js",
       "_tgt": "background_processnewotp",
@@ -2753,7 +2737,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/background.js",
-      "source_location": "L149",
+      "source_location": "L138",
       "weight": 1.0,
       "_src": "background_performpairing",
       "_tgt": "background_waitforauth",
@@ -2765,7 +2749,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/background.js",
-      "source_location": "L429",
+      "source_location": "L418",
       "weight": 1.0,
       "_src": "background_handlemanualfetch",
       "_tgt": "background_waitforauth",
@@ -2777,7 +2761,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/background.js",
-      "source_location": "L168",
+      "source_location": "L157",
       "weight": 1.0,
       "_src": "background_performpairing",
       "_tgt": "background_safesendmessage",
@@ -2789,7 +2773,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/background.js",
-      "source_location": "L298",
+      "source_location": "L287",
       "weight": 1.0,
       "_src": "background_hydrateandpush",
       "_tgt": "background_safesendmessage",
@@ -2801,7 +2785,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/background.js",
-      "source_location": "L395",
+      "source_location": "L384",
       "weight": 1.0,
       "_src": "background_handlewebloginsuccess",
       "_tgt": "background_safesendmessage",
@@ -2813,7 +2797,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/background.js",
-      "source_location": "L417",
+      "source_location": "L406",
       "weight": 1.0,
       "_src": "background_handlewebpairingsuccess",
       "_tgt": "background_safesendmessage",
@@ -2825,7 +2809,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/background.js",
-      "source_location": "L519",
+      "source_location": "L508",
       "weight": 1.0,
       "_src": "background_performunpaironly",
       "_tgt": "background_safesendmessage",
@@ -2837,7 +2821,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/background.js",
-      "source_location": "L543",
+      "source_location": "L532",
       "weight": 1.0,
       "_src": "background_performsignout",
       "_tgt": "background_safesendmessage",
@@ -2849,7 +2833,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/background.js",
-      "source_location": "L758",
+      "source_location": "L760",
       "weight": 1.0,
       "_src": "background_processnewotp",
       "_tgt": "background_safesendmessage",
@@ -2861,7 +2845,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/background.js",
-      "source_location": "L610",
+      "source_location": "L599",
       "weight": 1.0,
       "_src": "background_startpresencelisteners",
       "_tgt": "background_startkeepalive",
@@ -2873,7 +2857,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/background.js",
-      "source_location": "L559",
+      "source_location": "L548",
       "weight": 1.0,
       "_src": "background_stoppresencelisteners",
       "_tgt": "background_stopkeepalive",
@@ -2885,7 +2869,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/background.js",
-      "source_location": "L164",
+      "source_location": "L153",
       "weight": 1.0,
       "_src": "background_performpairing",
       "_tgt": "background_startalllisteners",
@@ -2897,7 +2881,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/background.js",
-      "source_location": "L310",
+      "source_location": "L299",
       "weight": 1.0,
       "_src": "background_hydrateandpush",
       "_tgt": "background_startpresencelisteners",
@@ -2909,7 +2893,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/background.js",
-      "source_location": "L394",
+      "source_location": "L383",
       "weight": 1.0,
       "_src": "background_handlewebloginsuccess",
       "_tgt": "background_startalllisteners",
@@ -2921,7 +2905,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/background.js",
-      "source_location": "L416",
+      "source_location": "L405",
       "weight": 1.0,
       "_src": "background_handlewebpairingsuccess",
       "_tgt": "background_startalllisteners",
@@ -2933,7 +2917,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/background.js",
-      "source_location": "L523",
+      "source_location": "L512",
       "weight": 1.0,
       "_src": "background_performunpaironly",
       "_tgt": "background_cleanupfirestorepairing",
@@ -2945,7 +2929,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/background.js",
-      "source_location": "L547",
+      "source_location": "L536",
       "weight": 1.0,
       "_src": "background_performsignout",
       "_tgt": "background_cleanupfirestorepairing",
@@ -2957,7 +2941,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/background.js",
-      "source_location": "L515",
+      "source_location": "L504",
       "weight": 1.0,
       "_src": "background_performunpaironly",
       "_tgt": "background_stopalllisteners",
@@ -2969,7 +2953,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/background.js",
-      "source_location": "L535",
+      "source_location": "L524",
       "weight": 1.0,
       "_src": "background_performsignout",
       "_tgt": "background_stopalllisteners",
@@ -2981,7 +2965,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/background.js",
-      "source_location": "L567",
+      "source_location": "L556",
       "weight": 1.0,
       "_src": "background_stopalllisteners",
       "_tgt": "background_stoppresencelisteners",
@@ -2993,7 +2977,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/background.js",
-      "source_location": "L590",
+      "source_location": "L579",
       "weight": 1.0,
       "_src": "background_startpresencelisteners",
       "_tgt": "background_stoppresencelisteners",
@@ -3005,7 +2989,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/background.js",
-      "source_location": "L568",
+      "source_location": "L557",
       "weight": 1.0,
       "_src": "background_stopalllisteners",
       "_tgt": "background_stopotplistener",
@@ -3017,7 +3001,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/background.js",
-      "source_location": "L703",
+      "source_location": "L702",
       "weight": 1.0,
       "_src": "background_startotplistener",
       "_tgt": "background_stopotplistener",
@@ -3029,7 +3013,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/background.js",
-      "source_location": "L725",
+      "source_location": "L727",
       "weight": 1.0,
       "_src": "background_startalllisteners",
       "_tgt": "background_startpresencelisteners",
@@ -3041,7 +3025,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/background.js",
-      "source_location": "L726",
+      "source_location": "L728",
       "weight": 1.0,
       "_src": "background_startalllisteners",
       "_tgt": "background_startotplistener",
@@ -3053,7 +3037,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/config.js",
-      "source_location": "L33",
+      "source_location": "L31",
       "weight": 1.0,
       "_src": "extension_src_config_js",
       "_tgt": "config_isdashboardpage",
@@ -3065,7 +3049,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/pairing.js",
-      "source_location": "L33",
+      "source_location": "L23",
       "weight": 1.0,
       "_src": "extension_src_pairing_js",
       "_tgt": "pairing_statusarea",
@@ -3077,7 +3061,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/pairing.js",
-      "source_location": "L34",
+      "source_location": "L24",
       "weight": 1.0,
       "_src": "extension_src_pairing_js",
       "_tgt": "pairing_statustext",
@@ -3089,7 +3073,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/pairing.js",
-      "source_location": "L35",
+      "source_location": "L25",
       "weight": 1.0,
       "_src": "extension_src_pairing_js",
       "_tgt": "pairing_countdownel",
@@ -3101,7 +3085,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/pairing.js",
-      "source_location": "L37",
+      "source_location": "L27",
       "weight": 1.0,
       "_src": "extension_src_pairing_js",
       "_tgt": "pairing_setstatus",
@@ -3113,7 +3097,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/pairing.js",
-      "source_location": "L71",
+      "source_location": "L61",
       "weight": 1.0,
       "_src": "extension_src_pairing_js",
       "_tgt": "pairing_startcountdown",
@@ -3125,7 +3109,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/pairing.js",
-      "source_location": "L38",
+      "source_location": "L28",
       "weight": 1.0,
       "_src": "pairing_setstatus",
       "_tgt": "pairing_statusarea",
@@ -3137,7 +3121,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "extension/src/pairing.js",
-      "source_location": "L39",
+      "source_location": "L29",
       "weight": 1.0,
       "_src": "pairing_setstatus",
       "_tgt": "pairing_statustext",
@@ -3173,7 +3157,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/main.js",
-      "source_location": "L77",
+      "source_location": "L68",
       "weight": 1.0,
       "_src": "web_main_js",
       "_tgt": "main_isdeviceonline",
@@ -3185,7 +3169,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/main.js",
-      "source_location": "L85",
+      "source_location": "L76",
       "weight": 1.0,
       "_src": "web_main_js",
       "_tgt": "main_escapehtml",
@@ -3197,7 +3181,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/main.js",
-      "source_location": "L101",
+      "source_location": "L92",
       "weight": 1.0,
       "_src": "web_main_js",
       "_tgt": "main_checkurlparams",
@@ -3209,7 +3193,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/main.js",
-      "source_location": "L121",
+      "source_location": "L112",
       "weight": 1.0,
       "_src": "web_main_js",
       "_tgt": "main_decryptotp",
@@ -3221,7 +3205,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/main.js",
-      "source_location": "L132",
+      "source_location": "L123",
       "weight": 1.0,
       "_src": "web_main_js",
       "_tgt": "main_el",
@@ -3233,7 +3217,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/main.js",
-      "source_location": "L158",
+      "source_location": "L149",
       "weight": 1.0,
       "_src": "web_main_js",
       "_tgt": "main_updateui",
@@ -3245,7 +3229,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/main.js",
-      "source_location": "L183",
+      "source_location": "L174",
       "weight": 1.0,
       "_src": "web_main_js",
       "_tgt": "main_updateconnectionindicator",
@@ -3257,7 +3241,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/main.js",
-      "source_location": "L267",
+      "source_location": "L258",
       "weight": 1.0,
       "_src": "web_main_js",
       "_tgt": "main_rendersignin",
@@ -3269,7 +3253,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/main.js",
-      "source_location": "L313",
+      "source_location": "L304",
       "weight": 1.0,
       "_src": "web_main_js",
       "_tgt": "main_renderunpaired",
@@ -3281,7 +3265,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/main.js",
-      "source_location": "L364",
+      "source_location": "L355",
       "weight": 1.0,
       "_src": "web_main_js",
       "_tgt": "main_renderpaired",
@@ -3293,7 +3277,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/main.js",
-      "source_location": "L586",
+      "source_location": "L589",
       "weight": 1.0,
       "_src": "web_main_js",
       "_tgt": "main_loginwithgoogle",
@@ -3305,7 +3289,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/main.js",
-      "source_location": "L614",
+      "source_location": "L617",
       "weight": 1.0,
       "_src": "web_main_js",
       "_tgt": "main_listentocloudsync",
@@ -3317,7 +3301,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/main.js",
-      "source_location": "L682",
+      "source_location": "L685",
       "weight": 1.0,
       "_src": "web_main_js",
       "_tgt": "main_handlesignout",
@@ -3329,7 +3313,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/main.js",
-      "source_location": "L737",
+      "source_location": "L740",
       "weight": 1.0,
       "_src": "web_main_js",
       "_tgt": "main_startlisteners",
@@ -3341,7 +3325,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/main.js",
-      "source_location": "L837",
+      "source_location": "L840",
       "weight": 1.0,
       "_src": "web_main_js",
       "_tgt": "main_handleforcedunpair",
@@ -3353,7 +3337,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/main.js",
-      "source_location": "L848",
+      "source_location": "L851",
       "weight": 1.0,
       "_src": "web_main_js",
       "_tgt": "main_stoplisteners",
@@ -3365,7 +3349,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "web/main.js",
-      "source_location": "L195",
+      "source_location": "L186",
       "weight": 1.0,
       "_src": "main_updateconnectionindicator",
       "_tgt": "main_isdeviceonline",
@@ -3377,7 +3361,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "web/main.js",
-      "source_location": "L368",
+      "source_location": "L356",
       "weight": 1.0,
       "_src": "main_renderpaired",
       "_tgt": "main_isdeviceonline",
@@ -3389,7 +3373,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "web/main.js",
-      "source_location": "L324",
+      "source_location": "L315",
       "weight": 1.0,
       "_src": "main_renderunpaired",
       "_tgt": "main_escapehtml",
@@ -3401,7 +3385,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "web/main.js",
-      "source_location": "L405",
+      "source_location": "L402",
       "weight": 1.0,
       "_src": "main_renderpaired",
       "_tgt": "main_escapehtml",
@@ -3413,7 +3397,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "web/main.js",
-      "source_location": "L270",
+      "source_location": "L261",
       "weight": 1.0,
       "_src": "main_rendersignin",
       "_tgt": "main_el",
@@ -3425,7 +3409,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "web/main.js",
-      "source_location": "L160",
+      "source_location": "L151",
       "weight": 1.0,
       "_src": "main_updateui",
       "_tgt": "main_rendersignin",
@@ -3437,7 +3421,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "web/main.js",
-      "source_location": "L165",
+      "source_location": "L156",
       "weight": 1.0,
       "_src": "main_updateui",
       "_tgt": "main_updateconnectionindicator",
@@ -3449,7 +3433,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "web/main.js",
-      "source_location": "L175",
+      "source_location": "L166",
       "weight": 1.0,
       "_src": "main_updateui",
       "_tgt": "main_renderpaired",
@@ -3461,7 +3445,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "web/main.js",
-      "source_location": "L178",
+      "source_location": "L169",
       "weight": 1.0,
       "_src": "main_updateui",
       "_tgt": "main_renderunpaired",
@@ -3473,7 +3457,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "web/main.js",
-      "source_location": "L589",
+      "source_location": "L592",
       "weight": 1.0,
       "_src": "main_loginwithgoogle",
       "_tgt": "main_updateui",
@@ -3485,7 +3469,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "web/main.js",
-      "source_location": "L696",
+      "source_location": "L699",
       "weight": 1.0,
       "_src": "main_handlesignout",
       "_tgt": "main_updateui",
@@ -3497,7 +3481,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "web/main.js",
-      "source_location": "L744",
+      "source_location": "L747",
       "weight": 1.0,
       "_src": "main_startlisteners",
       "_tgt": "main_updateui",
@@ -3509,7 +3493,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "web/main.js",
-      "source_location": "L845",
+      "source_location": "L848",
       "weight": 1.0,
       "_src": "main_handleforcedunpair",
       "_tgt": "main_updateui",
@@ -3521,7 +3505,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "web/main.js",
-      "source_location": "L683",
+      "source_location": "L686",
       "weight": 1.0,
       "_src": "main_handlesignout",
       "_tgt": "main_stoplisteners",
@@ -3533,7 +3517,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "web/main.js",
-      "source_location": "L739",
+      "source_location": "L742",
       "weight": 1.0,
       "_src": "main_startlisteners",
       "_tgt": "main_stoplisteners",
@@ -3545,7 +3529,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "web/main.js",
-      "source_location": "L838",
+      "source_location": "L841",
       "weight": 1.0,
       "_src": "main_handleforcedunpair",
       "_tgt": "main_stoplisteners",
@@ -3557,7 +3541,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "server/index.js",
-      "source_location": "L60",
+      "source_location": "L58",
       "weight": 1.0,
       "_src": "server_index_js",
       "_tgt": "index_log",
@@ -5477,52 +5461,62 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
+      "source_file": "README.md",
+      "source_location": null,
+      "weight": 1.0,
+      "_src": "firebase_firestore",
+      "_tgt": "otp_mirroring_flow",
+      "source": "firebase_firestore",
+      "target": "otp_mirroring_flow"
+    },
+    {
+      "relation": "shares_data_with",
+      "confidence": "INFERRED",
+      "confidence_score": 0.9,
       "source_file": "technical_audit.md",
       "source_location": null,
       "weight": 1.0,
-      "_src": "technical_audit_presence_server",
-      "_tgt": "readme_pinbridge",
-      "source": "readme_pinbridge",
-      "target": "technical_audit_presence_server"
-    },
-    {
-      "relation": "conceptually_related_to",
-      "confidence": "INFERRED",
-      "confidence_score": 0.9,
-      "source_file": "RUNBOOK.md",
-      "source_location": null,
-      "weight": 1.0,
-      "_src": "technical_audit_presence_server",
-      "_tgt": "runbook_deployment",
-      "source": "technical_audit_presence_server",
-      "target": "runbook_deployment"
+      "_src": "presence_server",
+      "_tgt": "firebase_firestore",
+      "source": "firebase_firestore",
+      "target": "presence_server"
     },
     {
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
+      "source_file": "security_audit.md",
+      "source_location": null,
+      "weight": 1.0,
+      "_src": "aes_256_gcm_encryption",
+      "_tgt": "otp_mirroring_flow",
+      "source": "aes_256_gcm_encryption",
+      "target": "otp_mirroring_flow"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
       "source_file": "docs/PAIRING_FLOW.md",
       "source_location": null,
       "weight": 1.0,
-      "_src": "docs_pairing_flow_ecdh",
-      "_tgt": "security_audit_v_04",
-      "source": "security_audit_v_04",
-      "target": "docs_pairing_flow_ecdh"
-    }
-  ],
-  "hyperedges": [
+      "_src": "ecdh_key_agreement",
+      "_tgt": "otp_mirroring_flow",
+      "source": "ecdh_key_agreement",
+      "target": "otp_mirroring_flow"
+    },
     {
-      "id": "otp_mirroring_flow",
-      "label": "OTP Mirroring Flow",
-      "nodes": [
-        "readme_pinbridge",
-        "production_audit_work_manager",
-        "technical_audit_presence_server"
-      ],
-      "relation": "participate_in",
+      "relation": "references",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "README.md"
+      "source_file": "SCORECARD.md",
+      "source_location": null,
+      "weight": 1.0,
+      "_src": "firebase_crashlytics_monitoring",
+      "_tgt": "otp_mirroring_flow",
+      "source": "firebase_crashlytics_monitoring",
+      "target": "otp_mirroring_flow"
     }
-  ]
+  ],
+  "hyperedges": []
 }
