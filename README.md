@@ -27,7 +27,6 @@ Now, OTPs from my secondary phone show up instantly on my laptop via a browser e
 - 🔐 **End-to-End Encryption** — All OTPs are encrypted with AES-GCM before leaving your phone
 - 🌐 **Chrome Extension** — View OTPs directly in your browser with auto-fill support
 - 📱 **Web Dashboard** — Access your latest OTP from any browser at [pin-bridge.vercel.app](https://pin-bridge.vercel.app)
-- ✅ **Pending Tasks** — Manage connection checklists and system tasks directly through the extension or web UI
 - ☁️ **Cloud Sync** — Sign in with Google to sync pairing across devices without re-scanning QR codes
 - 🟢 **Live Device Status** — See whether your phone is online, offline, or charging in real-time
 - 🔔 **Desktop Notifications** — Get notified instantly when a new OTP is received
@@ -73,7 +72,10 @@ Now, OTPs from my secondary phone show up instantly on my laptop via a browser e
 | `web/` | Web Dashboard — Vite, Vanilla JS, Firebase SDK |
 | `server/` | Presence Server — Node.js, Express, Socket.IO, Redis, Firebase Admin |
 | `functions/` | Firebase Cloud Functions (reserved) |
-| `logo/` | App logos and branding assets |
+| `e2e/` | End-to-end testing suite |
+| `docs/` | Project documentation and structure logs |
+| `for-execution/` | Compiled artifacts (APK, Extension ZIP) ready for deployment |
+| `graphify-out/` | Generated architecture visualizations |
 
 ---
 
@@ -96,7 +98,6 @@ When an SMS with an OTP lands on your Android phone, PinBridge:
 - The extension shows a notification and copies the OTP
 - Websites with OTP input fields get **auto-filled**
 - You can also click **Fetch Latest** or **Sync Signal** to manually pull the most recent status or OTP
-- Check off any active pending maintenance tasks from the web or extension checklist
 
 ---
 
