@@ -646,6 +646,10 @@ function startPresenceListeners(deviceId) {
         console.log('[PinBridge] Document missing but pairing is pending — ignoring.');
         return;
       }
+      if (snap.metadata && snap.metadata.fromCache) {
+        console.log('[PinBridge] Document missing from cache — ignoring offline deletion.');
+        return;
+      }
       console.log('[PinBridge] Pairing document deleted. Unpairing...');
       isFirstPairingSnapshot = false;
       performUnpairOnly();
@@ -656,6 +660,10 @@ function startPresenceListeners(deviceId) {
       if (isFirstPairingSnapshot || pairingPending) {
         console.log('[PinBridge] Ignoring paired:false (first snapshot or pairing pending).');
         isFirstPairingSnapshot = false;
+        return;
+      }
+      if (snap.metadata && snap.metadata.fromCache) {
+        console.log('[PinBridge] paired:false read from cache — ignoring offline modification.');
         return;
       }
       console.log('[PinBridge] Pairing explicitly revoked (paired set to false). Unpairing...');
@@ -686,8 +694,10 @@ function startPresenceListeners(deviceId) {
           }
         }, 3000);
       } else {
-        console.warn('[PinBridge] Permission denied on pairing listener. Unpairing.');
-        performUnpairOnly();
+        console.warn('[PinBridge] Permission denied on pairing listener. Offline or token expired. Stopping listener.');
+        isFirstPairingSnapshot = false;
+        if (typeof unsubscribePairing === 'function') unsubscribePairing();
+        unsubscribePairing = null;
       }
     }
   });
@@ -714,7 +724,10 @@ function startOtpListener(deviceId) {
         console.warn('[PinBridge] OTP permission denied (first event or pairing pending) — ignoring.');
         isFirstOtpEvent = false;
       } else {
-        performUnpairOnly();
+        console.warn('[PinBridge] OTP permission denied. Offline or token expired. Stopping listener.');
+        isFirstOtpEvent = false;
+        if (typeof unsubscribeOtp === 'function') unsubscribeOtp();
+        unsubscribeOtp = null;
       }
     }
   });
