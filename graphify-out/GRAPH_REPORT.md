@@ -318,7 +318,7 @@ Nodes (1): Playwright E2E Test Failure
 
 ### Community 56 - "Community 56"
 Cohesion: 1.0
-Nodes (1): Sentry/Crashlytics Monitoring
+Nodes (1): Firebase Crashlytics Monitoring
 
 ## Knowledge Gaps
 - **9 isolated node(s):** `EncryptedData`, `Constants`, `PinBridge System`, `Vulnerability V-04: Insecure Secret Exchange`, `ECDH Key Agreement` (+4 more)
@@ -353,7 +353,9 @@ Nodes (1): Sentry/Crashlytics Monitoring
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
 - **Thin community `Community 43`** (1 nodes): `vite.config.js`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 44`** (1 nodes): `instrument.js`
+- **Thin community `Community 55`** (1 nodes): `Playwright E2E Test Failure`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 56`** (1 nodes): `Firebase Crashlytics Monitoring`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
 - **Thin community `Community 45`** (1 nodes): `build.gradle.kts`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
@@ -375,9 +377,7 @@ Nodes (1): Sentry/Crashlytics Monitoring
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
 - **Thin community `Community 54`** (1 nodes): `Android WorkManager Implementation`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 55`** (1 nodes): `Playwright E2E Test Failure`
-  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 56`** (1 nodes): `Sentry/Crashlytics Monitoring`
+- **Thin community `Community 56`** (1 nodes): `Firebase Crashlytics Monitoring`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
 
 ## Suggested Questions

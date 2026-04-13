@@ -9,7 +9,7 @@
 | **Security Audits Closed** | **✅ Pass** | Extension CORS patched. DOM securely parses strings instead of executing raw HTML layouts. Admin SDK rolled and environment synced. |
 | **Testing Coverage** | **✅ Pass** | All Playwright E2E and Jest Server tests exit 0. Android Intent filtering robustly handles edge conditions natively. |
 | **Deployment Automation** | **✅ Pass** | Render (Server), Firebase Hosting (Web), Chrome Extension bundles compiled cleanly with automated CI triggers via Github Actions. |
-| **Monitoring Observability** | **✅ Pass** | Sentry (Web/Server) and Crashlytics (Android) active. |
+| **Monitoring Observability** | **✅ Pass** | Firebase Crashlytics (Android) active. Web/Server use console.error logging. |
 | **Rollback Capable** | **✅ Pass** | Vercel and Firebase maintain historical artifacts. |
 | **Pilot User Feedback** | *Pending* | Launch the 3-day pilot to populate. |
 

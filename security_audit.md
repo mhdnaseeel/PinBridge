@@ -57,16 +57,16 @@ The threat surface is unusually wide: the system spans a native Android app (SMS
 | **V-06** | OTP displayed in Chrome notification (visible on lock screen) | **7.2 High** | Extension | 🔴 Open |
 | **V-07** | `innerHTML` injection with user-controlled data (`state.error`, `googleEmail`) | **7.0 High** | Web, Extension | 🔴 Open |
 | **V-08** | CORS `origin: "*"` on Socket.IO server | **6.8 Medium** | Server | 🔴 Open |
-| **V-09** | Sentry DSN exposed in client code — event injection | **5.3 Medium** | All | 🔴 Open |
+| **V-09** | ~~Sentry DSN exposed in client code — event injection~~ | **5.3 Medium** | All | ✅ Resolved (Sentry removed) |
 | **V-10** | No rate limiting on pairing code attempts | **6.5 Medium** | Extension, Firestore | 🔴 Open |
 | **V-11** | `OtpReceiver` exported with priority 999 — intent spoofing | **6.1 Medium** | Android | 🔴 Open |
 | **V-12** | No Firebase App Check — API abuse possible | **6.0 Medium** | All | 🔴 Open |
 | **V-13** | Firestore rules allow OTP writes for any authenticated user | **5.9 Medium** | Firestore | 🔴 Open |
-| **V-14** | `sendDefaultPii: true` in Sentry — leaks user data | **5.3 Medium** | All | 🔴 Open |
+| **V-14** | ~~`sendDefaultPii: true` in Sentry — leaks user data~~ | **5.3 Medium** | All | ✅ Resolved (Sentry removed) |
 | **V-15** | OTP doc `expiresAt` is set but never enforced | **4.3 Medium** | Firestore | 🔴 Open |
-| **V-16** | `tracesSampleRate: 1.0` — performance data leakage to Sentry | **3.7 Low** | All | 🔴 Open |
+| **V-16** | ~~`tracesSampleRate: 1.0` — performance data leakage to Sentry~~ | **3.7 Low** | All | ✅ Resolved (Sentry removed) |
 | **V-17** | No network security config — cleartext traffic not explicitly blocked | **3.5 Low** | Android | 🔴 Open |
-| **V-18** | Sentry `attach-screenshot` and `attach-view-hierarchy` enabled | **4.5 Medium** | Android | 🔴 Open |
+| **V-18** | ~~Sentry `attach-screenshot` and `attach-view-hierarchy` enabled~~ | **4.5 Medium** | Android | ✅ Resolved (Sentry removed) |
 | **V-19** | Secret embedded in Firestore pairing document | **6.5 Medium** | Firestore | 🔴 Open |
 | **V-20** | Content script error suppression hides security errors | **3.1 Low** | Extension | 🔴 Open |
 
@@ -442,38 +442,11 @@ Combined with V-10 or a compromised pairing, an attacker who has the encryption 
 
 ---
 
-#### V-14: `sendDefaultPii: true` in Sentry (MEDIUM)
+#### V-14: ~~`sendDefaultPii: true` in Sentry~~ (RESOLVED)
 
-**Location**: All Sentry init calls across 4 platforms
+**Status**: ✅ Resolved — Sentry has been completely removed from the project. Error tracking is now handled by Firebase Crashlytics (Android) and `console.error` (Web/Extension/Server).
 
-```javascript
-Sentry.init({
-    sendDefaultPii: true  // ← Sends IP addresses, cookies, user info
-});
-```
-
-**Impact**: Sentry will capture and transmit:
-- User IP addresses
-- Cookies and session data
-- Request headers (which may contain auth tokens)
-- User identifiable information from error context
-
-**Remediation**: Set `sendDefaultPii: false` and explicitly include only necessary data:
-```javascript
-Sentry.init({
-    sendDefaultPii: false,
-    beforeSend(event) {
-        // Strip sensitive fields
-        if (event.request) {
-            delete event.request.cookies;
-            delete event.request.headers;
-        }
-        return event;
-    }
-});
-```
-
-**Priority**: 🟡 **P1**
+**Priority**: ✅ Resolved
 
 ---
 
@@ -517,26 +490,11 @@ And reference it in `AndroidManifest.xml`:
 
 ---
 
-#### V-18: Sentry Screenshot & View Hierarchy Capture (MEDIUM)
+#### V-18: ~~Sentry Screenshot & View Hierarchy Capture~~ (RESOLVED)
 
-**Location**: AndroidManifest.xml
+**Status**: ✅ Resolved — Sentry has been completely removed from the project. All `io.sentry.*` meta-data entries have been removed from `AndroidManifest.xml`. Firebase Crashlytics is used instead and does not capture screenshots or view hierarchies by default.
 
-```xml
-<meta-data android:name="io.sentry.attach-screenshot" android:value="true" />
-<meta-data android:name="io.sentry.attach-view-hierarchy" android:value="true" />
-```
-
-**Impact**: On any crash, Sentry captures a screenshot and the complete view hierarchy. If the crash occurs while the OTP is displayed, the user's CAPTCHA code (used for unpair verification), device ID, or pairing status is sent to Sentry's servers.
-
-**Remediation**: Disable both:
-```xml
-<meta-data android:name="io.sentry.attach-screenshot" android:value="false" />
-<meta-data android:name="io.sentry.attach-view-hierarchy" android:value="false" />
-```
-
-Or implement a `beforeScreenshot` callback that redacts sensitive views.
-
-**Priority**: 🟡 **P1** — OTPs visible in crash screenshots completely defeat encryption
+**Priority**: ✅ Resolved
 
 ---
 
@@ -625,9 +583,9 @@ Extension (chrome.storage.local) ── postMessage('*') ──→ Web Dashboard
 | **S-09** | **Add pairing session expiry** — auto-delete pairing docs older than 5 minutes via Firestore TTL or Cloud Function. | 2 hrs | Firestore config, `pairing.js` |
 | **S-10** | **Add rate limiting on pairing code attempts** — lock after 5 failures. | 2 hrs | `PairingRepository.kt`, Firestore rules |
 | **S-11** | **Protect OtpReceiver** — add `android:permission="android.permission.BROADCAST_SMS"`. | 5 min | `AndroidManifest.xml` |
-| **S-12** | **Set `sendDefaultPii: false`** across all Sentry configs. | 15 min | All Sentry init files |
-| **S-13** | **Disable Sentry screenshot/view-hierarchy** in `AndroidManifest.xml`. | 5 min | `AndroidManifest.xml` |
-| **S-14** | **Reduce `tracesSampleRate` to 0.1** in production. | 15 min | All Sentry init files |
+| **S-12** | ~~Set `sendDefaultPii: false`~~ | ✅ Done | Sentry removed entirely |
+| **S-13** | ~~Disable Sentry screenshot/view-hierarchy~~ | ✅ Done | Sentry removed entirely |
+| **S-14** | ~~Reduce `tracesSampleRate` to 0.1~~ | ✅ Done | Sentry removed entirely |
 | **S-15** | **Add network security config** — block cleartext, consider cert pinning. | 30 min | `network_security_config.xml`, `AndroidManifest.xml` |
 | **S-16** | **Add `googleUid` to OTP documents** and restrict reads to owner. | 1 hr | `OtpUploader.kt`, `UploadOtpWorker.kt`, `firestore.rules` |
 | **S-17** | **Enable Firebase App Check** — enforce attestation for Firestore and Auth access. | 2-3 hrs | Firebase Console, Android, Extension, Web |
@@ -640,10 +598,10 @@ Extension (chrome.storage.local) ── postMessage('*') ──→ Web Dashboard
 |---|-----|--------|
 | **S-18** | Implement ECDH key agreement for pairing (eliminate plaintext secret in QR and Firestore) | 1-2 days |
 | **S-19** | Add Helmet.js to Express server for HTTP security headers | 30 min |
-| **S-20** | Fix content script error suppression — log to Sentry instead of silencing | 30 min |
+| **S-20** | Fix content script error suppression — log to `console.error` instead of silencing | 30 min |
 | **S-21** | Implement key rotation mechanism (periodic re-keying of the AES secret) | 1-2 days |
 | **S-22** | Add Android SafetyNet/Play Integrity attestation before allowing pairing | 4-6 hrs |
-| **S-23** | Implement Sentry DSN proxy (server-side relay to prevent DSN exposure) | 2-3 hrs |
+| **S-23** | ~~Implement Sentry DSN proxy~~ — N/A, Sentry removed | ✅ Done |
 | **S-24** | R8/ProGuard obfuscation verification for release builds | 1 hr |
 
 ---
@@ -743,7 +701,7 @@ The system has a **sound cryptographic foundation** (AES-256-GCM with CSPRNG) bu
 |----------|-------|-----------|
 | 🔴 Critical | 3 | Secret exposure (localStorage, postMessage, QR code) |
 | 🟠 High | 5 | XSS vectors, backup exposure, notification leakage |
-| 🟡 Medium | 8 | CORS, rate limiting, Sentry PII, Firestore rules |
+| 🟡 Medium | 4 | CORS, rate limiting, Firestore rules |
 | 🟢 Low | 4 | Network config, error suppression, sample rates |
 
 **The most urgent finding**: The AES encryption key — the single piece of data that protects all OTPs — is exposed through at least 5 different channels: `localStorage`, `postMessage`, QR code, Firestore document, and URL parameters. Addressing these 5 exposure vectors (Phase 1) should be the immediate priority before any public release.

@@ -8,6 +8,8 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <uses-permission android:name="android.permission.RECEIVE_SMS" />
     <uses-permission android:name="android.permission.READ_SMS" />
@@ -81,16 +83,6 @@
                 android:value="androidx.startup"
                 tools:node="remove" />
         </provider>
-        
-        <!-- Sentry SDK Configuration -->
-        <meta-data android:name="io.sentry.dsn" android:value="https://5077a37e69c5a42a4ace47d13cd759ee@o4511118204141568.ingest.us.sentry.io/4511118218297344" />
-        <meta-data android:name="io.sentry.traces.sample-rate" android:value="0.2" />
-        <!-- Disabled: screenshots may capture OTPs or sensitive data (V-18) -->
-        <meta-data android:name="io.sentry.attach-screenshot" android:value="false" />
-        <!-- Disabled: view hierarchy may expose sensitive UI state (V-18) -->
-        <meta-data android:name="io.sentry.attach-view-hierarchy" android:value="false" />
-        <!-- Disable PII collection (V-14) -->
-        <meta-data android:name="io.sentry.send-default-pii" android:value="false" />
 
     </application>
 

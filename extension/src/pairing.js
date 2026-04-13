@@ -2,27 +2,17 @@ import { initializeApp } from "firebase/app";
 import { getAuth, signInAnonymously, onAuthStateChanged } from "firebase/auth";
 import { getFirestore, doc, setDoc, serverTimestamp, onSnapshot } from "firebase/firestore";
 import QRCode from 'qrcode';
-import * as Sentry from "@sentry/browser";
-import { FIREBASE_CONFIG, SENTRY_DSN } from "./config";
-
-// Sentry Initialization
-Sentry.init({
-    dsn: SENTRY_DSN,
-    tracesSampleRate: 0.2,
-    sendDefaultPii: false
-});
+import { FIREBASE_CONFIG } from "./config";
 
 // Global error handlers to prevent Chrome Extension error UI
 const targetScope = typeof self !== 'undefined' ? self : window;
 targetScope.addEventListener('error', (e) => {
-    Sentry.captureException(e.error || e.message);
+    console.error('[PinBridge] Uncaught error:', e.error || e.message);
     e.preventDefault();
-    console.debug('[PinBridge] Reported error:', e.error || e.message);
 });
 targetScope.addEventListener('unhandledrejection', (e) => {
-    Sentry.captureException(e.reason);
+    console.error('[PinBridge] Unhandled rejection:', e.reason);
     e.preventDefault();
-    console.debug('[PinBridge] Reported unhandled rejection:', e.reason);
 });
 
 const app = initializeApp(FIREBASE_CONFIG);

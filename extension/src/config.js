@@ -1,6 +1,6 @@
 /**
  * PinBridge — Shared Configuration
- * Single source of truth for Firebase config, Sentry DSN, and server URL.
+ * Single source of truth for Firebase config and server URL.
  * All extension scripts import from here instead of hardcoding.
  */
 
@@ -13,8 +13,6 @@ export const FIREBASE_CONFIG = {
   appId: "1:475556984962:web:87e42b8f4e3b0ce9a89c9b",
   measurementId: "G-LEDS6BH99B"
 };
-
-export const SENTRY_DSN = "https://3457c2e95d532379d40e4152fc7642c1@o4511118204141568.ingest.us.sentry.io/4511118399635456";
 
 export const SOCKET_SERVER_URL = "https://pinbridge-presence.onrender.com";
 

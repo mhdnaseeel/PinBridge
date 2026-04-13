@@ -1,6 +1,6 @@
 package com.pinbridge.otpmirror
 
-import android.util.Base64
+import java.util.Base64
 import java.security.SecureRandom
 import javax.crypto.Cipher
 import javax.crypto.spec.GCMParameterSpec
@@ -25,15 +25,15 @@ object CryptoUtil {
         val cipherText = cipher.doFinal(plaintext.toByteArray())
         
         return EncryptedData(
-            Base64.encodeToString(cipherText, Base64.NO_WRAP),
-            Base64.encodeToString(iv, Base64.NO_WRAP)
+            Base64.getEncoder().encodeToString(cipherText),
+            Base64.getEncoder().encodeToString(iv)
         )
     }
 
     fun decrypt(encrypted: EncryptedData, secretKey: ByteArray): String {
         val cipher = Cipher.getInstance(ALGORITHM)
-        val iv = Base64.decode(encrypted.iv, Base64.NO_WRAP)
-        val cipherText = Base64.decode(encrypted.cipher, Base64.NO_WRAP)
+        val iv = Base64.getDecoder().decode(encrypted.iv)
+        val cipherText = Base64.getDecoder().decode(encrypted.cipher)
         
         val gcmSpec = GCMParameterSpec(TAG_LENGTH_BIT, iv)
         val keySpec = SecretKeySpec(secretKey, "AES")

@@ -26,7 +26,7 @@ PinBridge is a cross-platform OTP mirroring system that intercepts SMS OTPs on a
 - Git history still contains previously committed OAuth client secrets and Firebase Admin SDK keys (untracked but not purged).
 
 ### Unknowns
-- **Crash analytics**: No data on actual crash rates, ANR frequency, or error distribution from Sentry.
+- **Crash analytics**: Firebase Crashlytics is active for Android. Web/Extension/Server use console.error logging.
 - **Firestore billing**: Unknown read/write volume against limits.
 - **Battery impact**: No empirical measurement of battery drain from 15-second heartbeat + WakeLock pattern.
 - **Chrome Web Store review**: Unknown if `sidePanel`, `identity`, `notifications` permission combination has been approved.
@@ -68,9 +68,9 @@ PinBridge is a cross-platform OTP mirroring system that intercepts SMS OTPs on a
 | **Monolithic MainActivity** | High | 966 lines. Mixes auth orchestration, cloud sync validation, UI rendering, permissions, and sign-out logic in a single Activity. |
 | **Web dashboard: innerHTML rendering** | High | `renderSignIn()`, `renderUnpaired()`, `renderPaired()` rebuild the entire DOM via `innerHTML`. Destroys event listeners, causes flicker, and is an XSS vector if user email contains HTML. |
 | **No ViewModel/state management (Android)** | High | All state lives in the Activity. Config changes (rotation) lose transient state. No unidirectional data flow. |
-| **Secrets in client-side config** | Medium | `config.js` exports Firebase API key, Sentry DSN, Google Client ID as plaintext. While Firebase API keys are meant to be public, the Sentry DSN allows anyone to send garbage events to your project. |
+| **Secrets in client-side config** | Medium | `config.js` exports Firebase API key, Google Client ID as plaintext. While Firebase API keys are meant to be public, they should be secured with App Check. |
 | **OTP regex is too greedy** | Medium | `\b\d{4,8}\b` will match account numbers, PIN amounts, and phone numbers — not just OTPs. High false-positive rate. |
-| **Three Sentry init points** | Low | `background.js`, `popup.js`, `pairing.js` each independently init Sentry with the same config. Triplicate initialization in the same browser runtime. |
+| ~~Three Sentry init points~~ | ✅ Resolved | Sentry has been fully removed. Error tracking is now via Firebase Crashlytics (Android) and console.error (Web/Extension/Server). |
 
 ---
 
@@ -138,7 +138,7 @@ PinBridge is a cross-platform OTP mirroring system that intercepts SMS OTPs on a
 | File | Lines | Concern |
 |------|-------|---------|
 | `index.js` | 268 | Compact. Good use of Redis for presence, Firestore for persistence. The `setInterval` watchdog (line 211) is not production-safe — it runs in-process and dies with the server. Should use Redis key expiry + pub/sub instead. |
-| `instrument.js` | 9 | Clean Sentry initialization. |
+| ~~`instrument.js`~~ | — | Deleted (Sentry removed). |
 
 ---
 
@@ -146,7 +146,7 @@ PinBridge is a cross-platform OTP mirroring system that intercepts SMS OTPs on a
 
 | Area | Finding | Impact |
 |------|---------|--------|
-| **Extension bundle size** | `background.js` = 445 KiB, `pairing.js` = 419 KiB | Exceeds Chrome's recommended 244 KiB. Caused by bundling all of Firebase + Socket.IO + Sentry + QRCode. Should use code splitting or tree-shaking. |
+| **Extension bundle size** | `background.js` = 376 KiB, `pairing.js` = 347 KiB | Exceeds Chrome's recommended 244 KiB. Caused by bundling all of Firebase + Socket.IO + QRCode. Should use code splitting or tree-shaking. |
 | **Heartbeat frequency** | 15-second interval | Aggressive for battery-constrained devices. Consider adaptive intervals: 15s when app is foregrounded, 60s when backgrounded. |
 | **Firestore reads** | 2 active listeners per paired user (pairings + otps) + cloud sync listener on web | At scale (1000 users), this is ~3000 concurrent listeners. Firestore charges per document read — each snapshot update costs. |
 | **Manual fetch busy-wait** | 30-second polling loop with 1-second setTimeout intervals | Keeps service worker alive for 30 seconds. Chrome MV3 service workers have a 30-second idle timeout (extended to 5 min for active messages). This pattern is racing against the timeout. |
@@ -176,7 +176,7 @@ PinBridge is a cross-platform OTP mirroring system that intercepts SMS OTPs on a
 | OTP encryption | ✅ Solid | AES-256-GCM with random IV per message |
 | Git secrets | ⚠️ Partial | Untracked but not purged from history |
 | Content script scope | ✅ Fixed | `https://*/*` + `http://*/*` only |
-| Sentry DSN in client code | ⚠️ Risk | Anyone can send fake events. Consider server-side relay or DSN allowlisting. |
+| ~~Sentry DSN in client code~~ | ✅ Resolved | Sentry has been fully removed from the project. |
 | `window.postMessage` origin | ⚠️ Risk | `content.js:34` and `content.js:52` use `'*'` as target origin. Should specify the exact dashboard origin. |
 | Cloud sync doc expiry | ❌ Missing | `users/{uid}/mirroring/active` never expires. Stale data persists forever. |
 | OTP document expiry | ⚠️ Partial | `expiresAt` is set but no TTL function or Firestore scheduled delete exists to enforce it. |
@@ -218,13 +218,13 @@ PinBridge is a cross-platform OTP mirroring system that intercepts SMS OTPs on a
 
 | Check | Status | Notes |
 |-------|--------|-------|
-| Error tracking (Sentry) | ✅ | Configured on all 4 platforms (Android, extension, web, server) |
-| `tracesSampleRate: 1.0` | ⚠️ | 100% trace sampling will hit Sentry quota limits at scale. Should be 0.1-0.2 in production. |
+| Error tracking (Crashlytics) | ✅ | Firebase Crashlytics configured on Android. Web/Extension/Server use console.error. |
+| ~~`tracesSampleRate: 1.0`~~ | ✅ Resolved | Sentry removed. No sampling concerns with Crashlytics. |
 | Server health endpoint | ✅ | `GET /` returns `{status, uptime}` |
 | Uptime monitoring | ❌ | No external ping/health check (UptimeRobot, Betterstack, etc.) |
 | Structured logging | ❌ | All logging is `console.log` with inline string interpolation. No log levels, no JSON structure, no correlation IDs. |
 | Client-side analytics | ❌ | Firebase Analytics SDK not integrated despite `measurementId` being configured. |
-| Alerting | ❌ | No Sentry alert rules configured. No PagerDuty/Slack integration. |
+| Alerting | ❌ | No Crashlytics alert rules configured. No PagerDuty/Slack integration. |
 | Dashboards | ❌ | No Grafana/Datadog/Firebase Performance dashboards. |
 
 ---
@@ -253,8 +253,8 @@ PinBridge is a cross-platform OTP mirroring system that intercepts SMS OTPs on a
 | **P1-4** | **Add "Connecting..." intermediate UI state** in extension popup and web dashboard for initial socket connection. | 2 hrs | Better UX during cold-start |
 | **P1-5** | **Improve OTP regex** — add negative lookbehind for currency/phone patterns. Prioritize messages containing keywords like "OTP", "code", "verification". | 2 hrs | Reduces false positive OTP extraction |
 | **P1-6** | **Add Firestore TTL** — use Firebase scheduled functions or a Cloud Function to delete OTP docs and stale pairings older than 30 days. | 2 hrs | Data hygiene, cost control |
-| **P1-7** | **Reduce `tracesSampleRate`** to 0.1 in all Sentry configs for production. | 15 min | Prevents quota exhaustion |
-| **P1-8** | **Webpack code splitting** — lazy-load Firebase, Socket.IO, Sentry, and QRCode to reduce extension bundle size below 244 KiB threshold. | 3-4 hrs | Faster extension load, Chrome Web Store compliance |
+| ~~**P1-7**~~ | ~~Reduce `tracesSampleRate`~~ | ✅ Done | Sentry removed entirely |
+| **P1-8** | **Webpack code splitting** — lazy-load Firebase, Socket.IO, and QRCode to reduce extension bundle size below 244 KiB threshold. | 3-4 hrs | Faster extension load, Chrome Web Store compliance |
 
 ### 🟢 P2 — Recommended (Production Polish)
 

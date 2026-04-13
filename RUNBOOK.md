@@ -58,8 +58,8 @@ If Firestore documents are rejecting legitimate writes (Permission Denied):
 
 ## 4. Monitoring & Observability
 
-### Sentry (Frontend & Server)
-All unexpected exceptions thrown during React rendering, or backend Node.js crashes (such as Redis timeouts or malformed JSON payloads), are pushed directly to the Sentry Dashboard.
+### Firebase Crashlytics (Android)
+All unexpected crashes on Android are captured by Firebase Crashlytics and visible in the Firebase Console under Release & Monitor → Crashlytics.
 
 ### Crashlytics (Android)
 If the Android app crashes natively (e.g. `NullPointerException` during intent broadcasts or out-of-memory errors), the stack trace is automatically visible in the **Firebase Console > Crashlytics** tab. 

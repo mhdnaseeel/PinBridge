@@ -34,4 +34,3 @@ pinbridge-*-firebase-adminsdk-*.json
 *.log
 .DS_Store
 Thumbs.db
-sentry.properties

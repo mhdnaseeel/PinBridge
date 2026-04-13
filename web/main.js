@@ -1,13 +1,4 @@
 import './style.css';
-import * as Sentry from "@sentry/browser";
-
-// Sentry Initialization
-Sentry.init({
-    dsn: "https://3457c2e95d532379d40e4152fc7642c1@o4511118204141568.ingest.us.sentry.io/4511118399635456",
-    tracesSampleRate: 0.2,
-    sendDefaultPii: false
-});
-
 
 import { initializeApp } from "firebase/app";
 import { 

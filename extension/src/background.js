@@ -3,27 +3,16 @@ import { getAuth, signInAnonymously, signOut, onAuthStateChanged, GoogleAuthProv
 import { getFirestore, doc, onSnapshot, deleteDoc, updateDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { decryptOtp } from "./crypto";
 import { io } from "socket.io-client";
-import * as Sentry from "@sentry/browser";
-import { FIREBASE_CONFIG, SENTRY_DSN, SOCKET_SERVER_URL, GOOGLE_CLIENT_ID } from "./config";
+import { FIREBASE_CONFIG, SOCKET_SERVER_URL, GOOGLE_CLIENT_ID } from "./config";
 
-// Sentry Initialization
-Sentry.init({
-    dsn: SENTRY_DSN,
-    tracesSampleRate: 0.2,
-    sendDefaultPii: false
-});
-
-
-// Global error handlers to capture and report errors to Sentry
+// Global error handlers
 self.addEventListener('error', (e) => {
-    Sentry.captureException(e.error || e.message);
+    console.error('[PinBridge] Uncaught error:', e.error || e.message);
     e.preventDefault();
-    console.debug('[PinBridge] Reported error:', e.error || e.message);
 });
 self.addEventListener('unhandledrejection', (e) => {
-    Sentry.captureException(e.reason);
+    console.error('[PinBridge] Unhandled rejection:', e.reason);
     e.preventDefault();
-    console.debug('[PinBridge] Reported unhandled rejection:', e.reason);
 });
 try {
   chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(() => {});

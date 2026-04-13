@@ -12,7 +12,6 @@ Many users rely on a secondary phone for SIM-based OTPs, which creates real fric
 
 > *Carrying a second phone just for OTPs is frustrating.*
 > *I used to forget mine all the time — and only realize it when I urgently needed an OTP.*
->
 > *So I built PinBridge.*
 
 Now, OTPs from my secondary phone show up instantly on my laptop via a browser extension and web app.
@@ -33,6 +32,18 @@ Now, OTPs from my secondary phone show up instantly on my laptop via a browser e
 - ✍️ **Auto-Fill** — OTPs are automatically pasted into input fields on websites
 - 📡 **Background Sync** — The Android app runs silently in the background, even after reboots
 - 🛡️ **CAPTCHA Protection** — Accidental unpairing is prevented with a 4-digit verification code
+
+---
+
+## 📥 Downloads
+
+Pre-built artifacts are available in the [`for-execution/`](for-execution/) directory:
+
+| Artifact | File | Description |
+|----------|------|-------------|
+| 📱 Android APK | [`PinBridge.apk`](for-execution/PinBridge.apk) | Debug build — install via `adb install` or transfer to your device |
+| 🌐 Chrome Extension | [`PinBridge-Extension.zip`](for-execution/PinBridge-Extension.zip) | Unzip and load via `chrome://extensions` → "Load unpacked" → select `dist/` |
+| 🖥️ Web Dashboard | [`PinBridge-Web.zip`](for-execution/PinBridge-Web.zip) | Production build — deploy to Vercel or any static host |
 
 ---
 
@@ -184,7 +195,7 @@ node index.js
 | Extension | JavaScript, Webpack, Firebase JS SDK, Socket.IO Client |
 | Web Dashboard | Vanilla JS, Vite, Firebase JS SDK |
 | Backend | Node.js, Express, Socket.IO, Redis, Firebase Admin SDK |
-| Error Tracking | Sentry (Android + Extension) |
+| Error Tracking | Firebase Crashlytics (Android) |
 | Database | Firebase Firestore |
 | Auth | Firebase Authentication (Google Sign-In) |
 | Hosting | Vercel (Web), Render (Presence Server) |

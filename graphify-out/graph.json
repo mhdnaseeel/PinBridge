@@ -2252,7 +2252,7 @@
       "community": 55
     },
     {
-      "label": "Sentry/Crashlytics Monitoring",
+      "label": "Firebase Crashlytics Monitoring",
       "file_type": "document",
       "source_file": "SCORECARD.md",
       "source_location": null,

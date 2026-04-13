@@ -1,24 +1,12 @@
-import * as Sentry from "@sentry/browser";
-import { SENTRY_DSN } from "./config";
-
-// Sentry Initialization
-Sentry.init({
-    dsn: SENTRY_DSN,
-    tracesSampleRate: 0.2,
-    sendDefaultPii: false
-});
-
-// Global error handlers to capture and report errors to Sentry
+// Global error handlers
 const targetScope = typeof self !== 'undefined' ? self : window;
 targetScope.addEventListener('error', (e) => {
-    Sentry.captureException(e.error || e.message);
+    console.error('[PinBridge Popup] Uncaught error:', e.error || e.message);
     e.preventDefault();
-    console.debug('[PinBridge Popup] Reported error:', e.error || e.message);
 });
 targetScope.addEventListener('unhandledrejection', (e) => {
-    Sentry.captureException(e.reason);
+    console.error('[PinBridge Popup] Unhandled rejection:', e.reason);
     e.preventDefault();
-    console.debug('[PinBridge Popup] Reported unhandled rejection:', e.reason);
 });
 
 document.addEventListener('DOMContentLoaded', async () => {

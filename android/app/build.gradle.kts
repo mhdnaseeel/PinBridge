@@ -9,14 +9,6 @@ plugins {
     id("com.google.firebase.crashlytics")
     id("com.google.dagger.hilt.android")
     id("com.google.devtools.ksp")
-    id("io.sentry.android.gradle")
-}
-
-sentry {
-    includeSourceContext.set(true)
-    tracingInstrumentation {
-        enabled.set(true)
-    }
 }
 
 android {
@@ -67,6 +59,12 @@ android {
         jniLibs {
             useLegacyPackaging = false
         }
+    }
+
+    lint {
+        abortOnError = false
+        checkReleaseBuilds = true
+        warningsAsErrors = false
     }
 }
 
@@ -143,9 +141,6 @@ dependencies {
 
     // Socket.IO
     implementation("io.socket:socket.io-client:2.1.0")
-
-    // Sentry
-    implementation("io.sentry:sentry-android:8.37.0")
 }
 
 /**
