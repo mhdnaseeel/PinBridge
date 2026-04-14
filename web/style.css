@@ -498,28 +498,25 @@ button {
     height: auto;
     border-right: none;
     border-bottom: 1px solid var(--glass-border);
-    padding: 12px 16px;
+    padding: 10px 16px;
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     align-items: center;
-    justify-content: space-between;
-    gap: 10px;
+    gap: 8px;
     background: rgba(15, 23, 42, 0.95);
     position: sticky;
     top: 0;
     z-index: 100;
-    flex-wrap: wrap;
   }
 
   .sidebar .logo-area {
     margin-bottom: 0;
     gap: 8px;
-    flex-shrink: 0;
   }
 
   .sidebar .logo-icon-img {
-    width: 26px;
-    height: 26px;
+    width: 28px;
+    height: 28px;
   }
 
   .sidebar .logo-text {
@@ -528,20 +525,17 @@ button {
 
   .sidebar .status-group {
     display: flex;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    gap: 6px;
+    flex-direction: column;
+    gap: 4px;
+    width: 100%;
     margin-top: 0;
-    flex: 1;
   }
 
   .sidebar .status-item {
-    flex: 0 1 auto;
-    min-width: unset;
-    padding: 6px 12px;
+    width: 100%;
+    padding: 5px 14px;
     margin-bottom: 0;
     border-radius: 10px;
-    gap: 6px;
   }
 
   .sidebar .status-label {
