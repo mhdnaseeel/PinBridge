@@ -452,7 +452,7 @@ function renderPaired() {
           </div>
           
           <div class="btn-group">
-            <button id="copyBtn" class="btn-primary" style="margin-bottom: 10px; width: 100%;">
+            <button id="copyBtn" class="btn-primary" style="width: 100%;">
               <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
               Copy Code
             </button>
@@ -468,8 +468,8 @@ function renderPaired() {
             </div>
           </div>
         </div>
-        <div class="footer-section" style="margin-top: 40px; display: flex; justify-content: space-between; align-items: center; width: 100%;">
-          <div class="footer-links" style="color: var(--text-muted); font-size: 12px; display: flex; gap: 20px; flex-wrap: wrap;">
+        <div class="footer-section" style="margin-top: 16px; display: flex; justify-content: space-between; align-items: center; width: 100%;">
+          <div class="footer-links" style="color: var(--text-muted); font-size: 12px; display: flex; gap: 16px; flex-wrap: wrap;">
             <span>● Secure Channel</span>
             <span>● End-to-End Encrypted</span>
             <span>● Auto-Push Active</span>
