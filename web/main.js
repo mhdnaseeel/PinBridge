@@ -58,7 +58,7 @@ let state = {
   batteryLevel: null,
   isCharging: false,
   serverStatus: null, // Authoritative status from socket server ('online'/'offline')
-  latestOtp: JSON.parse(localStorage.getItem('latestOtp') || 'null'),
+  latestOtp: null, // In-memory only — never localStorage
   signingIn: false,
   error: null
 };
@@ -689,7 +689,7 @@ async function handleSignOut() {
   state.latestOtp = null;
   state.user = null;
   localStorage.removeItem('pairedDeviceId');
-  localStorage.removeItem('latestOtp');
+  // Note: secret and latestOtp are in-memory only, no localStorage removal needed
   // Note: secret is in-memory only (V-01), no localStorage removal needed
   try {
     await firebaseSignOut(auth);
@@ -827,7 +827,7 @@ function startListeners() {
       const decrypted = await decryptOtp(data, state.secret);
       const ts = data.smsTs || Date.now();
       state.latestOtp = { otp: decrypted, ts, otpEventId: eventId };
-      localStorage.setItem('latestOtp', JSON.stringify(state.latestOtp));
+      // Security: Do not persist decrypted OTP to localStorage
       updateUI();
     } catch (e) {
       console.error('Decryption error', e);
@@ -843,8 +843,7 @@ function handleForcedUnpair() {
     state.secret = null;
     state.latestOtp = null;
     localStorage.removeItem('pairedDeviceId');
-    localStorage.removeItem('latestOtp');
-    // Note: secret is in-memory only (V-01)
+    // Note: secret and OTP are in-memory only
     updateUI();
 }
 
