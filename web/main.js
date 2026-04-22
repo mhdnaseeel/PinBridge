@@ -355,12 +355,12 @@ function renderUnpaired() {
 function renderPaired() {
   const isConnecting = !isDeviceOnline() && state.lastSeen === 0 && state.serverStatus !== 'offline';
   const otpContent = state.latestOtp?.otp || (isConnecting ? '000000' : '------');
-  const otpClass = (isConnecting && !state.latestOtp?.otp) ? 'otp-value skeleton-box' : 'otp-value';
+  const otpClass = 'otp-value';
   
   const timeContent = state.latestOtp?.ts 
     ? `Received at ${new Date(state.latestOtp.ts).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'})}` 
     : (isConnecting ? 'Syncing securely...' : 'Waiting for signal...');
-  const timeClass = (isConnecting && !state.latestOtp?.ts) ? 'otp-meta skeleton-box' : 'otp-meta';
+  const timeClass = 'otp-meta';
   
   const statusColor = isDeviceOnline() ? '#10b981' : (state.lastSeen > 0 ? '#f59e0b' : '#6366f1');
   const statusLabel = isDeviceOnline() ? 'Online' : (state.lastSeen > 0 ? 'Offline' : 'Connecting...');
@@ -448,7 +448,7 @@ function renderPaired() {
           <div class="otp-section">
             <div class="otp-label">Active Verification Code</div>
             <div id="otpValue" class="${otpClass}">${otpContent}</div>
-            <div id="otpMeta" class="${timeClass}" style="${isConnecting && !state.latestOtp?.ts ? 'width: 140px; margin: 0 auto;' : ''}">${timeContent}</div>
+            <div id="otpMeta" class="${timeClass}">${timeContent}</div>
           </div>
           
           <div class="btn-group">
