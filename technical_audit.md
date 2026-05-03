@@ -90,7 +90,7 @@ In [background.js:406-437](file:///Users/muhammednaseel/Desktop/Project/PinBridg
 | **SEC-1**: Firestore rules allow any authenticated user to read/write any `pairings/{deviceId}` or `otps/{deviceId}` document | 🔴 Critical | [firestore.rules:4-9](file:///Users/muhammednaseel/Desktop/Project/PinBridge/firestore.rules#L4-L9) |
 | **SEC-2**: OAuth `client_secret_*.json` tracked in Git | 🔴 Critical | Root directory |
 | **SEC-3**: Firebase Admin SDK service account JSON tracked in Git | 🔴 Critical | `pinbridge-61dd4-firebase-adminsdk-*.json` |
-| ~~**SEC-4**: Sentry DSN hardcoded in 4 client-side files~~ | ✅ Resolved | Sentry removed |
+| **SEC-4**: Sentry DSN hardcoded in 4 client-side files | 🟡 Medium | Multiple files |
 | **SEC-5**: Firebase API key hardcoded (acceptable for client SDK, but should be env-managed for server) | 🟢 Low | Multiple files |
 | **SEC-6**: OTP notification shows plaintext in notification body | 🟡 Medium | [background.js:454](file:///Users/muhammednaseel/Desktop/Project/PinBridge/extension/src/background.js#L454) |
 | **SEC-7**: `content_scripts` matches `<all_urls>` — content script injected into every page | 🟡 Medium | [manifest.json:43](file:///Users/muhammednaseel/Desktop/Project/PinBridge/extension/manifest.json#L43) |
@@ -210,20 +210,18 @@ The most fragile part of the system is **state synchronization across 4 platform
 
 ### 3.9 Observability & Monitoring
 
-**Current state**: Firebase Crashlytics is integrated for Android ✅. Web/Extension/Server use console.error logging.
+**Current state**: Sentry is integrated across all platforms ✅
 
-| Platform | Crashlytics | Custom Logging |
-|----------|-------------|----------------|
-| Android  | ✅          | Log.d/w/e      |
-| Extension| —           | console.error  |
-| Web      | —           | console.error  |
-| Server   | —           | console.error + Render logs |
-
-- Firebase Crashlytics captures native crashes and non-fatal exceptions on Android automatically.
+| Platform | Sentry | Custom Logging |
+|----------|--------|----------------|
+| Android | ✅ Auto + screenshots | `Log.d/i/w/e` throughout |
+| Extension | ✅ Manual capture | `console.log/warn/error` |
+| Web | ✅ Manual capture | `console.log/warn/error` |
+| Server | ✅ Node + Express handler | `console.log/error` |
 
 **Gaps:**
 - No structured logging (JSON format for server)
-- No performance/transaction monitoring configured
+- No Sentry performance/transaction monitoring configured (DSN is set, but no custom transactions)
 - No uptime monitoring for the Render server
 - No alerting on Redis connection failures
 - No Firestore usage/billing monitoring
@@ -237,7 +235,7 @@ The most fragile part of the system is **state synchronization across 4 platform
 | Total source lines | 5,330 | Appropriate for scope |
 | Largest file | `MainActivity.kt` (966 LOC) | 🔴 Too large — needs decomposition |
 | Second largest | `web/main.js` (752 LOC) | 🟡 Acceptable but rendering should be extracted |
-| Hardcoded strings | Firebase config ×4, Server URL ×3 | 🟡 Extract to shared config |
+| Hardcoded strings | Firebase config ×4, Sentry DSN ×4, Server URL ×3 | 🔴 Extract to shared config |
 | Code duplication | `performSignOut` / `performUnpairOnly` share 80% logic | 🟡 Extract shared cleanup function |
 | Code duplication | `pairWithQr` / `pairWithCode` share 90% logic | 🟡 Extract `completePairing(deviceId, secret)` |
 | Magic numbers | `35` (Redis TTL), `40000` (watchdog), `60000` (Firestore throttle), `15000` (heartbeat) | 🟡 Extract to named constants |
@@ -263,7 +261,7 @@ The most fragile part of the system is **state synchronization across 4 platform
 | # | Item | Effort | Impact |
 |---|------|--------|--------|
 | 5 | **Deduplicate Firestore listeners** in `background.js` — merge status + pairing listeners into a single `onSnapshot` | 2 hours | Halves Firestore read costs, eliminates race conditions |
-| 6 | **Extract shared config** — move Firebase config and server URL to a single importable module per platform | 2 hours | Single place to rotate credentials |
+| 6 | **Extract shared config** — move Firebase config, Sentry DSN, and server URL to a single importable module per platform | 2 hours | Single place to rotate credentials |
 | 7 | **Add CryptoUtil unit tests** — round-trip encrypt/decrypt across Android + JS | 3 hours | Catches encryption compatibility breaks |
 | 8 | **Add OTP regex tests** — validate extraction from various SMS formats (banks, Google, WhatsApp) | 2 hours | Prevents false positives/negatives |
 | 9 | **Socket token refresh** — implement periodic token refresh for long-running Android sessions (`getIdToken(true)` on a timer) | 2 hours | Prevents auth failures on sessions > 1 hour |
