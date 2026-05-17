@@ -823,6 +823,9 @@ function startListeners() {
         return;
     }
 
+    const expiresAt = data.expiresAt?.toMillis?.() ?? 0;
+    if (expiresAt && Date.now() > expiresAt) return;
+
     try {
       const decrypted = await decryptOtp(data, state.secret);
       const ts = data.smsTs || Date.now();

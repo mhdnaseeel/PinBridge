@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, signInAnonymously, onAuthStateChanged } from "firebase/auth";
-import { getFirestore, doc, setDoc, serverTimestamp, onSnapshot } from "firebase/firestore";
+import { getFirestore, doc, setDoc, updateDoc, deleteField, serverTimestamp, onSnapshot } from "firebase/firestore";
 import QRCode from 'qrcode';
 import { FIREBASE_CONFIG } from "./config";
 
@@ -178,7 +178,7 @@ function startCountdown(startTime) {
   //    Phase 2: status === 'online' (device connected to presence server)
   let pairingCompleted = false;
   let pairingPhase1Done = false;
-  const unsub = onSnapshot(doc(db, 'pairings', deviceId), (snapshot) => {
+  const unsub = onSnapshot(doc(db, 'pairings', deviceId), async (snapshot) => {
     const data = snapshot.data();
     if (!data || pairingCompleted) return;
 
@@ -230,7 +230,14 @@ function startCountdown(startTime) {
         console.log('[PinBridge] Phase 2: Device online! Pairing fully complete.');
         if (typeof unsub === 'function') unsub();
         if (countdownInterval) clearInterval(countdownInterval);
-        
+
+        // Delete the secret from Firestore — it is no longer needed after pairing
+        try {
+            await updateDoc(doc(db, 'pairings', deviceId), { secret: deleteField() });
+        } catch (e) {
+            console.warn('[PinBridge] Could not remove secret from Firestore:', e);
+        }
+
         const container = document.querySelector('.container');
         container.innerHTML = `
             <h2 style="background: linear-gradient(to right, #10b981, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Successfully Paired!</h2>

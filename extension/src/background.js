@@ -743,9 +743,15 @@ async function processNewOtp(data) {
         return;
     }
 
+    const expiresAt = data.expiresAt?.toMillis?.() ?? 0;
+    if (expiresAt && Date.now() > expiresAt) {
+        console.log('[PinBridge] OTP expired, ignoring');
+        return;
+    }
+
     try {
         const decrypted = await decryptOtp(data, secret);
-        chrome.storage.local.set({latestOtp: {otp: decrypted, ts: tsFromDb, otpEventId: eventId}});
+        chrome.storage.local.set({latestOtp: {iv: data.iv, cipher: data.otp, ts: tsFromDb, otpEventId: eventId}});
         
         // Fix V-06: Do not show the OTP in the notification.
         // Notifications are visible on lock screens and in OS notification centers.
@@ -759,7 +765,7 @@ async function processNewOtp(data) {
         
         safeSendMessage({type: 'newOtp', otp: decrypted, ts: tsFromDb});
         
-        chrome.tabs.query({}, (tabs) => {
+        chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
           tabs.forEach(tab => {
             chrome.tabs.sendMessage(tab.id, {type: 'newOtp', otp: decrypted, ts: tsFromDb}).catch(() => {});
           });

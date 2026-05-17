@@ -1,3 +1,5 @@
+import { decryptOtp } from './crypto';
+
 // Global error handlers
 const targetScope = typeof self !== 'undefined' ? self : window;
 targetScope.addEventListener('error', (e) => {
@@ -163,9 +165,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // Load latest OTP (do not animate on initial load)
-    chrome.storage.local.get(['latestOtp'], ({ latestOtp }) => {
-        if (latestOtp) {
-            updateOtpDisplay(latestOtp, false);
+    chrome.storage.local.get(['latestOtp', 'secret'], async ({ latestOtp, secret }) => {
+        if (latestOtp && secret && latestOtp.iv && latestOtp.cipher) {
+            try {
+                const otp = await decryptOtp({ iv: latestOtp.iv, otp: latestOtp.cipher }, secret);
+                updateOtpDisplay({ otp, ts: latestOtp.ts }, false);
+            } catch (e) {
+                console.warn('[PinBridge Popup] Failed to decrypt stored OTP:', e);
+            }
         }
     });
 
