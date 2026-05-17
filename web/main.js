@@ -749,9 +749,9 @@ function startListeners() {
     socket = io(SOCKET_SERVER_URL, {
       auth: async (cb) => {
         try {
-          const token = await state.user.getIdToken();
-          cb({ 
-            token, 
+          const token = await state.user.getIdToken(true);
+          cb({
+            token,
             deviceId: state.pairedDeviceId,
             clientType: 'viewer'
           });
@@ -759,7 +759,12 @@ function startListeners() {
           console.error('[PinBridge] Failed to get token for socket auth:', e);
           cb(new Error('Failed to get token'));
         }
-      }
+      },
+      reconnection: true,
+      reconnectionAttempts: Infinity,
+      reconnectionDelay: 3000,
+      reconnectionDelayMax: 60000,
+      transports: ['websocket', 'polling']
     });
 
     socket.on('connect', () => {

@@ -141,13 +141,14 @@ class DeviceHeartbeatService : Service() {
                 val token = auth.currentUser?.getIdToken(true)?.await()?.token
                 if (token == null) {
                     Log.e(TAG, "No Firebase user or token available")
+                    releaseWakeLock()
                     scheduleReconnect()
                     return@launch
                 }
 
                 val opts = IO.Options().apply {
                     forceNew = true
-                    reconnection = true
+                    reconnection = false  // We manage reconnection manually via scheduleReconnect()
                     auth = mapOf(
                         "token" to token,
                         "deviceId" to id,
@@ -323,9 +324,10 @@ class DeviceHeartbeatService : Service() {
 
     private val networkCallback = object : ConnectivityManager.NetworkCallback() {
         override fun onAvailable(network: Network) {
-            Log.d(TAG, "Network available - Connecting socket")
+            Log.d(TAG, "Network available - Connecting socket and restarting Firestore heartbeat")
             resetReconnectBackoff()
             connectSocket()
+            startFirestoreHeartbeat()
         }
 
         override fun onLost(network: Network) {
@@ -413,11 +415,21 @@ class DeviceHeartbeatService : Service() {
             PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE
         )
         val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        alarmManager.set(
-            AlarmManager.ELAPSED_REALTIME_WAKEUP,
-            SystemClock.elapsedRealtime() + 2000, // Restart in 2 seconds
-            pendingIntent
-        )
+        // Use setExactAndAllowWhileIdle (API 23+) so the alarm fires even in Doze mode.
+        // Unlike set(), this bypasses Doze maintenance windows for time-critical restarts.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            alarmManager.setExactAndAllowWhileIdle(
+                AlarmManager.ELAPSED_REALTIME_WAKEUP,
+                SystemClock.elapsedRealtime() + 2000,
+                pendingIntent
+            )
+        } else {
+            alarmManager.set(
+                AlarmManager.ELAPSED_REALTIME_WAKEUP,
+                SystemClock.elapsedRealtime() + 2000,
+                pendingIntent
+            )
+        }
     }
 
     private fun isInternetAvailable(): Boolean {

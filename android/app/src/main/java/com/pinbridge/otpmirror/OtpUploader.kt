@@ -3,6 +3,7 @@ package com.pinbridge.otpmirror
 import android.content.Context
 import android.util.Base64
 import androidx.work.*
+import java.util.UUID
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
@@ -57,20 +58,28 @@ object OtpUploader {
     }
 
     fun enqueue(context: Context, otp: String, sender: String, smsTs: Long = System.currentTimeMillis()) {
+        val eventId = UUID.randomUUID().toString()
         val data = workDataOf(
             "otp" to otp,
             "sender" to sender,
-            "smsTs" to smsTs
+            "smsTs" to smsTs,
+            "otpEventId" to eventId
         )
+        // Require network: WorkManager will hold the job and auto-run the moment
+        // connectivity is restored (WiFi reconnect, mobile data, call waking the radio, etc.)
+        val constraints = Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.CONNECTED)
+            .build()
         val request = OneTimeWorkRequestBuilder<UploadOtpWorker>()
             .setInputData(data)
+            .setConstraints(constraints)
             .setBackoffCriteria(
                 BackoffPolicy.EXPONENTIAL,
                 Duration.ofSeconds(30)
             )
             .addTag(TAG)
             .build()
-            
+
         WorkManager.getInstance(context).enqueueUniqueWork(
             "upload_otp",
             ExistingWorkPolicy.APPEND_OR_REPLACE,

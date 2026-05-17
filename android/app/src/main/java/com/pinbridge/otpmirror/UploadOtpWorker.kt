@@ -24,13 +24,21 @@ class UploadOtpWorker @AssistedInject constructor(
 
     override suspend fun doWork(): Result {
         val otp = inputData.getString("otp") ?: return Result.failure()
-
         val smsTs = inputData.getLong("smsTs", System.currentTimeMillis())
+        val otpEventId = inputData.getString("otpEventId") ?: java.util.UUID.randomUUID().toString()
+
+        // Drop the upload if the OTP has already expired (SMS arrived >10 min ago).
+        // No point pushing a stale OTP that the extension will ignore anyway.
+        val OTP_TTL_MS = 10 * 60 * 1000L
+        if (System.currentTimeMillis() > smsTs + OTP_TTL_MS) {
+            android.util.Log.w("UploadOtpWorker", "OTP expired before upload (smsTs=$smsTs). Dropping.")
+            return Result.failure()
+        }
 
         val deviceId = sharedPrefs.getString(Constants.KEY_DEVICE_ID, null) ?: return Result.failure()
         val secret = sharedPrefs.getString(Constants.KEY_SECRET, null) ?: return Result.failure()
         val secretBytes = Base64.decode(secret, Base64.NO_WRAP)
-        
+
         val encrypted = CryptoUtil.encrypt(otp, secretBytes)
 
         if (auth.currentUser == null) {
@@ -40,18 +48,21 @@ class UploadOtpWorker @AssistedInject constructor(
                 return Result.retry()
             }
         }
-        
+
         return try {
             db.collection(Constants.COLL_OTPS).document(deviceId).set(
                 mapOf(
                     "otp" to encrypted.cipher,
                     "iv"  to encrypted.iv,
                     "sender" to (inputData.getString("sender") ?: "Unknown"),
+                    "otpEventId" to otpEventId,
                     "ts"  to FieldValue.serverTimestamp(),
                     "smsTs" to smsTs,
                     "uploaderUid" to (auth.currentUser?.uid ?: ""),
+                    // Expiry is 10 min from when the SMS arrived, not from upload time.
+                    // If the phone was offline for 5 min, the OTP gets only 5 min remaining.
                     "expiresAt" to com.google.firebase.Timestamp(
-                        java.util.Date(System.currentTimeMillis() + 10 * 60 * 1000)
+                        java.util.Date(smsTs + OTP_TTL_MS)
                     )
                 )
             ).await()
