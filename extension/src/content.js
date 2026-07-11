@@ -134,14 +134,17 @@ function autofill(otp) {
 
 // nosemgrep: javascript.browser.security.insufficient-postmessage-origin-validation.insufficient-postmessage-origin-validation
 window.addEventListener('message', (event) => {
-    // Only accept messages from the same frame
     if (event.source !== window) return;
-    // Validate origin against known PinBridge dashboard hostnames (CWE-345)
-    try {
-        const originHost = new URL(event.origin).hostname;
-        const trustedHosts = ['localhost', 'pinbridge-61dd4.firebaseapp.com', 'pinbridge-61dd4.web.app', 'pin-bridge.vercel.app'];
-        if (!trustedHosts.some(h => originHost === h || originHost.endsWith('.' + h))) return;
-    } catch { return; }
+    
+    // Security: Strict origin verification to prevent arbitrary execution (SonarCloud S2819 / CWE-345)
+    const trustedOrigins = [
+        'http://localhost:3000',
+        'http://localhost:5173',
+        'https://pinbridge-61dd4.firebaseapp.com',
+        'https://pinbridge-61dd4.web.app',
+        'https://pin-bridge.vercel.app'
+    ];
+    if (!trustedOrigins.includes(event.origin)) return;
     
     const data = event.data;
     if (data && data.source === 'pinbridge-web') {

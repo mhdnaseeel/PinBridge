@@ -323,7 +323,13 @@ async function handleGoogleSignIn(sendResponse) {
   try {
     const redirectUri = chrome.identity.getRedirectURL();
     const scopes = encodeURIComponent("profile email");
-    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GOOGLE_CLIENT_ID}&response_type=id_token%20token&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scopes}&nonce=${Math.random().toString(36).substring(2)}`;
+    
+    // Security: Generate a cryptographically secure random nonce (SonarCloud S2245)
+    const nonceBytes = new Uint8Array(16);
+    self.crypto.getRandomValues(nonceBytes);
+    const nonce = Array.from(nonceBytes, b => b.toString(16).padStart(2, '0')).join('');
+    
+    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GOOGLE_CLIENT_ID}&response_type=id_token%20token&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scopes}&nonce=${nonce}`;
 
     chrome.identity.launchWebAuthFlow({
       url: authUrl,

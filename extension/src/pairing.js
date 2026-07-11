@@ -111,8 +111,10 @@ function startCountdown(startTime) {
   crypto.getRandomValues(secretBytes);
   const secretB64 = btoa(String.fromCharCode(...secretBytes));
 
-  // Generate a random 6-digit code
-  const pairingCode = ('000000' + Math.floor(100000 + Math.random() * 900000)).slice(-6);
+  // Generate a cryptographically secure random 6-digit code (SonarCloud S2245)
+  const randomUint32 = new Uint32Array(1);
+  window.crypto.getRandomValues(randomUint32);
+  const pairingCode = String(100000 + (randomUint32[0] % 900000));
 
   console.log('[PinBridge] Generating pairing session:', { deviceId, pairingCode });
 

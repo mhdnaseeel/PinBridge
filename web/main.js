@@ -110,6 +110,14 @@ function checkUrlParams() {
   const s = params.get('s');
   
   if (d && s) {
+    // Security: Validate parameter formats before processing/writing to storage (SonarCloud S6145 / CWE-20)
+    const DEVICE_ID_REGEX = /^[a-zA-Z0-9_-]{10,128}$/;
+    const SECRET_REGEX = /^[a-zA-Z0-9+/=]{16,128}$/;
+    if (!DEVICE_ID_REGEX.test(d) || !SECRET_REGEX.test(s)) {
+      console.warn('[PinBridge] Pairing aborted: Invalid deviceId or secret format in URL parameters');
+      return false;
+    }
+    
     console.log('[PinBridge] Initializing pairing from URL parameters');
     state.pairedDeviceId = d;
     state.secret = s; // In-memory only (V-01)
@@ -147,6 +155,22 @@ function el(tag, attrs = {}, ...children) {
     } else if (value !== undefined && value !== null) {
       element.setAttribute(key, value);
     }
+  }
+  for (const child of children) {
+    if (!child) continue;
+    if (typeof child === 'string' || typeof child === 'number') {
+      element.appendChild(document.createTextNode(child));
+    } else if (child instanceof Node) {
+      element.appendChild(child);
+    }
+  }
+  return element;
+}
+
+function svgEl(tag, attrs = {}, ...children) {
+  const element = document.createElementNS("http://www.w3.org/2000/svg", tag);
+  for (const [key, value] of Object.entries(attrs)) {
+    element.setAttribute(key, value);
   }
   for (const child of children) {
     if (!child) continue;
@@ -331,53 +355,61 @@ function renderSignIn() {
 
 /** Screen 2: Signed in but no device paired — passive waiting */
 function renderUnpaired() {
-  appDiv.innerHTML = `
-    <div class="dashboard-layout">
-      <div class="sidebar">
-        <div class="logo-area">
-          <img src="/logo.png" class="logo-icon-img" alt="Logo">
-          <span class="logo-text">PinBridge</span>
-        </div>
-        <div class="status-group">
-          <div class="status-item">
-            <span class="status-label">Account</span>
-            <span class="status-value" style="font-size: 11px;">${escapeHtml(state.user?.email) || 'Signed In'}</span>
-          </div>
-          <div class="status-item">
-            <span class="status-label">Environment</span>
-            <span class="status-value">Secure Cloud</span>
-          </div>
-        </div>
-      </div>
-      <div class="main-stage">
-        <div class="locked-view">
-          <div class="lock-icon">📱</div>
-          <h1 class="view-title">Waiting for Pairing</h1>
-          <p class="view-subtitle">Use the <strong>PinBridge Chrome Extension</strong> to pair with your Android app. This dashboard will automatically sync once pairing is complete.</p>
-
-          <div class="premium-card locked-card">
-            <div style="font-size: 48px; margin-bottom: 16px;">🔗</div>
-            <div style="font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 8px;">How to connect:</div>
-            <ol style="text-align: left; font-size: 13px; color: var(--text-muted); line-height: 2; padding-left: 20px;">
-              <li>Open the <strong>PinBridge Extension</strong> in Chrome</li>
-              <li>Sign in with this same Google account</li>
-              <li>Click <strong>"Start Pairing"</strong> to get a QR code</li>
-              <li>Scan the QR with the <strong>PinBridge Android App</strong></li>
-            </ol>
-
-            <div class="signed-in-badge" style="justify-content: center; margin-top: 20px; max-width: 100%; box-sizing: border-box;">
-              <span class="dot dot-online" style="flex-shrink: 0;"></span>
-              <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Signed in as <strong>${escapeHtml(state.user?.email) || 'User'}</strong></span>
-            </div>
-            <p class="locked-hint" style="margin-top: 16px;">This page will update automatically once your extension pairs with a device.</p>
-            <button id="signOutBtn" class="btn-signout" style="margin-top: 16px;">Sign Out</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  `;
+  appDiv.innerHTML = ''; // Clear DOM safely
   
-  document.getElementById('signOutBtn').onclick = handleSignOut;
+  const signOutBtn = el('button', { id: 'signOutBtn', className: 'btn-signout', style: 'margin-top: 16px;' }, 'Sign Out');
+  signOutBtn.onclick = handleSignOut;
+
+  appDiv.appendChild(
+    el('div', { className: 'dashboard-layout' },
+      el('div', { className: 'sidebar' },
+        el('div', { className: 'logo-area' },
+          el('img', { src: '/logo.png', className: 'logo-icon-img', alt: 'Logo' }),
+          el('span', { className: 'logo-text' }, 'PinBridge')
+        ),
+        el('div', { className: 'status-group' },
+          el('div', { className: 'status-item' },
+            el('span', { className: 'status-label' }, 'Account'),
+            el('span', { className: 'status-value', style: 'font-size: 11px;' }, state.user?.email || 'Signed In')
+          ),
+          el('div', { className: 'status-item' },
+            el('span', { className: 'status-label' }, 'Environment'),
+            el('span', { className: 'status-value' }, 'Secure Cloud')
+          )
+        )
+      ),
+      el('div', { className: 'main-stage' },
+        el('div', { className: 'locked-view' },
+          el('div', { className: 'lock-icon' }, '📱'),
+          el('h1', { className: 'view-title' }, 'Waiting for Pairing'),
+          el('p', { className: 'view-subtitle' }, 
+            'Use the ',
+            el('strong', {}, 'PinBridge Chrome Extension'),
+            ' to pair with your Android app. This dashboard will automatically sync once pairing is complete.'
+          ),
+          el('div', { className: 'premium-card locked-card' },
+            el('div', { style: 'font-size: 48px; margin-bottom: 16px;' }, '🔗'),
+            el('div', { style: 'font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 8px;' }, 'How to connect:'),
+            el('ol', { style: 'text-align: left; font-size: 13px; color: var(--text-muted); line-height: 2; padding-left: 20px;' },
+              el('li', {}, 'Open the ', el('strong', {}, 'PinBridge Extension'), ' in Chrome'),
+              el('li', {}, 'Sign in with this same Google account'),
+              el('li', {}, 'Click ', el('strong', {}, '"Start Pairing"'), ' to get a QR code'),
+              el('li', {}, 'Scan the QR with the ', el('strong', {}, 'PinBridge Android App'))
+            ),
+            el('div', { className: 'signed-in-badge', style: 'justify-content: center; margin-top: 20px; max-width: 100%; box-sizing: border-box;' },
+              el('span', { className: 'dot dot-online', style: 'flex-shrink: 0;' }),
+              el('span', { style: 'overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-left: 8px;' }, 
+                'Signed in as ',
+                el('strong', {}, state.user?.email || 'User')
+              )
+            ),
+            el('p', { className: 'locked-hint', style: 'margin-top: 16px;' }, 'This page will update automatically once your extension pairs with a device.'),
+            signOutBtn
+          )
+        )
+      )
+    )
+  );
 }
 
 /** Screen 3: Signed in + device paired — full OTP dashboard */
@@ -403,144 +435,163 @@ function renderPaired() {
   const hasBattery = state.batteryLevel != null && state.batteryLevel >= 0;
   const sidebarBatteryStr = hasBattery ? `${state.batteryLevel}%${deviceOnline && state.isCharging ? ' ⚡' : ''}` : '--';
   const sidebarBatteryColor = hasBattery && !deviceOnline ? '#ef4444' : '';
-  let batteryHtml = '';
-  let batteryStyle = '';
+  
+  appDiv.innerHTML = ''; // Clear DOM safely
+
+  // Icons constructed programmatically to satisfy S5131
+  const copyIcon = svgEl('svg', { width: '18', height: '18', fill: 'none', stroke: 'currentColor', 'stroke-width': '2', viewBox: '0 0 24 24', style: 'margin-right: 8px; vertical-align: middle;' },
+    svgEl('rect', { x: '9', y: '9', width: '13', height: '13', rx: '2', ry: '2' }),
+    svgEl('path', { d: 'M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1' })
+  );
+
+  const syncIcon = svgEl('svg', { width: '18', height: '18', fill: 'none', stroke: 'currentColor', 'stroke-width': '2', viewBox: '0 0 24 24', style: 'margin-right: 8px; vertical-align: middle;' },
+    svgEl('path', { d: 'M23 4v6h-6' }),
+    svgEl('path', { d: 'M1 20v-6h6' }),
+    svgEl('path', { d: 'M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15' })
+  );
+
+  const signalIcon = svgEl('svg', { width: '18', height: '18', viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': '2', 'stroke-linecap': 'round', 'stroke-linejoin': 'round', style: 'margin-right: 8px; vertical-align: middle;' },
+    svgEl('polyline', { points: '22 12 18 12 15 21 9 3 6 12 2 12' })
+  );
+
+  // Buttons
+  const copyBtn = el('button', { id: 'copyBtn', className: 'btn-primary', style: 'width: 100%; display: flex; align-items: center; justify-content: center;' },
+    copyIcon,
+    'Copy Code'
+  );
+  
+  const fetchBtn = el('button', { id: 'fetchBtn', className: 'btn-secondary', style: 'flex: 1; display: flex; align-items: center; justify-content: center;' },
+    syncIcon,
+    'Quick Sync'
+  );
+
+  const syncSignalBtn = el('button', { id: 'syncSignalBtn', className: 'btn-secondary', style: 'flex: 1; background: #3b82f6; border-color: #3b82f6; color: white; display: flex; align-items: center; justify-content: center;' },
+    signalIcon,
+    'Sync Signal'
+  );
+
+  const signOutBtn = el('button', { id: 'signOutBtn', className: 'btn-signout', style: 'margin-top: 0;' }, 'Sign Out');
+
+  const batteryDisplay = el('div', { id: 'batteryDisplay', className: 'battery-display', style: `display: ${hasBattery ? 'flex' : 'none'};${hasBattery && !deviceOnline ? 'color:#ef4444;' : ''}` });
   if (hasBattery) {
     if (deviceOnline) {
-      batteryHtml = `🔋 ${state.batteryLevel}%`;
+      batteryDisplay.textContent = `🔋 ${state.batteryLevel}%`;
       if (state.isCharging) {
-        batteryHtml += ' <span class="charging-badge">⚡ Charging</span>';
+        const chargingBadge = el('span', { className: 'charging-badge' }, '⚡ Charging');
+        batteryDisplay.appendChild(document.createTextNode(' '));
+        batteryDisplay.appendChild(chargingBadge);
       }
     } else {
-      batteryHtml = `🔋 ${state.batteryLevel}% <span style="color:#ef4444;font-size:12px;">(Last known)</span>`;
-      batteryStyle = 'color:#ef4444;';
+      batteryDisplay.textContent = `🔋 ${state.batteryLevel}% `;
+      const lastKnownSpan = el('span', { style: 'color:#ef4444;font-size:12px;' }, '(Last known)');
+      batteryDisplay.appendChild(lastKnownSpan);
     }
   }
+
+  appDiv.appendChild(
+    el('div', { className: 'dashboard-layout' },
+      el('aside', { className: 'sidebar' },
+        el('div', { className: 'logo-area' },
+          el('img', { src: '/logo.png', className: 'logo-icon-img', alt: 'Logo' }),
+          el('span', { className: 'logo-text' }, 'PinBridge')
+        ),
+        el('div', { className: 'status-group' },
+          el('div', { className: 'status-item' },
+            el('span', { className: 'status-label' }, 'Account'),
+            el('span', { className: 'status-value', style: 'font-size: 11px;' }, state.user?.email || 'Signed In')
+          ),
+          el('div', { className: 'status-item' },
+            el('span', { className: 'status-label' }, 'Device'),
+            el('span', { id: 'sidebarDeviceStatus', className: 'status-value', style: `font-size: 11px; font-weight: 500; color: ${statusColor};` },
+              el('span', { id: 'sidebarDeviceDot', className: `dot ${dotClass}` }),
+              ` ${statusLabel}`
+            )
+          ),
+          el('div', { className: 'status-item' },
+            el('span', { className: 'status-label' }, 'Last Seen'),
+            el('span', { id: 'sidebarLastSeen', className: 'status-value', style: 'font-size: 11px;' }, lastSeenStr)
+          ),
+          el('div', { className: 'status-item' },
+            el('span', { className: 'status-label' }, 'Battery'),
+            el('span', { id: 'sidebarBattery', className: 'status-value', style: `font-size: 11px;${sidebarBatteryColor ? ' color:' + sidebarBatteryColor + ';' : ''}` }, sidebarBatteryStr)
+          ),
+          el('div', { className: 'status-item' },
+            el('span', { className: 'status-label' }, 'Encryption'),
+            el('span', { className: 'status-value', style: 'color: var(--primary);' }, 'AES-256')
+          )
+        )
+      ),
+      el('main', { className: 'main-stage' },
+        el('header', { className: 'view-header' },
+          el('h1', { className: 'view-title' }, 'Security Terminal'),
+          el('p', { className: 'view-subtitle' },
+            'Real-time OTP mirroring from device ',
+            el('strong', {}, `${state.pairedDeviceId?.slice(0,8)}...`)
+          )
+        ),
+        el('div', { id: 'connectionIndicator', className: 'connection-indicator' },
+          el('span', { id: 'connDot', className: `dot ${dotClass}` }),
+          el('div', { className: 'conn-text' },
+            el('span', { id: 'connStatus', className: 'conn-status', style: `color: ${statusColor};` }, statusLabel),
+            el('span', { id: 'connDetail', className: 'conn-detail' }, connDetail)
+          )
+        ),
+        batteryDisplay,
+        el('div', { className: 'premium-card' },
+          el('div', { className: 'otp-section' },
+            el('div', { className: 'otp-label' }, 'Active Verification Code'),
+            el('div', { id: 'otpValue', className: otpClass }, otpContent),
+            el('div', { id: 'otpMeta', className: timeClass }, timeContent)
+          ),
+          el('div', { className: 'btn-group' },
+            copyBtn,
+            el('div', { style: 'display: flex; gap: 10px; width: 100%;' },
+              fetchBtn,
+              syncSignalBtn
+            )
+          )
+        ),
+        el('div', { className: 'footer-section', style: 'margin-top: 16px; display: flex; justify-content: space-between; align-items: center; width: 100%;' },
+          el('div', { className: 'footer-links', style: 'color: var(--text-muted); font-size: 12px; display: flex; gap: 16px; flex-wrap: wrap;' },
+            el('span', {}, '● Secure Channel'),
+            el('span', {}, '● End-to-End Encrypted'),
+            el('span', {}, '● Auto-Push Active')
+          ),
+          signOutBtn
+        )
+      )
+    )
+  );
   
-  appDiv.innerHTML = `
-    <div class="dashboard-layout">
-      <aside class="sidebar">
-        <div class="logo-area">
-          <img src="/logo.png" class="logo-icon-img" alt="Logo">
-          <span class="logo-text">PinBridge</span>
-        </div>
-        
-        <div class="status-group">
-          <div class="status-item">
-            <span class="status-label">Account</span>
-            <span class="status-value" style="font-size: 11px;">${escapeHtml(state.user?.email) || 'Signed In'}</span>
-          </div>
-          <div class="status-item">
-            <span class="status-label">Device</span>
-            <span id="sidebarDeviceStatus" class="status-value" style="font-size: 11px; font-weight: 500; color: ${statusColor};">
-              <span id="sidebarDeviceDot" class="dot ${dotClass}"></span> ${statusLabel}
-            </span>
-          </div>
-          <div class="status-item">
-            <span class="status-label">Last Seen</span>
-            <span id="sidebarLastSeen" class="status-value" style="font-size: 11px;">
-              ${lastSeenStr}
-            </span>
-          </div>
-          <div class="status-item">
-            <span class="status-label">Battery</span>
-            <span id="sidebarBattery" class="status-value" style="font-size: 11px;${sidebarBatteryColor ? ' color:' + sidebarBatteryColor + ';' : ''}">
-              ${sidebarBatteryStr}
-            </span>
-          </div>
-          <div class="status-item">
-            <span class="status-label">Encryption</span>
-            <span class="status-value" style="color: var(--primary);">AES-256</span>
-          </div>
-        </div>
-      </aside>
-
-      <main class="main-stage">
-        <header class="view-header">
-          <h1 class="view-title">Security Terminal</h1>
-          <p class="view-subtitle">Real-time OTP mirroring from device <strong>${escapeHtml(state.pairedDeviceId?.slice(0,8))}...</strong></p>
-        </header>
-
-        <div id="connectionIndicator" class="connection-indicator">
-          <span id="connDot" class="dot ${dotClass}"></span>
-          <div class="conn-text">
-            <span id="connStatus" class="conn-status" style="color: ${statusColor};">${statusLabel}</span>
-            <span id="connDetail" class="conn-detail">${connDetail}</span>
-          </div>
-        </div>
-
-        <div id="batteryDisplay" class="battery-display" style="display: ${hasBattery ? 'flex' : 'none'};${batteryStyle}">
-          ${batteryHtml}
-        </div>
-
-        <div class="premium-card">
-          <div class="otp-section">
-            <div class="otp-label">Active Verification Code</div>
-            <div id="otpValue" class="${otpClass}">${otpContent}</div>
-            <div id="otpMeta" class="${timeClass}">${timeContent}</div>
-          </div>
-          
-          <div class="btn-group">
-            <button id="copyBtn" class="btn-primary" style="width: 100%;">
-              <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-              Copy Code
-            </button>
-            <div style="display: flex; gap: 10px; width: 100%;">
-              <button id="fetchBtn" class="btn-secondary" style="flex: 1;">
-                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
-                Quick Sync
-              </button>
-              <button id="syncSignalBtn" class="btn-secondary" style="flex: 1; background: #3b82f6; border-color: #3b82f6; color: white;">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
-                Sync Signal
-              </button>
-            </div>
-          </div>
-        </div>
-        <div class="footer-section" style="margin-top: 16px; display: flex; justify-content: space-between; align-items: center; width: 100%;">
-          <div class="footer-links" style="color: var(--text-muted); font-size: 12px; display: flex; gap: 16px; flex-wrap: wrap;">
-            <span>● Secure Channel</span>
-            <span>● End-to-End Encrypted</span>
-            <span>● Auto-Push Active</span>
-          </div>
-          <button id="signOutBtn" class="btn-signout" style="margin-top: 0;">Sign Out</button>
-        </div>
-      </main>
-    </div>
-  `;
-  
-  // Re-bind actions
-  document.getElementById('copyBtn').onclick = () => {
+  // Bind actions (DOM APIs exclusively, resolving esbuild double-declarations and SonarCloud S5131)
+  copyBtn.onclick = () => {
     if (state.latestOtp?.otp) {
       navigator.clipboard.writeText(state.latestOtp.otp);
-      const btn = document.getElementById('copyBtn');
-      const original = btn.innerHTML;
-      btn.innerHTML = '✓ Copied';
-      setTimeout(() => btn.innerHTML = original, 2000);
+      copyText.textContent = '✓ Copied';
+      setTimeout(() => {
+        copyText.textContent = 'Copy Code';
+      }, 2000);
     }
   };
 
-  document.getElementById('fetchBtn').onclick = async () => {
-    const btn = document.getElementById('fetchBtn');
-    
+  fetchBtn.onclick = async () => {
     if (!isDeviceOnline()) {
-      const original = btn.innerHTML;
-      btn.innerHTML = 'Device Offline';
-      btn.style.background = '#ef4444';
-      btn.disabled = true;
-      btn.classList.add('syncing-btn');
+      fetchText.textContent = 'Device Offline';
+      fetchBtn.style.background = '#ef4444';
+      fetchBtn.disabled = true;
+      fetchBtn.classList.add('syncing-btn');
       setTimeout(() => {
-        btn.innerHTML = original;
-        btn.style.background = '';
-        btn.disabled = false;
+        fetchText.textContent = 'Quick Sync';
+        fetchBtn.style.background = '';
+        fetchBtn.disabled = false;
+        fetchBtn.classList.remove('syncing-btn');
       }, 2000);
       return;
     }
 
-    btn.disabled = true;
-    const original = btn.innerHTML;
-    btn.innerHTML = 'Requesting...';
-    btn.classList.add('syncing-btn');
+    fetchBtn.disabled = true;
+    fetchText.textContent = 'Requesting...';
+    fetchBtn.classList.add('syncing-btn');
     try {
       const preEventId = state.latestOtp ? state.latestOtp.otpEventId : null;
       await updateDoc(doc(db, 'pairings', state.pairedDeviceId), {
@@ -552,65 +603,69 @@ function renderPaired() {
           attempts++;
           if (state.latestOtp && state.latestOtp.otpEventId !== preEventId) {
              clearInterval(waitInterval);
-             btn.innerHTML = 'Success!';
-             btn.style.background = '#10b981';
-             btn.classList.remove('syncing-btn');
-             setTimeout(() => { btn.disabled = false; btn.innerHTML = original; btn.style.background = ''; }, 2000);
+             fetchText.textContent = 'Success!';
+             fetchBtn.style.background = '#10b981';
+             fetchBtn.classList.remove('syncing-btn');
+             setTimeout(() => {
+               fetchBtn.disabled = false;
+               fetchText.textContent = 'Quick Sync';
+               fetchBtn.style.background = '';
+             }, 2000);
           } else if (attempts >= 10) { // 10 seconds timeout
              clearInterval(waitInterval);
-             btn.innerHTML = 'Timed Out';
-             btn.style.background = '#f59e0b';
-             btn.classList.remove('syncing-btn');
-             setTimeout(() => { btn.disabled = false; btn.innerHTML = original; btn.style.background = ''; }, 2000);
+             fetchText.textContent = 'Timed Out';
+             fetchBtn.style.background = '#f59e0b';
+             fetchBtn.classList.remove('syncing-btn');
+             setTimeout(() => {
+               fetchBtn.disabled = false;
+               fetchText.textContent = 'Quick Sync';
+               fetchBtn.style.background = '';
+             }, 2000);
           }
       }, 1000);
     } catch (e) {
-      btn.innerHTML = 'Error';
-      btn.style.background = '#ef4444';
+      fetchText.textContent = 'Error';
+      fetchBtn.style.background = '#ef4444';
       setTimeout(() => {
-        btn.classList.remove('syncing-btn');
-        btn.disabled = false;
-        btn.innerHTML = original;
-        btn.style.background = '';
+        fetchBtn.classList.remove('syncing-btn');
+        fetchBtn.disabled = false;
+        fetchText.textContent = 'Quick Sync';
+        fetchBtn.style.background = '';
       }, 3000);
     }
   };
 
-  const syncSignalBtn = document.getElementById('syncSignalBtn');
-  if (syncSignalBtn) {
-    syncSignalBtn.onclick = () => {
-      if (socket) {
-        syncSignalBtn.disabled = true;
-        const original = syncSignalBtn.innerHTML;
-        syncSignalBtn.innerHTML = 'Connecting...';
-        syncSignalBtn.classList.add('syncing-btn');
+  syncSignalBtn.onclick = () => {
+    if (socket) {
+      syncSignalBtn.disabled = true;
+      syncSignalText.textContent = 'Connecting...';
+      syncSignalBtn.classList.add('syncing-btn');
 
-        // Clear cached data so UI doesn't show old values while connecting
-        state.lastSeen = 0;
-        state.batteryLevel = null;
-        state.serverStatus = 'offline';
-        updateUI();
-        
-        socket.disconnect();
+      // Clear cached data so UI doesn't show old values while connecting
+      state.lastSeen = 0;
+      state.batteryLevel = null;
+      state.serverStatus = 'offline';
+      updateUI();
+      
+      socket.disconnect();
+      setTimeout(() => {
+        socket.connect();
+        socket.emit('request_presence');
+        syncSignalText.textContent = 'Sent!';
+        syncSignalBtn.style.background = '#10b981';
+        syncSignalBtn.style.borderColor = '#10b981';
         setTimeout(() => {
-          socket.connect();
-          socket.emit('request_presence');
-          syncSignalBtn.innerHTML = 'Sent!';
-          syncSignalBtn.style.background = '#10b981';
-          syncSignalBtn.style.borderColor = '#10b981';
-          setTimeout(() => {
-            syncSignalBtn.innerHTML = original;
-            syncSignalBtn.style.background = '#3b82f6';
-            syncSignalBtn.style.borderColor = '#3b82f6';
-            syncSignalBtn.classList.remove('syncing-btn');
-            syncSignalBtn.disabled = false;
-          }, 2000);
-        }, 500);
-      }
-    };
-  }
+          syncSignalText.textContent = 'Sync Signal';
+          syncSignalBtn.style.background = '#3b82f6';
+          syncSignalBtn.style.borderColor = '#3b82f6';
+          syncSignalBtn.classList.remove('syncing-btn');
+          syncSignalBtn.disabled = false;
+        }, 2000);
+      }, 500);
+    }
+  };
 
-  document.getElementById('signOutBtn').onclick = handleSignOut;
+  signOutBtn.onclick = handleSignOut;
 }
 
 // ─── AUTH ACTIONS ───────────────────────────────────────────────
@@ -755,17 +810,27 @@ window.addEventListener('storage', (e) => {
 // nosemgrep: javascript.browser.security.insufficient-postmessage-origin-validation.insufficient-postmessage-origin-validation
 window.addEventListener('message', (e) => {
   if (e.source !== window) return; // Only accept from same frame
-  // Validate origin against known PinBridge dashboard hostnames (CWE-345)
-  try {
-    const originHost = new URL(e.origin).hostname;
-    const trustedHosts = ['localhost', 'pinbridge-61dd4.firebaseapp.com', 'pinbridge-61dd4.web.app', 'pin-bridge.vercel.app'];
-    if (!trustedHosts.some(h => originHost === h || originHost.endsWith('.' + h))) return;
-  } catch { return; }
+  
+  // Security: Strict origin verification to prevent arbitrary execution (SonarCloud S2819 / CWE-345)
+  const trustedOrigins = [
+    'http://localhost:3000',
+    'http://localhost:5173',
+    'https://pinbridge-61dd4.firebaseapp.com',
+    'https://pinbridge-61dd4.web.app',
+    'https://pin-bridge.vercel.app'
+  ];
+  if (!trustedOrigins.includes(e.origin)) return;
+
   if (e.data && e.data.source === 'pinbridge-extension') {
     if (e.data.action === 'UNPAIR') {
       handleForcedUnpair();
     } else if (e.data.action === 'SYNC') {
-      localStorage.setItem('pairedDeviceId', e.data.deviceId);
+      // Security: Validate deviceId format before writing to local storage to prevent tainted data injection (SonarCloud S6145)
+      const DEVICE_ID_REGEX = /^[a-zA-Z0-9_-]{10,128}$/;
+      if (typeof e.data.deviceId === 'string' && DEVICE_ID_REGEX.test(e.data.deviceId)) {
+        localStorage.setItem('pairedDeviceId', e.data.deviceId);
+        state.pairedDeviceId = e.data.deviceId;
+      }
       state.secret = e.data.secret; // In-memory only (V-01)
       window.dispatchEvent(new Event('storage'));
     }

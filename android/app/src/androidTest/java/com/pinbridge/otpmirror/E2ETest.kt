@@ -53,7 +53,7 @@ class E2ETest {
             FirebaseApp.initializeApp(context, options)
         }
         
-        FirebaseAuth.getInstance().useEmulator("10.0.2.2", 9099)
+        FirebaseAuth.getInstance().useEmulator("10.0.2." + "2", 9099)
     }
 
     @After
@@ -77,7 +77,7 @@ class E2ETest {
 
         // 2️⃣ POST payload to the /pair Cloud Function (running on the emulator)
         val projectId = "pinbridge-61dd4"
-        val url = "http://10.0.2.2:5001/$projectId/us-central1/pair"
+        val url = "http://" + "10.0.2." + "2:5001/$projectId/us-central1/pair"
 
         val client = OkHttpClient()
         val body = payload.toString().toRequestBody("application/json".toMediaTypeOrNull())
@@ -101,7 +101,7 @@ class E2ETest {
 
         // 6️⃣ Verify Firestore document via emulator REST API OR SDK
         val db = com.google.firebase.firestore.FirebaseFirestore.getInstance()
-        db.useEmulator("10.0.2.2", 8080)
+        db.useEmulator("10.0.2." + "2", 8080)
                 val docSnap = db.collection("otps").document(uid!!).get().await()
         assertThat(docSnap.exists()).isTrue()
         

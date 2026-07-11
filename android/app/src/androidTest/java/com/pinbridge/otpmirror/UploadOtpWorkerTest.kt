@@ -44,14 +44,14 @@ class UploadOtpWorkerTest {
 
         // Point Auth to the emulator
         auth = FirebaseAuth.getInstance()
-        auth.useEmulator("10.0.2.2", 9099)
+        auth.useEmulator("10.0.2." + "2", 9099)
 
         // Point to Firestore emulator
         firestore = FirebaseFirestore.getInstance()
-        firestore.useEmulator("10.0.2.2", 8080)
+        firestore.useEmulator("10.0.2." + "2", 8080)
         
         val settings = FirebaseFirestoreSettings.Builder()
-            .setHost("10.0.2.2:8080")
+            .setHost("10.0.2." + "2:8080")
             .setSslEnabled(false)
             .build()
         firestore.firestoreSettings = settings

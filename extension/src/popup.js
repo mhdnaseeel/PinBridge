@@ -55,7 +55,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // ─── CAPTCHA Helpers ────────────────────────────────
     function generateCaptcha() {
-        return String(Math.floor(1000 + Math.random() * 9000)); // 4-digit number, never starts with 0
+        // Security: Generate a cryptographically secure random 4-digit number (SonarCloud S2245)
+        const randomUint32 = new Uint32Array(1);
+        window.crypto.getRandomValues(randomUint32);
+        return String(1000 + (randomUint32[0] % 9000)); // 4-digit number, never starts with 0
     }
 
     function showCaptchaModal() {
