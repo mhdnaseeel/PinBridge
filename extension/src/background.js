@@ -20,6 +20,14 @@ try {
   // sidePanel API may not be available during service worker restart
 }
 
+// Security (H-3): Allow content scripts to access chrome.storage.session
+// so they can read the secret without it being persisted to disk.
+try {
+  chrome.storage.session.setAccessLevel({ accessLevel: 'TRUSTED_AND_UNTRUSTED_CONTEXTS' });
+} catch (e) {
+  console.warn('[PinBridge] Failed to set session storage access level:', e);
+}
+
 const app = initializeApp(FIREBASE_CONFIG);
 const auth = getAuth(app);
 const db = getFirestore(app);
@@ -141,14 +149,15 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             await signInAnonymously(auth);
         }
 
-        // Save pairing data and seed an initial lastSeen so popup shows "Online"
+        // Save pairing data: deviceId to local, secret to session (H-3)
         const now = Date.now();
         stateManager.update({ lastSeen: now });
         await chrome.storage.local.set({ 
             pairedDeviceId: msg.deviceId, 
-            secret: msg.secret,
             lastSeen: now
         });
+        // Security (H-3): Store secret in session storage only (not persisted to disk)
+        await chrome.storage.session.set({ secret: msg.secret });
         pairingPending = false; // Pairing is now confirmed
         startAllListeners(msg.deviceId);
         isPairingNow = false; // Allow onAuthStateChanged to work again
@@ -163,7 +172,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
           try {
             await setDoc(doc(db, 'users', googleUid, 'mirroring', 'active'), {
               deviceId: msg.deviceId,
-              secret: msg.secret,
+              secret: msg.secret,  // Stored in Firestore for cross-device sync; local copy is session-only
               pairedAt: serverTimestamp()
             });
             console.log('[PinBridge] Cloud sync written for uid:', googleUid);
@@ -376,10 +385,11 @@ async function handleWebLoginSuccess(msg) {
     if (pairedDeviceId && secret) {
       await chrome.storage.local.set({ 
         pairedDeviceId: pairedDeviceId, 
-        secret: secret,
         googleUid: uid,
         googleEmail: email
       });
+      // Security (H-3): Store secret in session storage only
+      await chrome.storage.session.set({ secret: secret });
       startAllListeners(pairedDeviceId);
       safeSendMessage({ type: 'paired', deviceId: pairedDeviceId });
     } else {
@@ -399,17 +409,20 @@ async function handleWebPairingSuccess(msg) {
   const { deviceId, secret } = msg;
   console.log('[PinBridge] Captured auto-pairing from web for device:', deviceId);
   await chrome.storage.local.set({ 
-    pairedDeviceId: deviceId, 
-    secret: secret
+    pairedDeviceId: deviceId
   });
+  // Security (H-3): Store secret in session storage only
+  await chrome.storage.session.set({ secret: secret });
   startAllListeners(deviceId);
   safeSendMessage({ type: 'paired', deviceId: deviceId });
 }
 
 async function handleManualFetch(sendResponse) {
-    const { pairedDeviceId, secret } = await chrome.storage.local.get(['pairedDeviceId', 'secret']);
+    const { pairedDeviceId } = await chrome.storage.local.get(['pairedDeviceId']);
+    // Security (H-3): Read secret from session storage
+    const { secret } = await chrome.storage.session.get(['secret']);
     if (!pairedDeviceId || !secret) {
-        sendResponse({status: 'error', error: 'Not paired'});
+        sendResponse({status: 'error', error: 'Not paired or secret unavailable (browser restart?)'});
         return;
     }
 
@@ -503,7 +516,9 @@ async function performUnpairOnly() {
   // Firestore cleanup happens in the background (non-blocking).
   stopAllListeners();
   stateManager.reset();
-  await chrome.storage.local.remove(['pairedDeviceId', 'secret', 'latestOtp', 'lastSeen', 'batteryLevel', 'isCharging', 'serverStatus']);
+  await chrome.storage.local.remove(['pairedDeviceId', 'latestOtp', 'lastSeen', 'batteryLevel', 'isCharging', 'serverStatus']);
+  // Security (H-3): Clear secret from session storage
+  await chrome.storage.session.remove(['secret']);
   console.log('[PinBridge] Unpaired (auth preserved)');
   safeSendMessage({ type: 'statusUpdate', lastSeen: 0 });
   safeSendMessage({ type: 'unpaired' });
@@ -524,8 +539,10 @@ async function performSignOut() {
   stopAllListeners();
   stateManager.reset();
   await signOut(auth).catch(() => {});
-  await chrome.storage.local.remove(['pairedDeviceId', 'secret', 'latestOtp', 'googleUid', 'googleEmail']);
+  await chrome.storage.local.remove(['pairedDeviceId', 'latestOtp', 'googleUid', 'googleEmail']);
   await chrome.storage.local.remove(['lastSeen', 'batteryLevel', 'isCharging', 'serverStatus']);
+  // Security (H-3): Clear secret from session storage
+  await chrome.storage.session.remove(['secret']);
   
   isSigningOut = false;
   console.log('[PinBridge] Local state cleaned');
@@ -729,8 +746,13 @@ function startAllListeners(deviceId) {
 }
 
 async function processNewOtp(data) {
-    const { secret, latestOtp } = await chrome.storage.local.get(['secret', 'latestOtp']);
-    if (!secret) return;
+    // Security (H-3): Read secret from session storage instead of local
+    const { latestOtp } = await chrome.storage.local.get(['latestOtp']);
+    const { secret } = await chrome.storage.session.get(['secret']);
+    if (!secret) {
+        console.warn('[PinBridge] Secret not available in session storage. Browser may have restarted.');
+        return;
+    }
 
     // Fix P0-1: Deduplicate OTPs by comparing otpEventId OR timestamp.
     // Without this, every Firestore snapshot (including initial cache reads)
@@ -804,8 +826,24 @@ chrome.storage.session.get(['pairingInProgress'], (data) => {
 onAuthStateChanged(auth, user => {
   if (user && !isPairingNow) {
     // Auth restored on SW restart — start both presence and OTP listeners.
-    chrome.storage.local.get(['pairedDeviceId'], ({pairedDeviceId}) => {
-      if (pairedDeviceId && !isPairingNow) startAllListeners(pairedDeviceId);
+    chrome.storage.local.get(['pairedDeviceId', 'googleUid'], async ({pairedDeviceId, googleUid}) => {
+      if (pairedDeviceId && !isPairingNow) {
+        // Security (H-3): On cold start, recover secret from Firestore cloud sync if missing from session
+        const { secret } = await chrome.storage.session.get(['secret']);
+        if (!secret && googleUid) {
+          try {
+            const { getDoc } = await import('firebase/firestore');
+            const syncSnap = await getDoc(doc(db, 'users', googleUid, 'mirroring', 'active'));
+            if (syncSnap.exists() && syncSnap.data().secret) {
+              await chrome.storage.session.set({ secret: syncSnap.data().secret });
+              console.log('[PinBridge] Secret recovered from Firestore cloud sync.');
+            }
+          } catch (e) {
+            console.warn('[PinBridge] Failed to recover secret from cloud sync:', e);
+          }
+        }
+        startAllListeners(pairedDeviceId);
+      }
     });
   }
 });

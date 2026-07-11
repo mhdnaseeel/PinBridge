@@ -31,6 +31,7 @@ export const DASHBOARD_HOSTNAMES = [
   'pin-bridge.vercel.app'
 ];
 
+// Security (L-5): Use strict hostname matching instead of loose includes()
 export function isDashboardPage(hostname) {
-  return DASHBOARD_HOSTNAMES.some(h => hostname === h || hostname.includes(h));
+  return DASHBOARD_HOSTNAMES.some(h => hostname === h || hostname.endsWith('.' + h));
 }

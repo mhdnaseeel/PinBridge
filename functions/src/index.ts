@@ -4,10 +4,19 @@ import * as admin from "firebase-admin";
 admin.initializeApp();
 
 export const pair = functions.https.onCall(async (data, context) => {
+    // Security (H-4): Require at least anonymous authentication
+    if (!context.auth) {
+        throw new functions.https.HttpsError("unauthenticated", "Authentication required.");
+    }
+
     const { deviceId, secret } = data;
 
     if (!deviceId || typeof deviceId !== "string") {
         throw new functions.https.HttpsError("invalid-argument", "Missing or invalid deviceId.");
+    }
+    // Security (M-5): Validate deviceId format
+    if (!/^[a-zA-Z0-9_-]{10,128}$/.test(deviceId)) {
+        throw new functions.https.HttpsError("invalid-argument", "Invalid deviceId format.");
     }
     if (!secret || typeof secret !== "string") {
         throw new functions.https.HttpsError("invalid-argument", "Missing or invalid secret.");

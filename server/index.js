@@ -4,7 +4,55 @@ const { Server } = require('socket.io');
 const Redis = require('ioredis');
 const admin = require('firebase-admin');
 const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 require('dotenv').config();
+
+// ─── Security: DeviceId validation (M-5) ───────────────────────
+const DEVICE_ID_REGEX = /^[a-zA-Z0-9_-]{10,128}$/;
+function isValidDeviceId(id) {
+    return typeof id === 'string' && DEVICE_ID_REGEX.test(id);
+}
+
+// ─── Security: Battery value sanitization (M-5) ────────────────
+function sanitizeBattery(level) {
+    if (typeof level !== 'number' || !Number.isFinite(level)) return null;
+    return Math.max(0, Math.min(100, Math.round(level)));
+}
+
+// ─── Security: Safe JSON parse for Redis data ──────────────────
+function safeJsonParse(raw, fallback = null) {
+    if (!raw) return fallback;
+    try { return JSON.parse(raw); } catch { return fallback; }
+}
+
+// ─── Security: Socket.IO per-event rate limiting (H-1) ─────────
+const socketRateLimiters = new Map();
+function rateLimitSocket(socket, event, maxPerWindow = 10, windowMs = 10000) {
+    const key = `${socket.id}:${event}`;
+    let entry = socketRateLimiters.get(key);
+    const now = Date.now();
+    if (!entry || now - entry.windowStart > windowMs) {
+        entry = { count: 0, windowStart: now };
+        socketRateLimiters.set(key, entry);
+    }
+    entry.count++;
+    if (entry.count > maxPerWindow) {
+        return false; // Rate limited
+    }
+    return true;
+}
+// Cleanup stale rate limit entries every 60s
+setInterval(() => {
+    const now = Date.now();
+    for (const [key, entry] of socketRateLimiters.entries()) {
+        if (now - entry.windowStart > 60000) socketRateLimiters.delete(key);
+    }
+}, 60000);
+
+// ─── Structured logging with level control (L-1) ───────────────
+const LOG_LEVEL = process.env.LOG_LEVEL || 'info';
+const LOG_LEVELS = { error: 0, warn: 1, info: 2, debug: 3 };
+const currentLogLevel = LOG_LEVELS[LOG_LEVEL] ?? 2;
 
 // Initialize Firebase Admin
 if (process.env.FIREBASE_SERVICE_ACCOUNT) {
@@ -41,16 +89,29 @@ const ALLOWED_ORIGINS = [
     'http://localhost:5173',
     'http://localhost:3000'
 ];
+// Security (M-3): Pin specific Chrome extension ID instead of allowing all
+const PINBRIDGE_EXTENSION_ID = process.env.PINBRIDGE_EXTENSION_ID || '';
 
 const io = new Server(server, {
     cors: {
         origin: (origin, callback) => {
             // Allow requests with no origin (mobile apps, curl, server-to-server)
-            // and Chrome extensions (chrome-extension:// protocol)
-            if (!origin || ALLOWED_ORIGINS.includes(origin) || origin.startsWith('chrome-extension://')) {
+            if (!origin || ALLOWED_ORIGINS.includes(origin)) {
                 callback(null, true);
+            // Security (M-3): Only allow the specific PinBridge extension ID
+            } else if (origin.startsWith('chrome-extension://')) {
+                if (PINBRIDGE_EXTENSION_ID && origin === `chrome-extension://${PINBRIDGE_EXTENSION_ID}`) {
+                    callback(null, true);
+                } else if (!PINBRIDGE_EXTENSION_ID) {
+                    // Fallback: allow all extensions if ID not configured (log warning)
+                    log('warn', 'PINBRIDGE_EXTENSION_ID not set — allowing all chrome-extension origins. Set this env var in production.', { origin });
+                    callback(null, true);
+                } else {
+                    log('warn', 'Blocked unknown Chrome extension origin', { origin });
+                    callback(new Error('Origin not allowed'));
+                }
             } else {
-                console.warn(`[CORS] Blocked request from origin: ${origin}`);
+                log('warn', 'CORS blocked request', { origin });
                 callback(new Error('Origin not allowed'));
             }
         },
@@ -60,8 +121,10 @@ const io = new Server(server, {
     pingInterval: 5000
 });
 
-// Structured logging utility (P2-3)
+// Structured logging utility (P2-3) with level control (L-1)
 function log(level, message, meta = {}) {
+    const lvl = LOG_LEVELS[level] ?? 2;
+    if (lvl > currentLogLevel) return; // Skip logs above configured level
     const entry = { ts: new Date().toISOString(), level, message, ...meta };
     if (level === 'error') console.error(JSON.stringify(entry));
     else if (level === 'warn') console.warn(JSON.stringify(entry));
@@ -74,7 +137,7 @@ const redis = new Redis(process.env.REDIS_URL, {
     tls: {} // Use default TLS verification — Upstash has valid certificates
 });
 
-// Middleware for authentication
+// Middleware for authentication + input validation (M-5)
 io.use(async (socket, next) => {
     const token = socket.handshake.auth.token;
     const deviceId = socket.handshake.auth.deviceId;
@@ -84,6 +147,16 @@ io.use(async (socket, next) => {
         return next(new Error("Authentication error: Missing token or deviceId"));
     }
 
+    // Security (M-5): Validate deviceId format before using as key
+    if (!isValidDeviceId(deviceId)) {
+        return next(new Error("Authentication error: Invalid deviceId format"));
+    }
+
+    // Validate clientType
+    if (clientType !== 'device' && clientType !== 'viewer') {
+        return next(new Error("Authentication error: Invalid clientType"));
+    }
+
     try {
         const decodedToken = await admin.auth().verifyIdToken(token);
         socket.user = decodedToken;
@@ -91,7 +164,7 @@ io.use(async (socket, next) => {
         socket.clientType = clientType;
         next();
     } catch (err) {
-        log('error', 'Auth error for device', { deviceId, error: err.message });
+        log('error', 'Auth error for device', { deviceId: deviceId.substring(0, 8), error: err.message });
         next(new Error("Authentication error: Invalid token"));
     }
 });
@@ -121,9 +194,7 @@ io.on('connection', async (socket) => {
         // FIX (Bug 2): Read existing battery data from Redis to include in initial Firestore write
         let existingBattery = null;
         const batteryRaw = await redis.get(`battery:${deviceId}`);
-        if (batteryRaw) {
-            existingBattery = JSON.parse(batteryRaw);
-        }
+        existingBattery = safeJsonParse(batteryRaw);
 
         // Write online status + any existing battery data to Firestore on connect (always)
         try {
@@ -153,7 +224,7 @@ io.on('connection', async (socket) => {
         const status = await redis.get(`presence:${deviceId}`) || 'offline';
         const lastSeen = await redis.get(`lastSeen:${deviceId}`);
         const batteryRaw = await redis.get(`battery:${deviceId}`);
-        const battery = batteryRaw ? JSON.parse(batteryRaw) : null;
+        const battery = safeJsonParse(batteryRaw);
         
         socket.emit('presence_update', {
             deviceId,
@@ -166,16 +237,21 @@ io.on('connection', async (socket) => {
 
     socket.on('heartbeat', async (data) => {
         if (clientType === 'device') {
+            // Security (H-1): Rate limit heartbeat events
+            if (!rateLimitSocket(socket, 'heartbeat', 6, 10000)) {
+                return; // Drop excess heartbeats silently
+            }
+
             const now = Date.now();
             lastHeartbeatMap.set(deviceId, now);
             await redis.set(`presence:${deviceId}`, 'online', 'EX', 35);
             await redis.set(`lastSeen:${deviceId}`, now.toString());
 
-            // Parse battery info from heartbeat payload
+            // Parse and validate battery info from heartbeat payload (M-5)
             let batteryLevel = null;
             let isCharging = false;
             if (data && typeof data === 'object') {
-                batteryLevel = typeof data.batteryLevel === 'number' ? data.batteryLevel : null;
+                batteryLevel = sanitizeBattery(data.batteryLevel);
                 isCharging = !!data.isCharging;
             }
 
@@ -226,11 +302,15 @@ io.on('connection', async (socket) => {
     // This is used by the Chrome extension after SW restart when the socket
     // reconnects and needs fresh data without waiting for the next heartbeat.
     socket.on('request_presence', async () => {
+        // Security (H-1): Rate limit presence requests
+        if (!rateLimitSocket(socket, 'request_presence', 5, 10000)) {
+            return;
+        }
         if (clientType !== 'device') {
             const status = await redis.get(`presence:${deviceId}`) || 'offline';
             const lastSeen = await redis.get(`lastSeen:${deviceId}`);
             const batteryRaw = await redis.get(`battery:${deviceId}`);
-            const battery = batteryRaw ? JSON.parse(batteryRaw) : null;
+            const battery = safeJsonParse(batteryRaw);
 
             socket.emit('presence_update', {
                 deviceId,
@@ -256,8 +336,8 @@ io.on('connection', async (socket) => {
             let batteryLevel = null;
             let isCharging = false;
             const batteryRaw = await redis.get(`battery:${deviceId}`);
-            if (batteryRaw) {
-                const battery = JSON.parse(batteryRaw);
+            const battery = safeJsonParse(batteryRaw);
+            if (battery) {
                 batteryLevel = battery.level;
                 isCharging = battery.isCharging;
             }
@@ -301,10 +381,10 @@ setInterval(async () => {
             let batteryLevel = null;
             let isCharging = false;
             const batteryRaw = await redis.get(`battery:${deviceId}`);
-            if (batteryRaw) {
-                const battery = JSON.parse(batteryRaw);
-                batteryLevel = battery.level;
-                isCharging = battery.isCharging;
+            const battery = safeJsonParse(batteryRaw);
+            if (battery) {
+                batteryLevel = sanitizeBattery(battery.level);
+                isCharging = !!battery.isCharging;
             }
             
             // Push offline status to Firestore & Socket Viewers
@@ -353,6 +433,15 @@ setInterval(async () => {
 
 // Helmet.js for HTTP security headers (2.12)
 app.use(helmet());
+
+// Security (H-1): HTTP rate limiting
+app.use(rateLimit({
+    windowMs: 60 * 1000, // 1 minute
+    max: 30,             // 30 requests per minute per IP
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Too many requests, please try again later.' }
+}));
 
 // Enhanced Health check endpoint (2.9)
 app.get("/", async (req, res) => {

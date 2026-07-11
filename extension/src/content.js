@@ -14,7 +14,12 @@ targetScope.addEventListener('unhandledrejection', (e) => {
 // Sync credentials with the Web Dashboard (and clear stale ones)
 const _isDashboard = window.location.hostname === 'localhost' || window.location.hostname.includes('firebaseapp.com') || window.location.hostname.includes('web.app') || window.location.hostname === 'pin-bridge.vercel.app';
 if (_isDashboard) {
-    chrome.storage.local.get(['pairedDeviceId', 'secret'], (data) => {
+    // Security (H-3): Read secret from session storage (not persisted to disk)
+    Promise.all([
+        new Promise(r => chrome.storage.local.get(['pairedDeviceId'], r)),
+        new Promise(r => chrome.storage.session.get(['secret'], r))
+    ]).then(([localData, sessionData]) => {
+        const data = { ...localData, ...sessionData };
         if (data.pairedDeviceId && data.secret) {
             console.log('[PinBridge] Synchronizing session with dashboard...');
             // Inject deviceId into page localStorage (secret stays in-memory via postMessage)
@@ -58,7 +63,8 @@ chrome.storage.onChanged.addListener((changes, area) => {
             window.postMessage({ source: 'pinbridge-extension', action: 'UNPAIR' }, window.location.origin);
         } else {
             // New Pairing or update
-            chrome.storage.local.get(['secret'], (data) => {
+            // Security (H-3): Read secret from session storage
+            chrome.storage.session.get(['secret'], (sessionData) => {
                 console.log('[PinBridge] New extension pairing detected. Syncing...');
                 localStorage.setItem('pairedDeviceId', changes.pairedDeviceId.newValue);
                 // V-01: Do NOT write secret to localStorage
@@ -67,7 +73,7 @@ chrome.storage.onChanged.addListener((changes, area) => {
                     source: 'pinbridge-extension', 
                     action: 'SYNC', 
                     deviceId: changes.pairedDeviceId.newValue,
-                    secret: data.secret
+                    secret: sessionData.secret
                 }, window.location.origin);
             });
         }
@@ -88,23 +94,32 @@ chrome.runtime.onMessage.addListener((msg) => {
 });
 
 function autofill(otp) {
+    // Security (H-2): Validate OTP is a reasonable format before autofilling
+    if (!otp || typeof otp !== 'string' || otp.length < 4 || otp.length > 10 || !/^\d+$/.test(otp)) {
+        console.warn('[PinBridge] Skipping autofill: OTP format invalid');
+        return;
+    }
+
     const selectors = [
-        'input[type="number"]',
-        'input[type="tel"]',
         'input[autocomplete="one-time-code"]',
-        'input[name*="code"]',
         'input[name*="otp"]',
+        'input[name*="code"]',
         'input[name*="pin"]',
         'input[id*="otp"]',
         'input[id*="code"]',
-        'input[id*="pin"]'
+        'input[id*="pin"]',
+        'input[type="number"]',
+        'input[type="tel"]'
     ];
 
     const inputs = Array.from(document.querySelectorAll(selectors.join(',')))
         .filter(input => {
             const rect = input.getBoundingClientRect();
-            return rect.width > 0 && rect.height > 0 && 
+            // Security (H-2): Stricter visibility checks — minimum 20x20 size prevents hidden inputs
+            return rect.width >= 20 && rect.height >= 20 && 
                    window.getComputedStyle(input).visibility !== 'hidden' &&
+                   window.getComputedStyle(input).opacity !== '0' &&
+                   window.getComputedStyle(input).display !== 'none' &&
                    !input.disabled && !input.readOnly;
         });
 

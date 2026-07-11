@@ -41,11 +41,17 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 
 // Initialize App Check (P0 - Security)
-// IMPORTANT: Replace 'YOUR_RECAPTCHA_SITE_KEY' with your actual reCAPTCHA v3 site key from the Google Cloud Console.
-const appCheck = initializeAppCheck(app, {
-  provider: new ReCaptchaV3Provider('YOUR_RECAPTCHA_SITE_KEY'),
-  isTokenAutoRefreshEnabled: true
-});
+// Security (C-3): Read reCAPTCHA key from environment variable.
+// Set VITE_RECAPTCHA_SITE_KEY in your .env file or Vercel/Firebase Hosting config.
+const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
+if (RECAPTCHA_SITE_KEY && RECAPTCHA_SITE_KEY !== 'YOUR_RECAPTCHA_SITE_KEY') {
+  const appCheck = initializeAppCheck(app, {
+    provider: new ReCaptchaV3Provider(RECAPTCHA_SITE_KEY),
+    isTokenAutoRefreshEnabled: true
+  });
+} else {
+  console.warn('[PinBridge] App Check NOT initialized: VITE_RECAPTCHA_SITE_KEY is missing or placeholder. Set this in production!');
+}
 
 const auth = getAuth(app);
 const db = getFirestore(app);
@@ -79,6 +85,12 @@ function isDeviceOnline() {
 function escapeHtml(str) {
   if (!str) return '';
   return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Security (M-5): Battery value sanitization — prevents injection via non-numeric values
+function sanitizeBattery(level) {
+  if (typeof level !== 'number' || !Number.isFinite(level)) return null;
+  return Math.max(0, Math.min(100, Math.round(level)));
 }
 
 // DOM Elements
@@ -206,19 +218,28 @@ function updateConnectionIndicator() {
     detailText.textContent = 'Establishing connection to device';
   }
 
-  // Update battery display
+  // Update battery display — Security (H-5): use textContent instead of innerHTML for dynamic data
   const hasBattery = state.batteryLevel != null && state.batteryLevel >= 0;
   if (batteryEl) {
     if (hasBattery) {
+      // Clear and rebuild safely with DOM API
+      batteryEl.textContent = '';
       if (online) {
-        let batteryHtml = `🔋 ${state.batteryLevel}%`;
+        batteryEl.textContent = `🔋 ${state.batteryLevel}%`;
         if (state.isCharging) {
-          batteryHtml += ' <span class="charging-badge">⚡ Charging</span>';
+          const badge = document.createElement('span');
+          badge.className = 'charging-badge';
+          badge.textContent = '⚡ Charging';
+          batteryEl.appendChild(document.createTextNode(' '));
+          batteryEl.appendChild(badge);
         }
-        batteryEl.innerHTML = batteryHtml;
         batteryEl.style.color = '';
       } else {
-        batteryEl.innerHTML = `🔋 ${state.batteryLevel}% <span style="color:#ef4444;font-size:12px;">(Last known)</span>`;
+        batteryEl.textContent = `🔋 ${state.batteryLevel}% `;
+        const lastKnown = document.createElement('span');
+        lastKnown.style.cssText = 'color:#ef4444;font-size:12px;';
+        lastKnown.textContent = '(Last known)';
+        batteryEl.appendChild(lastKnown);
         batteryEl.style.color = '#ef4444';
       }
       batteryEl.style.display = 'flex';
@@ -227,11 +248,16 @@ function updateConnectionIndicator() {
     }
   }
   
-  // Update sidebar
+  // Update sidebar — Security (H-5): use textContent instead of innerHTML
   if (sidebarStatus) {
     const sidebarDotClass = online ? 'dot-online' : (state.lastSeen > 0 ? 'dot-offline' : 'dot-connecting');
     const sidebarLabel = online ? 'Online' : (state.lastSeen > 0 ? 'Offline' : 'Connecting...');
-    sidebarStatus.innerHTML = `<span id="sidebarDeviceDot" class="dot ${sidebarDotClass}"></span> ${sidebarLabel}`;
+    sidebarStatus.textContent = '';
+    const dotSpan = document.createElement('span');
+    dotSpan.id = 'sidebarDeviceDot';
+    dotSpan.className = `dot ${sidebarDotClass}`;
+    sidebarStatus.appendChild(dotSpan);
+    sidebarStatus.appendChild(document.createTextNode(` ${sidebarLabel}`));
   }
   if (sidebarLastSeen) {
     sidebarLastSeen.textContent = state.lastSeen ? new Date(state.lastSeen).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : 'Never';
@@ -800,8 +826,9 @@ function startListeners() {
           // the 25s threshold handles it seamlessly.
           state.lastSeen = lastSeen;
       }
+      // Security (M-5): Validate battery values before storing
       if (batteryLevel != null) {
-          state.batteryLevel = batteryLevel;
+          state.batteryLevel = sanitizeBattery(batteryLevel);
           state.isCharging = !!isCharging;
       }
       // Track authoritative server status
