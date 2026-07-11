@@ -20,7 +20,11 @@ if (_isDashboard) {
         new Promise(r => chrome.storage.session.get(['secret'], r))
     ]).then(([localData, sessionData]) => {
         const data = { ...localData, ...sessionData };
-        if (data.pairedDeviceId && data.secret) {
+        // Security: Validate formats before writing to browser localStorage (SonarCloud S6145 / CWE-20)
+        const DEVICE_ID_REGEX = /^[a-zA-Z0-9_-]{10,128}$/;
+        const SECRET_REGEX = /^[a-zA-Z0-9+/=]{16,128}$/;
+        if (data.pairedDeviceId && data.secret && 
+            DEVICE_ID_REGEX.test(data.pairedDeviceId) && SECRET_REGEX.test(data.secret)) {
             console.log('[PinBridge] Synchronizing session with dashboard...');
             // Inject deviceId into page localStorage (secret stays in-memory via postMessage)
             localStorage.setItem('pairedDeviceId', data.pairedDeviceId);
@@ -63,19 +67,26 @@ chrome.storage.onChanged.addListener((changes, area) => {
             window.postMessage({ source: 'pinbridge-extension', action: 'UNPAIR' }, window.location.origin);
         } else {
             // New Pairing or update
-            // Security (H-3): Read secret from session storage
-            chrome.storage.session.get(['secret'], (sessionData) => {
-                console.log('[PinBridge] New extension pairing detected. Syncing...');
-                localStorage.setItem('pairedDeviceId', changes.pairedDeviceId.newValue);
-                // V-01: Do NOT write secret to localStorage
-                window.dispatchEvent(new Event('storage'));
-                window.postMessage({ 
-                    source: 'pinbridge-extension', 
-                    action: 'SYNC', 
-                    deviceId: changes.pairedDeviceId.newValue,
-                    secret: sessionData.secret
-                }, window.location.origin);
-            });
+            // Security: Validate format of the new device ID before writing to localStorage (SonarCloud S6145 / CWE-20)
+            const DEVICE_ID_REGEX = /^[a-zA-Z0-9_-]{10,128}$/;
+            const newDeviceVal = changes.pairedDeviceId.newValue;
+            if (typeof newDeviceVal === 'string' && DEVICE_ID_REGEX.test(newDeviceVal)) {
+                // Security (H-3): Read secret from session storage
+                chrome.storage.session.get(['secret'], (sessionData) => {
+                    console.log('[PinBridge] New extension pairing detected. Syncing...');
+                    localStorage.setItem('pairedDeviceId', newDeviceVal);
+                    // V-01: Do NOT write secret to localStorage
+                    window.dispatchEvent(new Event('storage'));
+                    window.postMessage({ 
+                        source: 'pinbridge-extension', 
+                        action: 'SYNC', 
+                        deviceId: newDeviceVal,
+                        secret: sessionData.secret
+                    }, window.location.origin);
+                });
+            } else {
+                console.warn('[PinBridge] Pairing update rejected: new deviceId format is invalid');
+            }
         }
     }
 });

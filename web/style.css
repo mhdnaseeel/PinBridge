@@ -784,3 +784,129 @@ button {
   animation: shimmer 1.5s infinite linear;
   pointer-events: none;
 }
+
+/* ─── Strict CSP Custom Styles ─────────────────────────────────── */
+.locked-icon-large {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+.locked-instruction-header {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+.locked-instruction-list {
+  text-align: left;
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 2;
+  padding-left: 20px;
+}
+.signed-in-badge-container {
+  justify-content: center;
+  margin-top: 20px;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.signed-in-badge-dot {
+  flex-shrink: 0;
+}
+.signed-in-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-left: 8px;
+}
+.locked-hint-margin {
+  margin-top: 16px;
+}
+.btn-primary-flex {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.btn-secondary-flex {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.btn-signal {
+  flex: 1;
+  background: #3b82f6;
+  border-color: #3b82f6;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.btn-signal-success {
+  background: #10b981 !important;
+  border-color: #10b981 !important;
+}
+.btn-signout-margin {
+  margin-top: 0 !important;
+}
+.footer-section-flex {
+  margin-top: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+.footer-links-flex {
+  color: var(--text-muted);
+  font-size: 12px;
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.btn-subgroup-flex {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+}
+.btn-icon-middle {
+  margin-right: 8px;
+  vertical-align: middle;
+}
+.battery-display-offline {
+  color: #ef4444 !important;
+}
+.last-known-battery-text {
+  color: #ef4444;
+  font-size: 12px;
+}
+.sidebar-account-text {
+  font-size: 11px;
+}
+.sidebar-device-text {
+  font-size: 11px;
+  font-weight: 500;
+}
+.sidebar-lastseen-text {
+  font-size: 11px;
+}
+.sidebar-battery-text {
+  font-size: 11px;
+}
+.conn-status-online {
+  color: #10b981 !important;
+}
+.conn-status-offline {
+  color: #f59e0b !important;
+}
+.conn-status-connecting {
+  color: #6366f1 !important;
+}
+.sidebar-status-online {
+  color: #10b981 !important;
+}
+.sidebar-status-offline {
+  color: #f59e0b !important;
+}
+.sidebar-status-connecting {
+  color: #6366f1 !important;
+}
