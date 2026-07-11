@@ -1,5 +1,5 @@
 const express = require('express');
-const http = require('http');
+const http = require('node:http');
 const { Server } = require('socket.io');
 const Redis = require('ioredis');
 const admin = require('firebase-admin');
@@ -36,10 +36,7 @@ function rateLimitSocket(socket, event, maxPerWindow = 10, windowMs = 10000) {
         socketRateLimiters.set(key, entry);
     }
     entry.count++;
-    if (entry.count > maxPerWindow) {
-        return false; // Rate limited
-    }
-    return true;
+    return entry.count <= maxPerWindow;
 }
 // Cleanup stale rate limit entries every 60s
 setInterval(() => {
@@ -62,7 +59,7 @@ if (process.env.FIREBASE_SERVICE_ACCOUNT) {
         databaseURL: process.env.FIREBASE_DATABASE_URL
     });
 } else if (process.env.FIREBASE_SERVICE_ACCOUNT_PATH) {
-    const path = require('path');
+    const path = require('node:path');
     const serviceAccount = require(path.resolve(__dirname, process.env.FIREBASE_SERVICE_ACCOUNT_PATH));
     admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
@@ -78,13 +75,13 @@ const app = express();
 // nosemgrep
 const server = http.createServer(app);
 // Security (V-08): Restrict CORS to known PinBridge origins
-const ALLOWED_ORIGINS = [
+const ALLOWED_ORIGINS = new Set([
     'https://pin-bridge.vercel.app',
     'https://pinbridge-61dd4.web.app',
     'https://pinbridge-61dd4.firebaseapp.com',
     'http://localhost:5173',
     'http://localhost:3000'
-];
+]);
 // Security (M-3): Pin specific Chrome extension ID instead of allowing all
 const PINBRIDGE_EXTENSION_ID = process.env.PINBRIDGE_EXTENSION_ID || '';
 
@@ -92,7 +89,7 @@ const io = new Server(server, {
     cors: {
         origin: (origin, callback) => {
             // Allow requests with no origin (mobile apps, curl, server-to-server)
-            if (!origin || ALLOWED_ORIGINS.includes(origin)) {
+            if (!origin || ALLOWED_ORIGINS.has(origin)) {
                 callback(null, true);
             // Security (M-3): Only allow the specific PinBridge extension ID
             } else if (origin.startsWith('chrome-extension://')) {
@@ -173,62 +170,169 @@ const FIRESTORE_SYNC_INTERVAL = 60000; // Sync to Firestore at most once per 60s
 // Track whether first heartbeat has been received (for eager battery write)
 const firstHeartbeatReceived = new Map();
 
-io.on('connection', async (socket) => {
-    const { deviceId, user, clientType } = socket;
-    console.log(`[PinBridge Server] ${clientType === 'device' ? 'Device' : 'Viewer'} connected: ${deviceId}`);
+async function handleDeviceConnection(socket) {
+    const { deviceId } = socket;
+    const now = Date.now();
+    lastHeartbeatMap.set(deviceId, now);
+    firstHeartbeatReceived.set(deviceId, false); // Reset: waiting for first heartbeat with battery
+    
+    await redis.set(`presence:${deviceId}`, 'online', 'EX', 35);
+    await redis.set(`lastSeen:${deviceId}`, now.toString());
 
-    socket.join(`room:${deviceId}`);
+    // FIX (Bug 2): Read existing battery data from Redis to include in initial Firestore write
+    let existingBattery = null;
+    const batteryRaw = await redis.get(`battery:${deviceId}`);
+    existingBattery = safeJsonParse(batteryRaw);
 
-    if (clientType === 'device') {
-        const now = Date.now();
-        lastHeartbeatMap.set(deviceId, now);
-        firstHeartbeatReceived.set(deviceId, false); // Reset: waiting for first heartbeat with battery
-        
-        await redis.set(`presence:${deviceId}`, 'online', 'EX', 35);
-        await redis.set(`lastSeen:${deviceId}`, now.toString());
+    // Write online status + any existing battery data to Firestore on connect (always)
+    try {
+        const updateData = {
+            lastOnline: admin.firestore.FieldValue.serverTimestamp(),
+            status: 'online'
+        };
+        if (existingBattery) {
+            updateData.batteryLevel = existingBattery.level;
+            updateData.isCharging = existingBattery.isCharging;
+            updateData.batteryUpdatedAt = admin.firestore.FieldValue.serverTimestamp();
+        }
+        await db.collection('pairings').doc(deviceId).update(updateData);
+        lastFirestoreSyncMap.set(deviceId, now);
+    } catch (e) {
+        console.error('[PinBridge Server] Firestore online write error:', e.message);
+    }
 
-        // FIX (Bug 2): Read existing battery data from Redis to include in initial Firestore write
-        let existingBattery = null;
-        const batteryRaw = await redis.get(`battery:${deviceId}`);
-        existingBattery = safeJsonParse(batteryRaw);
+    io.to(`room:${deviceId}`).emit('presence_update', {
+        deviceId,
+        status: 'online',
+        lastSeen: now,
+        batteryLevel: existingBattery ? existingBattery.level : null,
+        isCharging: existingBattery ? existingBattery.isCharging : false
+    });
+}
 
-        // Write online status + any existing battery data to Firestore on connect (always)
+async function handleViewerConnection(socket) {
+    const { deviceId } = socket;
+    const status = await redis.get(`presence:${deviceId}`) || 'offline';
+    const lastSeen = await redis.get(`lastSeen:${deviceId}`);
+    const batteryRaw = await redis.get(`battery:${deviceId}`);
+    const battery = safeJsonParse(batteryRaw);
+    
+    socket.emit('presence_update', {
+        deviceId,
+        status,
+        lastSeen: lastSeen ? Number.parseInt(lastSeen, 10) : null,
+        batteryLevel: battery ? battery.level : null,
+        isCharging: battery ? battery.isCharging : false
+    });
+}
+
+async function handleHeartbeat(socket, data) {
+    const { deviceId } = socket;
+    const now = Date.now();
+    lastHeartbeatMap.set(deviceId, now);
+    await redis.set(`presence:${deviceId}`, 'online', 'EX', 35);
+    await redis.set(`lastSeen:${deviceId}`, now.toString());
+
+    // Parse and validate battery info from heartbeat payload (M-5)
+    let batteryLevel = null;
+    let isCharging = false;
+    if (data && typeof data === 'object') {
+        batteryLevel = sanitizeBattery(data.batteryLevel);
+        isCharging = !!data.isCharging;
+    }
+
+    // Store battery info in Redis
+    if (batteryLevel !== null) {
+        await redis.set(`battery:${deviceId}`, JSON.stringify({ level: batteryLevel, isCharging }));
+    }
+
+    // FIX (Bug 2): On the first heartbeat with battery data, write to Firestore immediately
+    // without respecting the 60s throttle. This ensures battery data is available fast.
+    const isFirstHB = !firstHeartbeatReceived.get(deviceId);
+    const lastSync = lastFirestoreSyncMap.get(deviceId) || 0;
+    const shouldSync = (isFirstHB && batteryLevel !== null) || (now - lastSync > FIRESTORE_SYNC_INTERVAL);
+    
+    if (isFirstHB && batteryLevel !== null) {
+        firstHeartbeatReceived.set(deviceId, true);
+    }
+
+    if (shouldSync) {
         try {
             const updateData = {
                 lastOnline: admin.firestore.FieldValue.serverTimestamp(),
                 status: 'online'
             };
-            if (existingBattery) {
-                updateData.batteryLevel = existingBattery.level;
-                updateData.isCharging = existingBattery.isCharging;
+            if (batteryLevel !== null) {
+                updateData.batteryLevel = batteryLevel;
+                updateData.isCharging = isCharging;
                 updateData.batteryUpdatedAt = admin.firestore.FieldValue.serverTimestamp();
             }
             await db.collection('pairings').doc(deviceId).update(updateData);
             lastFirestoreSyncMap.set(deviceId, now);
         } catch (e) {
-            console.error('[PinBridge Server] Firestore online write error:', e.message);
+            console.error('[PinBridge Server] Firestore heartbeat sync error:', e.message);
+        }
+    }
+
+    io.to(`room:${deviceId}`).emit('presence_update', {
+        deviceId,
+        status: 'online',
+        lastSeen: now,
+        batteryLevel,
+        isCharging
+    });
+}
+
+async function handleDisconnect(socket, reason) {
+    const { deviceId, clientType } = socket;
+    console.log(`[PinBridge Server] ${clientType === 'device' ? 'Device' : 'Viewer'} disconnected: ${deviceId} (${reason})`);
+    
+    if (clientType === 'device') {
+        lastHeartbeatMap.delete(deviceId);
+        lastFirestoreSyncMap.delete(deviceId);
+        firstHeartbeatReceived.delete(deviceId);
+        await redis.set(`presence:${deviceId}`, 'offline');
+        const now = Date.now();
+
+        // Get last known battery info for the disconnect broadcast
+        let batteryLevel = null;
+        let isCharging = false;
+        const batteryRaw = await redis.get(`battery:${deviceId}`);
+        const battery = safeJsonParse(batteryRaw);
+        if (battery) {
+            batteryLevel = battery.level;
+            isCharging = battery.isCharging;
+        }
+        
+        try {
+            await db.collection('pairings').doc(deviceId).update({
+                lastOnline: admin.firestore.FieldValue.serverTimestamp(),
+                status: 'offline'
+            });
+        } catch (e) {
+            console.error("[PinBridge Server] Firestore error:", e.message);
         }
 
         io.to(`room:${deviceId}`).emit('presence_update', {
             deviceId,
-            status: 'online',
+            status: 'offline',
             lastSeen: now,
-            batteryLevel: existingBattery ? existingBattery.level : null,
-            isCharging: existingBattery ? existingBattery.isCharging : false
+            batteryLevel,
+            isCharging
         });
+    }
+}
+
+io.on('connection', async (socket) => {
+    const { deviceId, clientType } = socket;
+    console.log(`[PinBridge Server] ${clientType === 'device' ? 'Device' : 'Viewer'} connected: ${deviceId}`);
+
+    socket.join(`room:${deviceId}`);
+
+    if (clientType === 'device') {
+        await handleDeviceConnection(socket);
     } else {
-        const status = await redis.get(`presence:${deviceId}`) || 'offline';
-        const lastSeen = await redis.get(`lastSeen:${deviceId}`);
-        const batteryRaw = await redis.get(`battery:${deviceId}`);
-        const battery = safeJsonParse(batteryRaw);
-        
-        socket.emit('presence_update', {
-            deviceId,
-            status,
-            lastSeen: lastSeen ? Number.parseInt(lastSeen, 10) : null,
-            batteryLevel: battery ? battery.level : null,
-            isCharging: battery ? battery.isCharging : false
-        });
+        await handleViewerConnection(socket);
     }
 
     socket.on('heartbeat', async (data) => {
@@ -237,66 +341,11 @@ io.on('connection', async (socket) => {
             if (!rateLimitSocket(socket, 'heartbeat', 6, 10000)) {
                 return; // Drop excess heartbeats silently
             }
-
-            const now = Date.now();
-            lastHeartbeatMap.set(deviceId, now);
-            await redis.set(`presence:${deviceId}`, 'online', 'EX', 35);
-            await redis.set(`lastSeen:${deviceId}`, now.toString());
-
-            // Parse and validate battery info from heartbeat payload (M-5)
-            let batteryLevel = null;
-            let isCharging = false;
-            if (data && typeof data === 'object') {
-                batteryLevel = sanitizeBattery(data.batteryLevel);
-                isCharging = !!data.isCharging;
-            }
-
-            // Store battery info in Redis
-            if (batteryLevel !== null) {
-                await redis.set(`battery:${deviceId}`, JSON.stringify({ level: batteryLevel, isCharging }));
-            }
-
-            // FIX (Bug 2): On the first heartbeat with battery data, write to Firestore immediately
-            // without respecting the 60s throttle. This ensures battery data is available fast.
-            const isFirstHB = !firstHeartbeatReceived.get(deviceId);
-            const lastSync = lastFirestoreSyncMap.get(deviceId) || 0;
-            const shouldSync = isFirstHB && batteryLevel !== null || (now - lastSync > FIRESTORE_SYNC_INTERVAL);
-            
-            if (isFirstHB && batteryLevel !== null) {
-                firstHeartbeatReceived.set(deviceId, true);
-            }
-
-            if (shouldSync) {
-                try {
-                    const updateData = {
-                        lastOnline: admin.firestore.FieldValue.serverTimestamp(),
-                        status: 'online'
-                    };
-                    if (batteryLevel !== null) {
-                        updateData.batteryLevel = batteryLevel;
-                        updateData.isCharging = isCharging;
-                        updateData.batteryUpdatedAt = admin.firestore.FieldValue.serverTimestamp();
-                    }
-                    await db.collection('pairings').doc(deviceId).update(updateData);
-                    lastFirestoreSyncMap.set(deviceId, now);
-                } catch (e) {
-                    console.error('[PinBridge Server] Firestore heartbeat sync error:', e.message);
-                }
-            }
-
-            io.to(`room:${deviceId}`).emit('presence_update', {
-                deviceId,
-                status: 'online',
-                lastSeen: now,
-                batteryLevel,
-                isCharging
-            });
+            await handleHeartbeat(socket, data);
         }
     });
 
     // Allow viewer clients to explicitly request current presence data.
-    // This is used by the Chrome extension after SW restart when the socket
-    // reconnects and needs fresh data without waiting for the next heartbeat.
     socket.on('request_presence', async () => {
         // Security (H-1): Rate limit presence requests
         if (!rateLimitSocket(socket, 'request_presence', 5, 10000)) {
@@ -319,42 +368,7 @@ io.on('connection', async (socket) => {
     });
 
     socket.on('disconnect', async (reason) => {
-        console.log(`[PinBridge Server] ${clientType === 'device' ? 'Device' : 'Viewer'} disconnected: ${deviceId} (${reason})`);
-        
-        if (clientType === 'device') {
-            lastHeartbeatMap.delete(deviceId);
-            lastFirestoreSyncMap.delete(deviceId);
-            firstHeartbeatReceived.delete(deviceId);
-            await redis.set(`presence:${deviceId}`, 'offline');
-            const now = Date.now();
-
-            // Get last known battery info for the disconnect broadcast
-            let batteryLevel = null;
-            let isCharging = false;
-            const batteryRaw = await redis.get(`battery:${deviceId}`);
-            const battery = safeJsonParse(batteryRaw);
-            if (battery) {
-                batteryLevel = battery.level;
-                isCharging = battery.isCharging;
-            }
-            
-            try {
-                await db.collection('pairings').doc(deviceId).update({
-                    lastOnline: admin.firestore.FieldValue.serverTimestamp(),
-                    status: 'offline'
-                });
-            } catch (e) {
-                console.error("[PinBridge Server] Firestore error:", e.message);
-            }
-
-            io.to(`room:${deviceId}`).emit('presence_update', {
-                deviceId,
-                status: 'offline',
-                lastSeen: now,
-                batteryLevel,
-                isCharging
-            });
-        }
+        await handleDisconnect(socket, reason);
     });
 });
 
@@ -389,7 +403,9 @@ setInterval(async () => {
                     lastOnline: admin.firestore.Timestamp.fromMillis(lastSeen),
                     status: 'offline'
                 });
-            } catch (e) {}
+            } catch (e) {
+                log('warn', 'Watchdog failed to write pairing status to Firestore', { deviceId, error: e.message });
+            }
 
             io.to(`room:${deviceId}`).emit('presence_update', {
                 deviceId,

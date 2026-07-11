@@ -327,43 +327,50 @@ async function handleGoogleSignIn(sendResponse) {
     chrome.identity.launchWebAuthFlow({
       url: authUrl,
       interactive: true
-    }, async (redirectUrl) => {
-      if (chrome.runtime.lastError || !redirectUrl) {
-        console.error('[PinBridge] launchWebAuthFlow error:', chrome.runtime.lastError);
-        sendResponse({ status: 'error', error: chrome.runtime.lastError?.message || 'Sign-in cancelled or failed' });
-        return;
-      }
-
-      try {
-        const urlHash = new URL(redirectUrl).hash.substring(1);
-        const params = new URLSearchParams(urlHash);
-        const idToken = params.get('id_token');
-        const accessToken = params.get('access_token');
-
-        if (!idToken && !accessToken) {
-          throw new Error('No tokens returned from Google Auth');
-        }
-
-        const credential = GoogleAuthProvider.credential(idToken, accessToken);
-        const userCredential = await signInWithCredential(auth, credential);
-        const user = userCredential.user;
-
-        await chrome.storage.local.set({
-          googleUid: user.uid,
-          googleEmail: user.email
-        });
-
-        console.log('[PinBridge] Google Sign-In native success:', user.email);
-        sendResponse({ status: 'success', email: user.email, uid: user.uid });
-        safeSendMessage({ type: 'statusUpdate', message: `Signed in as ${user.email}` });
-        safeSendMessage({ type: 'unpaired' });
-      } catch (err) {
-        console.error('[PinBridge] Firebase auth error:', err);
+    }, (redirectUrl) => {
+      handleWebAuthResponse(redirectUrl, sendResponse).catch(err => {
+        console.error('[PinBridge] launchWebAuthFlow callback error:', err);
         sendResponse({ status: 'error', error: err.message });
-      }
+      });
     });
   } catch (err) {
     console.error('[PinBridge] setup auth error:', err);
+    sendResponse({ status: 'error', error: err.message });
+  }
+}
+
+async function handleWebAuthResponse(redirectUrl, sendResponse) {
+  if (chrome.runtime.lastError || !redirectUrl) {
+    console.error('[PinBridge] launchWebAuthFlow error:', chrome.runtime.lastError);
+    sendResponse({ status: 'error', error: chrome.runtime.lastError?.message || 'Sign-in cancelled or failed' });
+    return;
+  }
+
+  try {
+    const urlHash = new URL(redirectUrl).hash.substring(1);
+    const params = new URLSearchParams(urlHash);
+    const idToken = params.get('id_token');
+    const accessToken = params.get('access_token');
+
+    if (!idToken && !accessToken) {
+      throw new Error('No tokens returned from Google Auth');
+    }
+
+    const credential = GoogleAuthProvider.credential(idToken, accessToken);
+    const userCredential = await signInWithCredential(auth, credential);
+    const user = userCredential.user;
+
+    await chrome.storage.local.set({
+      googleUid: user.uid,
+      googleEmail: user.email
+    });
+
+    console.log('[PinBridge] Google Sign-In native success:', user.email);
+    sendResponse({ status: 'success', email: user.email, uid: user.uid });
+    safeSendMessage({ type: 'statusUpdate', message: `Signed in as ${user.email}` });
+    safeSendMessage({ type: 'unpaired' });
+  } catch (err) {
+    console.error('[PinBridge] Firebase auth error:', err);
     sendResponse({ status: 'error', error: err.message });
   }
 }

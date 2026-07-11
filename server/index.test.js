@@ -125,27 +125,14 @@ describe('Health check response shape', () => {
 });
 
 describe('Heartbeat timeout detection', () => {
-    test('detects stale heartbeat after 40 seconds', () => {
+    test.each([
+        ['stale heartbeat after 50 seconds', 50000, true],
+        ['fresh heartbeat after 10 seconds', 10000, false],
+        ['exact timeout boundary', 40001, true]
+    ])('correctly evaluates %s', (_, offset, expected) => {
         const TIMEOUT_MS = 40000;
         const now = Date.now();
-        const lastSeen = now - 50000; // 50 seconds ago
-
-        expect(now - lastSeen > TIMEOUT_MS).toBe(true);
-    });
-
-    test('does not flag fresh heartbeat', () => {
-        const TIMEOUT_MS = 40000;
-        const now = Date.now();
-        const lastSeen = now - 10000; // 10 seconds ago
-
-        expect(now - lastSeen > TIMEOUT_MS).toBe(false);
-    });
-
-    test('detects exact timeout boundary', () => {
-        const TIMEOUT_MS = 40000;
-        const now = Date.now();
-        const lastSeen = now - 40001; // Just over timeout
-
-        expect(now - lastSeen > TIMEOUT_MS).toBe(true);
+        const lastSeen = now - offset;
+        expect(now - lastSeen > TIMEOUT_MS).toBe(expected);
     });
 });

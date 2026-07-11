@@ -552,40 +552,60 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // ─── Live Updates ───────────────────────────────────────
+    function handleNewOtpMessage(msg) {
+        showPaired();
+        updateOtpDisplay({ otp: msg.otp, ts: msg.ts });
+        if (isFetching) {
+            console.log('[PinBridge Popup] Success detected via newOtp message.');
+            onFetchSuccess();
+        }
+    }
+
+    function handleStatusUpdateMessage(msg) {
+        if (msg.lastSeen !== undefined) currentLastSeen = msg.lastSeen;
+        if (msg.serverStatus !== undefined) currentServerStatus = msg.serverStatus;
+        if (msg.batteryLevel !== undefined) {
+            currentBatteryLevel = msg.batteryLevel;
+            currentIsCharging = msg.isCharging;
+        }
+        updateConnectionStatus();
+        if (currentBatteryLevel != null) {
+            const now = Date.now();
+            const isOnline = (currentLastSeen > 0 && (now - currentLastSeen < ONLINE_THRESHOLD)) ||
+                (currentServerStatus === 'online' && currentLastSeen > 0 && (now - currentLastSeen < 60000));
+            updateBatteryDisplay(currentBatteryLevel, currentIsCharging, !isOnline);
+        }
+    }
+
+    function handleUnpairMessage() {
+        isPaired = false;
+        stopContinuousSync();
+        showUnpaired();
+    }
+
+    function handlePairedMessage() {
+        isPaired = true;
+        showPaired();
+        showConnectingStatus();
+        batteryIndicator.classList.add('hidden');
+        startContinuousSync();
+    }
+
     function handleRuntimeMessage(msg) {
-        if (msg.type === 'newOtp') {
-            showPaired();
-            updateOtpDisplay({ otp: msg.otp, ts: msg.ts });
-            // If a manual fetch is in progress, mark it as successful
-            if (isFetching) {
-                console.log('[PinBridge Popup] Success detected via newOtp message.');
-                onFetchSuccess();
-            }
-        } else if (msg.type === 'statusUpdate') {
-            if (msg.lastSeen !== undefined) currentLastSeen = msg.lastSeen;
-            if (msg.serverStatus !== undefined) currentServerStatus = msg.serverStatus;
-            if (msg.batteryLevel !== undefined) {
-                currentBatteryLevel = msg.batteryLevel;
-                currentIsCharging = msg.isCharging;
-            }
-            updateConnectionStatus();
-            // Show battery — updateConnectionStatus handles red styling when offline
-            if (currentBatteryLevel != null) {
-                const now = Date.now();
-                const isOnline = (currentLastSeen > 0 && (now - currentLastSeen < ONLINE_THRESHOLD)) ||
-                    (currentServerStatus === 'online' && currentLastSeen > 0 && (now - currentLastSeen < 60000));
-                updateBatteryDisplay(currentBatteryLevel, currentIsCharging, !isOnline);
-            }
-        } else if (msg.type === 'unpaired' || msg.type === 'signOut') {
-            isPaired = false;
-            stopContinuousSync();
-            showUnpaired();
-        } else if (msg.type === 'paired') {
-            isPaired = true;
-            showPaired();
-            showConnectingStatus();
-            batteryIndicator.classList.add('hidden');
-            startContinuousSync();
+        switch (msg.type) {
+            case 'newOtp':
+                handleNewOtpMessage(msg);
+                break;
+            case 'statusUpdate':
+                handleStatusUpdateMessage(msg);
+                break;
+            case 'unpaired':
+            case 'signOut':
+                handleUnpairMessage();
+                break;
+            case 'paired':
+                handlePairedMessage();
+                break;
         }
     }
 

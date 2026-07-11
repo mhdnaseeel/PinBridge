@@ -181,104 +181,116 @@ function startCountdown(startTime) {
   let pairingCompleted = false;
   let pairingPhase1Done = false;
 
+  function handlePairingPhase1() {
+    pairingPhase1Done = true;
+    console.log('[PinBridge] Phase 1: Pairing confirmed by device. Waiting for device to come online...');
+    
+    const qrCanvas = document.getElementById('qrCanvas');
+    const codeBox = document.querySelector('.code-box');
+    const copyBtn = document.getElementById('copyBtn');
+    const cdEl = countdownEl();
+    
+    if (qrCanvas) qrCanvas.style.display = 'none';
+    if (codeBox) codeBox.style.display = 'none';
+    if (copyBtn) copyBtn.style.display = 'none';
+    if (cdEl) cdEl.style.display = 'none';
+    
+    const descText = document.querySelector('.container > p');
+    if (descText) descText.textContent = 'Establishing secure connection with your device...';
+    
+    setStatus('waiting', '🔄', 'Device paired! Waiting for connection...');
+    
+    chrome.storage.local.set({
+      pairedDeviceId: deviceId,
+      secret: secretB64
+    });
+    chrome.storage.session.remove(['pairingInProgress']);
+    
+    chrome.runtime.sendMessage({
+        type: 'pair',
+        deviceId: deviceId,
+        secret: secretB64
+    }, () => {
+        if (chrome.runtime.lastError) {
+            console.warn('[PinBridge] Background response error:', chrome.runtime.lastError.message);
+        }
+    });
+  }
+
+  async function handlePairingPhase2() {
+    pairingCompleted = true;
+    console.log('[PinBridge] Phase 2: Device online! Pairing fully complete.');
+    if (typeof unsub === 'function') unsub();
+    if (countdownInterval) clearInterval(countdownInterval);
+
+    try {
+        await updateDoc(doc(db, 'pairings', deviceId), { secret: deleteField() });
+    } catch (e) {
+        console.warn('[PinBridge] Could not remove secret from Firestore:', e);
+    }
+
+    const container = document.querySelector('.container');
+    container.innerHTML = `
+        <h2 style="background: linear-gradient(to right, #10b981, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Successfully Paired!</h2>
+        <p>Your Chrome extension is now securely connected to your mobile device.</p>
+        <div style="font-size: 64px; margin: 32px 0;">✅</div>
+        <button id="closeBtn">Close Window</button>
+    `;
+    document.getElementById('closeBtn').onclick = () => window.close();
+    setTimeout(() => {
+        try {
+            window.close();
+        } catch (err) {
+            console.debug('[PinBridge] window.close failed:', err);
+        }
+    }, 5000);
+  }
+
+  function handlePairingFallback() {
+    setTimeout(() => {
+        if (!pairingCompleted) {
+            pairingCompleted = true;
+            console.log('[PinBridge] Phase 2 timeout — closing with Phase 1 success.');
+            if (typeof unsub === 'function') unsub();
+            if (countdownInterval) clearInterval(countdownInterval);
+            
+            const container = document.querySelector('.container');
+            container.innerHTML = `
+                <h2 style="background: linear-gradient(to right, #10b981, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Successfully Paired!</h2>
+                <p>Your Chrome extension is now securely connected to your mobile device.</p>
+                <div style="font-size: 64px; margin: 32px 0;">✅</div>
+                <button id="closeBtn">Close Window</button>
+            `;
+            document.getElementById('closeBtn').onclick = () => window.close();
+            setTimeout(() => {
+                try {
+                    window.close();
+                } catch (err) {
+                    console.debug('[PinBridge] window.close failed:', err);
+                }
+            }, 5000);
+        }
+    }, 30000);
+  }
+
   async function onPairingChange(snapshot) {
     const data = snapshot.data();
     if (!data || pairingCompleted) return;
 
     // Phase 1: Device confirmed pairing
     if (data.paired === true && !pairingPhase1Done) {
-        pairingPhase1Done = true;
-        console.log('[PinBridge] Phase 1: Pairing confirmed by device. Waiting for device to come online...');
-        
-        const qrCanvas = document.getElementById('qrCanvas');
-        const codeBox = document.querySelector('.code-box');
-        const copyBtn = document.getElementById('copyBtn');
-        const cdEl = countdownEl();
-        
-        if (qrCanvas) qrCanvas.style.display = 'none';
-        if (codeBox) codeBox.style.display = 'none';
-        if (copyBtn) copyBtn.style.display = 'none';
-        if (cdEl) cdEl.style.display = 'none';
-        
-        const descText = document.querySelector('.container > p');
-        if (descText) descText.textContent = 'Establishing secure connection with your device...';
-        
-        setStatus('waiting', '🔄', 'Device paired! Waiting for connection...');
-        
-        chrome.storage.local.set({
-          pairedDeviceId: deviceId,
-          secret: secretB64
-        });
-        chrome.storage.session.remove(['pairingInProgress']);
-        
-        chrome.runtime.sendMessage({
-            type: 'pair',
-            deviceId: deviceId,
-            secret: secretB64
-        }, () => {
-            if (chrome.runtime.lastError) {
-                console.warn('[PinBridge] Background response error:', chrome.runtime.lastError.message);
-            }
-        });
+        handlePairingPhase1();
     }
 
     // Phase 2: Device is online — full success
     if (pairingPhase1Done && data.status === 'online' && !pairingCompleted) {
-        pairingCompleted = true;
-        console.log('[PinBridge] Phase 2: Device online! Pairing fully complete.');
-        if (typeof unsub === 'function') unsub();
-        if (countdownInterval) clearInterval(countdownInterval);
-
-        try {
-            await updateDoc(doc(db, 'pairings', deviceId), { secret: deleteField() });
-        } catch (e) {
-            console.warn('[PinBridge] Could not remove secret from Firestore:', e);
-        }
-
-        const container = document.querySelector('.container');
-        container.innerHTML = `
-            <h2 style="background: linear-gradient(to right, #10b981, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Successfully Paired!</h2>
-            <p>Your Chrome extension is now securely connected to your mobile device.</p>
-            <div style="font-size: 64px; margin: 32px 0;">✅</div>
-            <button id="closeBtn">Close Window</button>
-        `;
-        document.getElementById('closeBtn').onclick = () => window.close();
-        setTimeout(() => {
-            try {
-                window.close();
-            } catch (err) {
-                console.debug('[PinBridge] window.close failed:', err);
-            }
-        }, 5000);
+        await handlePairingPhase2();
     }
 
     // Fallback: If Phase 1 is done but device doesn't come online within 30s,
     // still allow closing — the background has already started listeners.
     if (pairingPhase1Done && !pairingCompleted) {
-        setTimeout(() => {
-            if (!pairingCompleted) {
-                pairingCompleted = true;
-                console.log('[PinBridge] Phase 2 timeout — closing with Phase 1 success.');
-                if (typeof unsub === 'function') unsub();
-                if (countdownInterval) clearInterval(countdownInterval);
-                
-                const container = document.querySelector('.container');
-                container.innerHTML = `
-                    <h2 style="background: linear-gradient(to right, #10b981, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Successfully Paired!</h2>
-                    <p>Your Chrome extension is now securely connected to your mobile device.</p>
-                    <div style="font-size: 64px; margin: 32px 0;">✅</div>
-                    <button id="closeBtn">Close Window</button>
-                `;
-                document.getElementById('closeBtn').onclick = () => window.close();
-                setTimeout(() => {
-                    try {
-                        window.close();
-                    } catch (err) {
-                        console.debug('[PinBridge] window.close failed:', err);
-                    }
-                }, 5000);
-            }
-        }, 30000);
+        handlePairingFallback();
     }
   }
 
