@@ -62,63 +62,59 @@ class MainActivity : AppCompatActivity() {
 
     // ─── Cloud Sync ─────────────────────────────────────────────
 
-    private fun checkCloudSync(uid: String) {
-        firestore.collection("users").document(uid)
-            .collection("mirroring").document("active")
-            .get()
-            .addOnSuccessListener { doc ->
-                if (doc.exists()) {
-                    val deviceId = doc.getString("deviceId")
-                    val secret = doc.getString("secret")
-                    if (deviceId != null && secret != null) {
-                        val localDeviceId = pairingRepository.getDeviceId()
-                        if (localDeviceId == null) {
-                            Log.i("MainActivity", "Fresh install detected — cleaning up stale cloud sync.")
-                            firestore.collection("users").document(uid)
-                                .collection("mirroring").document("active")
-                                .delete()
-                                .addOnSuccessListener { Log.i("MainActivity", "Stale cloud sync cleaned up.") }
-                                .addOnFailureListener { Log.w("MainActivity", "Failed to clean up stale cloud sync.", it) }
-                            Toast.makeText(this@MainActivity, "Signed in! Please pair your browser extension.", Toast.LENGTH_LONG).show()
-                            return@addOnSuccessListener
-                        }
+    private suspend fun checkCloudSync(uid: String) {
+        try {
+            val doc = firestore.collection("users").document(uid)
+                .collection("mirroring").document("active")
+                .get().await()
 
-                        firestore.collection(Constants.COLL_PAIRINGS).document(deviceId)
-                            .get()
-                            .addOnSuccessListener { pairingDoc ->
-                                if (pairingDoc.exists() && pairingDoc.getBoolean("paired") == true) {
-                                    lifecycleScope.launch {
-                                        try {
-                                            pairingRepository.pairWithQr(deviceId, secret)
-                                            Toast.makeText(this@MainActivity, "Cloud Sync activated! Device paired.", Toast.LENGTH_LONG).show()
-                                        } catch (e: Exception) {
-                                            Toast.makeText(this@MainActivity, "Pairing failed: ${e.message}", Toast.LENGTH_SHORT).show()
-                                        }
-                                    }
-                                } else {
-                                    Log.w("MainActivity", "Cloud sync data is stale. Cleaning up.")
-                                    firestore.collection("users").document(uid)
-                                        .collection("mirroring").document("active")
-                                        .delete()
-                                        .addOnSuccessListener { Log.i("MainActivity", "Stale cloud sync cleaned up.") }
-                                        .addOnFailureListener { Log.w("MainActivity", "Failed to clean up stale cloud sync.", it) }
-                                    Toast.makeText(this@MainActivity, "Previous pairing expired. Please pair again.", Toast.LENGTH_LONG).show()
-                                }
-                            }
-                            .addOnFailureListener {
-                                Log.w("MainActivity", "Failed to validate pairing document.", it)
-                                Toast.makeText(this@MainActivity, "Could not verify pairing status.", Toast.LENGTH_SHORT).show()
-                            }
-                    } else {
-                        Toast.makeText(this, "Cloud Sync data incomplete.", Toast.LENGTH_SHORT).show()
-                    }
-                } else {
-                    Toast.makeText(this, "No cloud sync found. Pair your browser extension first.", Toast.LENGTH_LONG).show()
-                }
+            if (!doc.exists()) {
+                Toast.makeText(this, "No cloud sync found. Pair your browser extension first.", Toast.LENGTH_LONG).show()
+                return
             }
-            .addOnFailureListener {
-                Toast.makeText(this, "Failed to read cloud sync data.", Toast.LENGTH_SHORT).show()
+
+            val deviceId = doc.getString("deviceId")
+            val secret = doc.getString("secret")
+            if (deviceId == null || secret == null) {
+                Toast.makeText(this, "Cloud Sync data incomplete.", Toast.LENGTH_SHORT).show()
+                return
             }
+
+            val localDeviceId = pairingRepository.getDeviceId()
+            if (localDeviceId == null) {
+                Log.i("MainActivity", "Fresh install detected — cleaning up stale cloud sync.")
+                cleanUpStaleCloudSync(uid)
+                Toast.makeText(this, "Signed in! Please pair your browser extension.", Toast.LENGTH_LONG).show()
+                return
+            }
+
+            val pairingDoc = firestore.collection(Constants.COLL_PAIRINGS).document(deviceId)
+                .get().await()
+
+            if (pairingDoc.exists() && pairingDoc.getBoolean("paired") == true) {
+                pairingRepository.pairWithQr(deviceId, secret)
+                Toast.makeText(this, "Cloud Sync activated! Device paired.", Toast.LENGTH_LONG).show()
+            } else {
+                Log.w("MainActivity", "Cloud sync data is stale. Cleaning up.")
+                cleanUpStaleCloudSync(uid)
+                Toast.makeText(this, "Previous pairing expired. Please pair again.", Toast.LENGTH_LONG).show()
+            }
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Cloud sync check failed", e)
+            Toast.makeText(this, "Failed to read cloud sync data.", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    /** Deletes the stale mirroring/active document for the given user. */
+    private suspend fun cleanUpStaleCloudSync(uid: String) {
+        try {
+            firestore.collection("users").document(uid)
+                .collection("mirroring").document("active")
+                .delete().await()
+            Log.i("MainActivity", "Stale cloud sync cleaned up.")
+        } catch (e: Exception) {
+            Log.w("MainActivity", "Failed to clean up stale cloud sync.", e)
+        }
     }
 
     // ─── Authentication ─────────────────────────────────────────
@@ -145,9 +141,9 @@ class MainActivity : AppCompatActivity() {
         val firebaseCredential = GoogleAuthProvider.getCredential(idToken, null)
         val authResult = firebaseAuth.signInWithCredential(firebaseCredential).await()
 
-        if (authResult.user != null) {
-            val uid = authResult.user!!.uid
-            checkCloudSync(uid)
+        val user = authResult.user
+        if (user != null) {
+            checkCloudSync(user.uid)
             return true
         }
         return false

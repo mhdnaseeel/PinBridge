@@ -71,29 +71,34 @@ class PairingRepositoryImpl constructor(
                     return@addSnapshotListener
                 }
 
-                if (snapshot == null || !snapshot.exists()) {
-                    Log.i(TAG, "Snapshot for device $deviceId does not exist or was deleted.")
-                    // Only unpair if we were previously paired, the document is truly gone from the server, and this isn't a stale cached read
-                    if (_pairingStatus.value && snapshot?.metadata?.isFromCache == false && snapshot.metadata?.hasPendingWrites() != true) {
-                        Log.i(TAG, "Triggering local unpair due to missing Firestore document.")
-                        clearLocalCredentials()
-                    }
-                } else if (snapshot.getBoolean("paired") != true) {
-                    Log.i(TAG, "Snapshot exists but 'paired' field is false/missing for $deviceId.")
-                    if (_pairingStatus.value && snapshot.metadata.isFromCache == false && snapshot.metadata.hasPendingWrites() != true) {
-                        Log.i(TAG, "Triggering local unpair due to 'paired' field change.")
-                        clearLocalCredentials()
-                    }
-                } else if (snapshot.contains("fetchRequested")) {
-                    val newTs = snapshot.getTimestamp("fetchRequested")
-                    if (newTs != null && (lastFetchRequested == null || newTs.compareTo(lastFetchRequested!!) > 0)) {
-                        lastFetchRequested = newTs
-                        Log.i(TAG, "Remote fetch request signal received (new timestamp).")
-                        CoroutineScope(Dispatchers.Main).launch {
-                            _remoteFetchRequest.emit(Unit)
+                when {
+                    snapshot == null || !snapshot.exists() -> {
+                        Log.i(TAG, "Snapshot for device $deviceId does not exist or was deleted.")
+                        // Only unpair if we were previously paired, the document is truly gone from the server, and this isn't a stale cached read
+                        if (_pairingStatus.value && snapshot?.metadata?.isFromCache == false && snapshot.metadata.hasPendingWrites() != true) {
+                            Log.i(TAG, "Triggering local unpair due to missing Firestore document.")
+                            clearLocalCredentials()
                         }
-                    } else {
-                        Log.d(TAG, "fetchRequested field exists but has not changed or is in the past. Ignoring.")
+                    }
+                    snapshot.getBoolean("paired") != true -> {
+                        Log.i(TAG, "Snapshot exists but 'paired' field is false/missing for $deviceId.")
+                        if (_pairingStatus.value && !snapshot.metadata.isFromCache && !snapshot.metadata.hasPendingWrites()) {
+                            Log.i(TAG, "Triggering local unpair due to 'paired' field change.")
+                            clearLocalCredentials()
+                        }
+                    }
+                    snapshot.contains("fetchRequested") -> {
+                        val newTs = snapshot.getTimestamp("fetchRequested")
+                        val lastTs = lastFetchRequested
+                        if (newTs != null && (lastTs == null || newTs.compareTo(lastTs) > 0)) {
+                            lastFetchRequested = newTs
+                            Log.i(TAG, "Remote fetch request signal received (new timestamp).")
+                            CoroutineScope(Dispatchers.Main).launch {
+                                _remoteFetchRequest.emit(Unit)
+                            }
+                        } else {
+                            Log.d(TAG, "fetchRequested field exists but has not changed or is in the past. Ignoring.")
+                        }
                     }
                 }
             }

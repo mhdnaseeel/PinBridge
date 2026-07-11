@@ -18,7 +18,7 @@ class MainActivityTest {
     val composeTestRule = createAndroidComposeRule<MainActivity>()
 
     @Test
-    fun clickingShowPairingQr_opensPairingActivity_andShowsQr() {
+    fun clickingShowPairingQrOpensPairingActivityAndShowsQr() {
         val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
         
         // Either "Start Pairing" or "View Pairing QR" based on state

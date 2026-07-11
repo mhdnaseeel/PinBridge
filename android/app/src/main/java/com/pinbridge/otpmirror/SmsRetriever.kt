@@ -34,7 +34,7 @@ object SmsRetriever {
                 }
 
                 if (bestMatch != null) {
-                    Log.d(TAG, "Best OTP candidate: ${bestMatch!!.first.length} digits")
+                    Log.d(TAG, "Best OTP candidate: ${bestMatch.first.length} digits")
                 }
                 return bestMatch
             }

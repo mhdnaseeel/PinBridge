@@ -69,13 +69,44 @@ android {
 }
 
 dependencies {
-    implementation("androidx.core:core-ktx:1.12.0")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
-    implementation("androidx.activity:activity-compose:1.8.2")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.9.0")
-    
+    // ── Version catalogue (local variables) ─────────────────────────────
+    val coreKtxVersion          = "1.12.0"
+    val lifecycleVersion        = "2.7.0"
+    val activityComposeVersion  = "1.8.2"
+    val coroutinesPlayVersion   = "1.9.0"
+    val composeBomVersion       = "2024.02.01"
+    val appcompatVersion        = "1.6.1"
+    val materialVersion         = "1.11.0"
+    val constraintLayoutVersion = "2.1.4"
+    val workManagerVersion      = "2.9.0"
+    val firebaseBomVersion      = "34.10.0"
+    val playServicesAuthVersion = "21.0.0"
+    val credentialsVersion      = "1.5.0-rc01"
+    val googleIdVersion         = "1.1.1"
+    val securityCryptoVersion   = "1.1.0-alpha06"
+    val mlKitBarcodeVersion     = "17.3.0"
+    val cameraxVersion          = "1.4.0"
+    val junitVersion            = "4.13.2"
+    val truthVersion            = "1.1.5"
+    val mockitoVersion          = "5.5.0"
+    val testCoreVersion         = "1.5.0"
+    val testExtJunitVersion     = "1.2.1"
+    val espressoVersion         = "3.6.0"
+    val uiautomatorVersion      = "2.3.0"
+    val composeTestVersion      = "1.6.6"
+    val hiltVersion             = "2.51.1"
+    val hiltWorkVersion         = "1.2.0"
+    val socketIoVersion         = "2.1.0"
+
+    // ── Implementation dependencies ─────────────────────────────────────
+    // AndroidX Core
+    implementation("androidx.core:core-ktx:$coreKtxVersion")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:$lifecycleVersion")
+    implementation("androidx.activity:activity-compose:$activityComposeVersion")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:$coroutinesPlayVersion")
+
     // Compose
-    val composeBom = platform("androidx.compose:compose-bom:2024.02.01")
+    val composeBom = platform("androidx.compose:compose-bom:$composeBomVersion")
     implementation(composeBom)
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
@@ -83,65 +114,68 @@ dependencies {
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.material:material-icons-core")
     implementation("androidx.compose.material:material-icons-extended")
-    
-    implementation("androidx.appcompat:appcompat:1.6.1")
-    implementation("com.google.android.material:material:1.11.0")
-    implementation("androidx.constraintlayout:constraintlayout:2.1.4")
-    
+
+    // UI / Layout
+    implementation("androidx.appcompat:appcompat:$appcompatVersion")
+    implementation("com.google.android.material:material:$materialVersion")
+    implementation("androidx.constraintlayout:constraintlayout:$constraintLayoutVersion")
+
     // WorkManager
-    implementation("androidx.work:work-runtime-ktx:2.9.0")
-    
+    implementation("androidx.work:work-runtime-ktx:$workManagerVersion")
+
     // Firebase
-    implementation(platform("com.google.firebase:firebase-bom:34.10.0"))
+    implementation(platform("com.google.firebase:firebase-bom:$firebaseBomVersion"))
     implementation("com.google.firebase:firebase-analytics")
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-firestore")
     implementation("com.google.firebase:firebase-crashlytics")
     implementation("com.google.firebase:firebase-functions")
     implementation("com.google.firebase:firebase-appcheck-playintegrity")
-    implementation("com.google.android.gms:play-services-auth:21.0.0")
+    implementation("com.google.android.gms:play-services-auth:$playServicesAuthVersion")
+
     // Credential Manager (modern Google Sign-In replacement)
-    implementation("androidx.credentials:credentials:1.5.0-rc01")
-    implementation("androidx.credentials:credentials-play-services-auth:1.5.0-rc01")
-    implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
-    
+    implementation("androidx.credentials:credentials:$credentialsVersion")
+    implementation("androidx.credentials:credentials-play-services-auth:$credentialsVersion")
+    implementation("com.google.android.libraries.identity.googleid:googleid:$googleIdVersion")
+
     // Encryption
-    implementation("androidx.security:security-crypto:1.1.0-alpha06")
-    
-    // ML Kit Barcode Scanning (Replaces ZXing)
-    implementation("com.google.mlkit:barcode-scanning:17.3.0")
+    implementation("androidx.security:security-crypto:$securityCryptoVersion")
+
+    // ML Kit Barcode Scanning
+    implementation("com.google.mlkit:barcode-scanning:$mlKitBarcodeVersion")
+
     // CameraX
-    val camerax_version = "1.4.0"
-    implementation("androidx.camera:camera-core:$camerax_version")
-    implementation("androidx.camera:camera-camera2:$camerax_version")
-    implementation("androidx.camera:camera-lifecycle:$camerax_version")
-    implementation("androidx.camera:camera-view:$camerax_version")
+    implementation("androidx.camera:camera-core:$cameraxVersion")
+    implementation("androidx.camera:camera-camera2:$cameraxVersion")
+    implementation("androidx.camera:camera-lifecycle:$cameraxVersion")
+    implementation("androidx.camera:camera-view:$cameraxVersion")
 
-    // ----- Unit-test dependencies -----
-    testImplementation("junit:junit:4.13.2")
-    testImplementation("com.google.truth:truth:1.1.5")
-    testImplementation("org.mockito:mockito-core:5.5.0")
-    testImplementation("androidx.test:core:1.5.0")
-    testImplementation("androidx.work:work-testing:2.9.0")
-
-    // ----- Android-instrumentation (UI) dependencies -----
-    androidTestImplementation("androidx.test.ext:junit:1.2.1")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.6.0")
-    androidTestImplementation("androidx.test.uiautomator:uiautomator:2.3.0")
-    androidTestImplementation("androidx.compose.ui:ui-test-junit4:1.6.6")
-    androidTestImplementation("androidx.compose.ui:ui-test-manifest:1.6.6")
-    androidTestImplementation("com.google.truth:truth:1.1.5")
-    androidTestImplementation("androidx.work:work-testing:2.9.0")
-
-    // Hilt
-    implementation("com.google.dagger:hilt-android:2.51.1")
-    ksp("com.google.dagger:hilt-compiler:2.51.1")
-    implementation("androidx.hilt:hilt-work:1.2.0")
-    ksp("androidx.hilt:hilt-compiler:1.2.0")
+    // Hilt (DI)
+    implementation("com.google.dagger:hilt-android:$hiltVersion")
+    ksp("com.google.dagger:hilt-compiler:$hiltVersion")
+    implementation("androidx.hilt:hilt-work:$hiltWorkVersion")
+    ksp("androidx.hilt:hilt-compiler:$hiltWorkVersion")
 
     // Socket.IO
-    implementation("io.socket:socket.io-client:2.1.0")
+    implementation("io.socket:socket.io-client:$socketIoVersion")
+
+    // ── Unit-test dependencies ──────────────────────────────────────────
+    testImplementation("junit:junit:$junitVersion")
+    testImplementation("com.google.truth:truth:$truthVersion")
+    testImplementation("org.mockito:mockito-core:$mockitoVersion")
+    testImplementation("androidx.test:core:$testCoreVersion")
+    testImplementation("androidx.work:work-testing:$workManagerVersion")
+
+    // ── Android-instrumentation (UI) test dependencies ──────────────────
+    androidTestImplementation("androidx.test.ext:junit:$testExtJunitVersion")
+    androidTestImplementation("androidx.test.espresso:espresso-core:$espressoVersion")
+    androidTestImplementation("androidx.test.uiautomator:uiautomator:$uiautomatorVersion")
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4:$composeTestVersion")
+    androidTestImplementation("androidx.compose.ui:ui-test-manifest:$composeTestVersion")
+    androidTestImplementation("com.google.truth:truth:$truthVersion")
+    androidTestImplementation("androidx.work:work-testing:$workManagerVersion")
 }
+
 
 /**
  * Custom task that starts the Firebase emulators (functions, firestore, auth)

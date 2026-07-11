@@ -1,5 +1,5 @@
 <resources>
     <string name="app_name">PinBridge</string>
-    <!-- TODO: Replace with your actual Web Client ID from Firebase Console -->
-    <string name="default_web_client_id">YOUR_WEB_CLIENT_ID_HERE.apps.googleusercontent.com</string>
+    <string name="default_web_client_id">475556984962-jekqarbki0ob5s1una398poptimup0eq.apps.googleusercontent.com</string>
 </resources>
+
