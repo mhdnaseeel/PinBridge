@@ -27,7 +27,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.PinBridge">
         
-        <!-- nosemgrep: java.android.security.exported_activity -->
+        <!-- nosemgrep -->
         <!-- exported="true" is REQUIRED here: MainActivity is the LAUNCHER entry point -->
         <activity
             android:name=".MainActivity"

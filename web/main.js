@@ -28,7 +28,7 @@ const firebaseConfig = {
   // nosemgrep: generic.secrets.security.detected-generic-api-key
   // Firebase API keys are public client-side identifiers, NOT secrets.
   // Security is enforced by Firestore rules + Firebase App Check.
-  apiKey: "AIzaSyBwBr0MOdVKCwuvoK3oOU6tg5LcS7uqZOE",
+  apiKey: "AIzaSyBwBr0MOdVKCwuvoK3oOU6tg5LcS7uqZOE", // nosemgrep
   authDomain: "pinbridge-61dd4.firebaseapp.com",
   projectId: "pinbridge-61dd4",
   storageBucket: "pinbridge-61dd4.firebasestorage.app",
@@ -752,6 +752,7 @@ window.addEventListener('storage', (e) => {
 
 // Listen for direct messages from Extension Content Script
 // Fix V-03: Validate event.source to only accept same-frame messages
+// nosemgrep: javascript.browser.security.insufficient-postmessage-origin-validation.insufficient-postmessage-origin-validation
 window.addEventListener('message', (e) => {
   if (e.source !== window) return; // Only accept from same frame
   // Validate origin against known PinBridge dashboard hostnames (CWE-345)

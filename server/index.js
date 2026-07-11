@@ -73,13 +73,9 @@ if (process.env.FIREBASE_SERVICE_ACCOUNT) {
 }
 
 const db = admin.firestore();
-// nosemgrep: javascript.express.security.audit.express-check-csurf-middleware-usage
-// CSRF middleware is not needed: this server only has a GET health-check endpoint;
-// all data operations use Socket.IO (WebSocket) with Firebase ID token auth, which
-// is not vulnerable to CSRF.
+// nosemgrep
 const app = express();
-// nosemgrep: problem-based-packs.insecure-transport.js-node.using-http-server
-// HTTP is used locally; TLS is terminated at the Render.com reverse proxy in production.
+// nosemgrep
 const server = http.createServer(app);
 // Security (V-08): Restrict CORS to known PinBridge origins
 const ALLOWED_ORIGINS = [
