@@ -225,7 +225,7 @@ io.on('connection', async (socket) => {
         socket.emit('presence_update', {
             deviceId,
             status,
-            lastSeen: lastSeen ? parseInt(lastSeen) : null,
+            lastSeen: lastSeen ? Number.parseInt(lastSeen, 10) : null,
             batteryLevel: battery ? battery.level : null,
             isCharging: battery ? battery.isCharging : false
         });
@@ -311,7 +311,7 @@ io.on('connection', async (socket) => {
             socket.emit('presence_update', {
                 deviceId,
                 status,
-                lastSeen: lastSeen ? parseInt(lastSeen) : null,
+                lastSeen: lastSeen ? Number.parseInt(lastSeen, 10) : null,
                 batteryLevel: battery ? battery.level : null,
                 isCharging: battery ? battery.isCharging : false
             });

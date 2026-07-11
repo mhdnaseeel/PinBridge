@@ -109,7 +109,7 @@ function startCountdown(startTime) {
   const deviceId = crypto.randomUUID();
   const secretBytes = new Uint8Array(32);
   crypto.getRandomValues(secretBytes);
-  const secretB64 = btoa(String.fromCharCode(...secretBytes));
+  const secretB64 = btoa(String.fromCodePoint(...secretBytes));
 
   // Generate a cryptographically secure random 6-digit code (SonarCloud S2245)
   const randomUint32 = new Uint32Array(1);

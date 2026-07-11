@@ -66,7 +66,7 @@ let state = {
   lastSeen: 0,
   batteryLevel: null,
   isCharging: false,
-  serverStatus: null, // Authoritative status from socket server ('online'/'offline')
+  serverStatus: 'offline', // Authoritative status from socket server ('online'/'offline')
   latestOtp: null, // In-memory only — never localStorage
   signingIn: false,
   error: null
@@ -84,7 +84,7 @@ function isDeviceOnline() {
 // HTML escaping utility (V-07)
 function escapeHtml(str) {
   if (!str) return '';
-  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  return str.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
 }
 
 // Security (M-5): Battery value sanitization — prevents injection via non-numeric values
@@ -134,9 +134,9 @@ function checkUrlParams() {
  */
 async function decryptOtp(data, b64Secret) {
     if (!data || !data.iv || !data.otp || !b64Secret) throw new Error('Missing data');
-    const secret = Uint8Array.from(atob(b64Secret), c => c.charCodeAt(0));
-    const iv = Uint8Array.from(atob(data.iv), c => c.charCodeAt(0));
-    const cipherText = Uint8Array.from(atob(data.otp), c => c.charCodeAt(0));
+    const secret = Uint8Array.from(atob(b64Secret), c => c.codePointAt(0));
+    const iv = Uint8Array.from(atob(data.iv), c => c.codePointAt(0));
+    const cipherText = Uint8Array.from(atob(data.otp), c => c.codePointAt(0));
     const key = await crypto.subtle.importKey("raw", secret, "AES-GCM", false, ["decrypt"]);
     const decrypted = await crypto.subtle.decrypt({ name: "AES-GCM", iv: iv }, key, cipherText);
     return new TextDecoder().decode(decrypted);

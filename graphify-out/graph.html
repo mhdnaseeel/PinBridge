@@ -39,7 +39,7 @@
 <div id="graph"></div>
 <div id="sidebar">
   <div id="search-wrap">
-    <input id="search" type="text" placeholder="Search nodes..." autocomplete="off">
+    <input id="search" type="text" placeholder="Search nodes..." autocomplete="off" aria-label="Search nodes">
     <div id="search-results"></div>
   </div>
   <div id="info-panel">
@@ -215,7 +215,7 @@ LEGEND.forEach(c => {
 </script>
 <script>
 // Render hyperedges as shaded regions
-const hyperedges = [];
+const hyperedges = window.hyperedges || [];
 function drawHyperedges() {
     const canvas = network.canvas.frame.canvas;
     const ctx = canvas.getContext('2d');

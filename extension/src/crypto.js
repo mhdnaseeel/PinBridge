@@ -10,9 +10,9 @@ export async function decryptOtp(data, b64Secret) {
     }
 
     try {
-        const secret = Uint8Array.from(atob(b64Secret), c => c.charCodeAt(0));
-        const iv = Uint8Array.from(atob(data.iv), c => c.charCodeAt(0));
-        const cipherText = Uint8Array.from(atob(data.otp), c => c.charCodeAt(0));
+        const secret = Uint8Array.from(atob(b64Secret), c => c.codePointAt(0));
+        const iv = Uint8Array.from(atob(data.iv), c => c.codePointAt(0));
+        const cipherText = Uint8Array.from(atob(data.otp), c => c.codePointAt(0));
         
         const key = await crypto.subtle.importKey(
             "raw", 

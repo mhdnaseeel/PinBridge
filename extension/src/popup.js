@@ -231,9 +231,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (googleEmail) {
                 if (googleSignInBtn) googleSignInBtn.classList.add('hidden');
                 if (startPairingBtn) startPairingBtn.classList.remove('hidden');
-                // Escape email to prevent innerHTML XSS (V-07)
-                const safeEmail = googleEmail.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-                emptyText.innerHTML = `Signed in as <strong>${safeEmail}</strong>.<br>Start pairing to configure your Android device.`;
+                // Render account details safely using DOM APIs (SonarCloud S5131)
+                emptyText.textContent = '';
+                emptyText.appendChild(document.createTextNode('Signed in as '));
+                const strong = document.createElement('strong');
+                strong.textContent = googleEmail;
+                emptyText.appendChild(strong);
+                emptyText.appendChild(document.createTextNode('.'));
+                emptyText.appendChild(document.createElement('br'));
+                emptyText.appendChild(document.createTextNode('Start pairing to configure your Android device.'));
                 if (unpairedSignOutBtn) unpairedSignOutBtn.classList.remove('hidden');
             } else {
                 if (googleSignInBtn) {

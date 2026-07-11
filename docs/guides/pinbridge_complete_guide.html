@@ -697,7 +697,7 @@ renderer.code = function(code, language) {
   if (lang === 'mermaid') {
     return '<div class="mermaid">' + text + '</div>';
   }
-  return '<pre><code>' + (text || '').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</code></pre>';
+  return '<pre><code>' + (text || '').replaceAll('<', '&lt;').replaceAll('>', '&gt;') + '</code></pre>';
 };
 
 marked.use({ renderer });
