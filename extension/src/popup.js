@@ -81,7 +81,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Enable confirm button only when 4 digits entered
     captchaInput.addEventListener('input', () => {
         // Strip non-numeric characters
-        captchaInput.value = captchaInput.value.replace(/[^0-9]/g, '');
+        captchaInput.value = captchaInput.value.replace(/\D/g, '');
         captchaConfirm.disabled = captchaInput.value.length !== 4;
         captchaError.textContent = '';
         captchaInput.classList.remove('shake');
@@ -154,7 +154,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     chrome.runtime.sendMessage({ type: 'getStatus' }, (response) => {
-        if (response && response.status === 'paired') {
+        if (response?.status === 'paired') {
             isPaired = true;
             showPaired();
             // Show "Connecting…" and hide battery until fresh data arrives
@@ -185,7 +185,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     chrome.storage.onChanged.addListener((changes, area) => {
         if (area !== 'local' || !isPaired) return;
         let needsUpdate = false;
-        if (changes.lastSeen && changes.lastSeen.newValue !== undefined) {
+        if (changes.lastSeen?.newValue !== undefined) {
             currentLastSeen = changes.lastSeen.newValue;
             needsUpdate = true;
         }
@@ -193,14 +193,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             currentServerStatus = changes.serverStatus.newValue || null;
             needsUpdate = true;
         }
-        if (changes.batteryLevel && changes.batteryLevel.newValue !== undefined) {
+        if (changes.batteryLevel?.newValue !== undefined) {
             currentBatteryLevel = changes.batteryLevel.newValue;
             needsUpdate = true;
         }
         if (changes.isCharging) {
             currentIsCharging = !!changes.isCharging.newValue;
         }
-        if (changes.latestOtp && changes.latestOtp.newValue) {
+        if (changes.latestOtp?.newValue) {
             updateOtpDisplay(changes.latestOtp.newValue);
         }
         if (needsUpdate) {
@@ -335,12 +335,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // ─── OTP Display ────────────────────────────────────────
     function updateOtpDisplay(otpData, animate = true) {
-        if (!otpData || !otpData.otp) return;
+        if (!otpData?.otp) return;
         otpContent.textContent = otpData.otp;
         
         if (animate) {
             otpValue.style.animation = 'none';
-            void otpValue.offsetWidth;
+            otpValue.offsetWidth;
             otpValue.style.animation = 'fadeIn 0.5s ease-out';
         } else {
             otpValue.style.animation = 'none';
@@ -356,14 +356,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     function startAuthPolling() {
         if (authPollInterval) clearInterval(authPollInterval);
         authPollInterval = setInterval(() => {
-            chrome.storage.local.get(['googleEmail', 'pairedDeviceId'], ({ googleEmail, pairedDeviceId }) => {
+            chrome.storage.local.get(['googleEmail', 'pairedDeviceId', 'latestOtp'], ({ googleEmail, pairedDeviceId, latestOtp }) => {
                 if (pairedDeviceId) {
                     clearInterval(authPollInterval);
                     authPollInterval = null;
                     showPaired();
-                    chrome.storage.local.get(['latestOtp'], ({ latestOtp }) => {
-                        if (latestOtp) updateOtpDisplay(latestOtp);
-                    });
+                    if (latestOtp) updateOtpDisplay(latestOtp);
                 } else if (googleEmail) {
                     clearInterval(authPollInterval);
                     authPollInterval = null;
@@ -396,13 +394,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 hasResponded = true;
                 clearTimeout(signInTimeout);
 
-                if (response && response.status === 'success') {
+                if (response?.status === 'success') {
                     if (authPollInterval) {
                         clearInterval(authPollInterval);
                         authPollInterval = null;
                     }
                     showUnpaired();
-                } else if (response && response.status === 'pending') {
+                } else if (response?.status === 'pending') {
                     googleSignInBtn.innerHTML = 'Waiting for sign-in...';
                     googleSignInBtn.style.background = '#6366f1';
                     emptyText.textContent = response.message || 'Please sign in...';
@@ -450,16 +448,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
+    const resetFetchButton = () => {
+        manualFetchBtn.innerText = 'Fetch Latest';
+        manualFetchBtn.style.background = '#059669';
+    };
+
     const onFetchSuccess = () => {
         if (!isFetching) return;
         isFetching = false;
         manualFetchBtn.disabled = false;
         manualFetchBtn.innerText = 'Success!';
         manualFetchBtn.style.background = '#6366f1';
-        setTimeout(() => {
-            manualFetchBtn.innerText = 'Fetch Latest';
-            manualFetchBtn.style.background = '#10b981';
-        }, 2000);
+        setTimeout(resetFetchButton, 2000);
     };
 
     if (syncSignalBtn) {
@@ -490,6 +490,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 manualFetchBtn.innerText = 'Fetch Latest';
                 manualFetchBtn.style.background = '#10b981';
             }, 3000);
+            setTimeout(resetFetchButton, 3000);
             return;
         }
 
@@ -498,19 +499,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         manualFetchBtn.innerText = 'Fetching...';
 
         chrome.runtime.sendMessage({ type: 'manualFetch' }, (response) => {
-            // Success might have been detected already via the storage listener (chrome.storage.onChanged)
             if (!isFetching) return; 
 
-            if (response && response.status === 'ok') {
+            if (response?.status === 'ok') {
                 onFetchSuccess();
             } else {
-                // If it's an error (like a timeout), allow a small grace period (5s) for a late-arriving OTP
-                // to still be caught by the storage listener before we finalize the UI error state.
                 const errorText = response?.error || 'Failed';
                 console.warn(`[PinBridge Popup] Manual fetch background error: ${errorText}. Waiting for late arrival...`);
 
                 setTimeout(() => {
-                    if (!isFetching) return; // Caught by late arrival listener in the meantime!
+                    if (!isFetching) return;
                     
                     isFetching = false;
                     manualFetchBtn.disabled = false;
@@ -524,10 +522,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         manualFetchBtn.innerText = 'Retry Later';
                     }
                     manualFetchBtn.style.background = '#ef4444';
-                    setTimeout(() => {
-                        manualFetchBtn.innerText = 'Fetch Latest';
-                        manualFetchBtn.style.background = '#10b981';
-                    }, 3000);
+                    setTimeout(resetFetchButton, 3000);
                 }, 5000); // 5s grace period
             }
         });
@@ -557,7 +552,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // ─── Live Updates ───────────────────────────────────────
-    chrome.runtime.onMessage.addListener((msg) => {
+    function handleRuntimeMessage(msg) {
         if (msg.type === 'newOtp') {
             showPaired();
             updateOtpDisplay({ otp: msg.otp, ts: msg.ts });
@@ -592,5 +587,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             batteryIndicator.classList.add('hidden');
             startContinuousSync();
         }
-    });
+    }
+
+    chrome.runtime.onMessage.addListener(handleRuntimeMessage);
 });

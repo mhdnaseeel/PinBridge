@@ -200,7 +200,7 @@ class DeviceHeartbeatService : Service() {
     }
 
     private fun scheduleReconnect() {
-        val id = deviceId ?: return
+        if (deviceId == null) return
         reconnectJob?.cancel()
         reconnectJob = scope.launch {
             val delay = getReconnectDelay()

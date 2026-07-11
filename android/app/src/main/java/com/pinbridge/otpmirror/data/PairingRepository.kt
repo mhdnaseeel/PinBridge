@@ -70,38 +70,43 @@ class PairingRepositoryImpl constructor(
                     Log.w(TAG, "Listen failed for device $deviceId", e)
                     return@addSnapshotListener
                 }
-
-                when {
-                    snapshot == null || !snapshot.exists() -> {
-                        Log.i(TAG, "Snapshot for device $deviceId does not exist or was deleted.")
-                        // Only unpair if we were previously paired, the document is truly gone from the server, and this isn't a stale cached read
-                        if (_pairingStatus.value && snapshot?.metadata?.isFromCache == false && snapshot.metadata.hasPendingWrites() != true) {
-                            Log.i(TAG, "Triggering local unpair due to missing Firestore document.")
-                            clearLocalCredentials()
-                        }
-                    }
-                    snapshot.getBoolean("paired") != true -> {
-                        Log.i(TAG, "Snapshot exists but 'paired' field is false/missing for $deviceId.")
-                        if (_pairingStatus.value && !snapshot.metadata.isFromCache && !snapshot.metadata.hasPendingWrites()) {
-                            Log.i(TAG, "Triggering local unpair due to 'paired' field change.")
-                            clearLocalCredentials()
-                        }
-                    }
-                    snapshot.contains("fetchRequested") -> {
-                        val newTs = snapshot.getTimestamp("fetchRequested")
-                        val lastTs = lastFetchRequested
-                        if (newTs != null && (lastTs == null || newTs.compareTo(lastTs) > 0)) {
-                            lastFetchRequested = newTs
-                            Log.i(TAG, "Remote fetch request signal received (new timestamp).")
-                            CoroutineScope(Dispatchers.Main).launch {
-                                _remoteFetchRequest.emit(Unit)
-                            }
-                        } else {
-                            Log.d(TAG, "fetchRequested field exists but has not changed or is in the past. Ignoring.")
-                        }
-                    }
+                if (snapshot != null) {
+                    handleStatusSnapshot(snapshot, deviceId)
                 }
             }
+    }
+
+    private fun handleStatusSnapshot(snapshot: com.google.firebase.firestore.DocumentSnapshot, deviceId: String) {
+        when {
+            !snapshot.exists() -> {
+                Log.i(TAG, "Snapshot for device $deviceId does not exist or was deleted.")
+                // Only unpair if we were previously paired, the document is truly gone from the server, and this isn't a stale cached read
+                if (_pairingStatus.value && snapshot.metadata.isFromCache == false && snapshot.metadata.hasPendingWrites() != true) {
+                    Log.i(TAG, "Triggering local unpair due to missing Firestore document.")
+                    clearLocalCredentials()
+                }
+            }
+            snapshot.getBoolean("paired") != true -> {
+                Log.i(TAG, "Snapshot exists but 'paired' field is false/missing for $deviceId.")
+                if (_pairingStatus.value && !snapshot.metadata.isFromCache && !snapshot.metadata.hasPendingWrites()) {
+                    Log.i(TAG, "Triggering local unpair due to 'paired' field change.")
+                    clearLocalCredentials()
+                }
+            }
+            snapshot.contains("fetchRequested") -> {
+                val newTs = snapshot.getTimestamp("fetchRequested")
+                val lastTs = lastFetchRequested
+                if (newTs != null && (lastTs == null || newTs.compareTo(lastTs) > 0)) {
+                    lastFetchRequested = newTs
+                    Log.i(TAG, "Remote fetch request signal received (new timestamp).")
+                    CoroutineScope(Dispatchers.Main).launch {
+                        _remoteFetchRequest.emit(Unit)
+                    }
+                } else {
+                    Log.d(TAG, "fetchRequested field exists but has not changed or is in the past. Ignoring.")
+                }
+            }
+        }
     }
 
     private fun clearLocalCredentials() {
@@ -178,7 +183,7 @@ class PairingRepositoryImpl constructor(
     private fun validateGoogleAccountMatch(extensionGoogleUid: String?) {
         val googleUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
         val isGoogleSignedIn = googleUser != null && googleUser.isAnonymous == false
-        if (extensionGoogleUid != null && isGoogleSignedIn && extensionGoogleUid != googleUser?.uid) {
+        if (extensionGoogleUid != null && isGoogleSignedIn && extensionGoogleUid != googleUser.uid) {
             throw Exception("Account mismatch. The extension is signed in with a different Google account. Please use the same account on both devices.")
         }
     }

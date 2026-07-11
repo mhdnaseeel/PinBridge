@@ -37,17 +37,15 @@ if (_isDashboard) {
             }, window.location.origin);
             // Dispatch storage event for deviceId change
             window.dispatchEvent(new Event('storage'));
-        } else {
+        } else if (localStorage.getItem('pairedDeviceId')) {
             // Extension is unpaired - PROTECTIVE CLEANUP
             // If the extension is unpaired, we MUST ensure the web dashboard is also cleared
-            if (localStorage.getItem('pairedDeviceId')) {
-                console.log('[PinBridge] Extension is unpaired but dashboard has stale data. Cleaning up...');
-                localStorage.removeItem('pairedDeviceId');
-                localStorage.removeItem('latestOtp');
-                // V-01: secret is not in localStorage, no need to remove
-                window.dispatchEvent(new Event('storage'));
-                window.postMessage({ source: 'pinbridge-extension', action: 'UNPAIR' }, window.location.origin);
-            }
+            console.log('[PinBridge] Extension is unpaired but dashboard has stale data. Cleaning up...');
+            localStorage.removeItem('pairedDeviceId');
+            localStorage.removeItem('latestOtp');
+            // V-01: secret is not in localStorage, no need to remove
+            window.dispatchEvent(new Event('storage'));
+            window.postMessage({ source: 'pinbridge-extension', action: 'UNPAIR' }, window.location.origin);
         }
     });
 }
@@ -158,7 +156,7 @@ window.addEventListener('message', (event) => {
     if (!trustedOrigins.includes(event.origin)) return;
     
     const data = event.data;
-    if (data && data.source === 'pinbridge-web') {
+    if (data?.source === 'pinbridge-web') {
         if (data.action === 'LOGIN_SUCCESS') {
             console.log('[PinBridge] Captured web login success. Sending to extension...');
             chrome.runtime.sendMessage({

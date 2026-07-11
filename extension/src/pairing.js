@@ -180,7 +180,8 @@ function startCountdown(startTime) {
   //    Phase 2: status === 'online' (device connected to presence server)
   let pairingCompleted = false;
   let pairingPhase1Done = false;
-  const unsub = onSnapshot(doc(db, 'pairings', deviceId), async (snapshot) => {
+
+  async function onPairingChange(snapshot) {
     const data = snapshot.data();
     if (!data || pairingCompleted) return;
 
@@ -189,8 +190,6 @@ function startCountdown(startTime) {
         pairingPhase1Done = true;
         console.log('[PinBridge] Phase 1: Pairing confirmed by device. Waiting for device to come online...');
         
-        // FIX (Bug 3): Hide the QR code, manual entry code, copy button, and countdown
-        // so the user doesn't see a confusing mix of QR + "Device paired!" message
         const qrCanvas = document.getElementById('qrCanvas');
         const codeBox = document.querySelector('.code-box');
         const copyBtn = document.getElementById('copyBtn');
@@ -201,20 +200,17 @@ function startCountdown(startTime) {
         if (copyBtn) copyBtn.style.display = 'none';
         if (cdEl) cdEl.style.display = 'none';
         
-        // Update the description text
         const descText = document.querySelector('.container > p');
         if (descText) descText.textContent = 'Establishing secure connection with your device...';
         
         setStatus('waiting', '🔄', 'Device paired! Waiting for connection...');
         
-        // Save credentials immediately so the background can start listeners
         chrome.storage.local.set({
           pairedDeviceId: deviceId,
           secret: secretB64
         });
         chrome.storage.session.remove(['pairingInProgress']);
         
-        // Notify background to start listeners right away
         chrome.runtime.sendMessage({
             type: 'pair',
             deviceId: deviceId,
@@ -233,7 +229,6 @@ function startCountdown(startTime) {
         if (typeof unsub === 'function') unsub();
         if (countdownInterval) clearInterval(countdownInterval);
 
-        // Delete the secret from Firestore — it is no longer needed after pairing
         try {
             await updateDoc(doc(db, 'pairings', deviceId), { secret: deleteField() });
         } catch (e) {
@@ -248,7 +243,13 @@ function startCountdown(startTime) {
             <button id="closeBtn">Close Window</button>
         `;
         document.getElementById('closeBtn').onclick = () => window.close();
-        setTimeout(() => { try { window.close(); } catch (e) {} }, 5000);
+        setTimeout(() => {
+            try {
+                window.close();
+            } catch (err) {
+                console.debug('[PinBridge] window.close failed:', err);
+            }
+        }, 5000);
     }
 
     // Fallback: If Phase 1 is done but device doesn't come online within 30s,
@@ -269,11 +270,19 @@ function startCountdown(startTime) {
                     <button id="closeBtn">Close Window</button>
                 `;
                 document.getElementById('closeBtn').onclick = () => window.close();
-                setTimeout(() => { try { window.close(); } catch (e) {} }, 5000);
+                setTimeout(() => {
+                    try {
+                        window.close();
+                    } catch (err) {
+                        console.debug('[PinBridge] window.close failed:', err);
+                    }
+                }, 5000);
             }
         }, 30000);
     }
-  }, (error) => {
+  }
+
+  const unsub = onSnapshot(doc(db, 'pairings', deviceId), onPairingChange, (error) => {
     if (error.code === 'permission-denied') {
        console.warn('[PinBridge] Pairing listener: permission denied.');
        if (!pairingCompleted) {

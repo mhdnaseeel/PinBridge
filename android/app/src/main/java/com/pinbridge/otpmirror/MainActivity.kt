@@ -154,17 +154,7 @@ class MainActivity : AppCompatActivity() {
         isSigningIn = true
         lifecycleScope.launch {
             try {
-                try {
-                    if (attemptGoogleSignIn(filterByAuthorized = true)) return@launch
-                } catch (e: NoCredentialException) {
-                    Log.i("MainActivity", "No previously authorized account, showing full picker")
-                } catch (e: GetCredentialCancellationException) {
-                    Log.i("MainActivity", "Auto-select cancelled, showing full picker")
-                }
-
-                if (!attemptGoogleSignIn(filterByAuthorized = false)) {
-                    Toast.makeText(this@MainActivity, "Google Sign-In failed", Toast.LENGTH_SHORT).show()
-                }
+                executeGoogleSignInFlow()
             } catch (e: GetCredentialCancellationException) {
                 Log.i("MainActivity", "User cancelled sign-in")
                 Toast.makeText(this@MainActivity, "Sign-in cancelled", Toast.LENGTH_SHORT).show()
@@ -180,6 +170,20 @@ class MainActivity : AppCompatActivity() {
             } finally {
                 isSigningIn = false
             }
+        }
+    }
+
+    private suspend fun executeGoogleSignInFlow() {
+        try {
+            if (attemptGoogleSignIn(filterByAuthorized = true)) return
+        } catch (e: NoCredentialException) {
+            Log.i("MainActivity", "No previously authorized account, showing full picker")
+        } catch (e: GetCredentialCancellationException) {
+            Log.i("MainActivity", "Auto-select cancelled, showing full picker")
+        }
+
+        if (!attemptGoogleSignIn(filterByAuthorized = false)) {
+            Toast.makeText(this@MainActivity, "Google Sign-In failed", Toast.LENGTH_SHORT).show()
         }
     }
 

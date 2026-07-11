@@ -17,7 +17,7 @@ self.addEventListener('unhandledrejection', (e) => {
 try {
   chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(() => {});
 } catch (e) {
-  // sidePanel API may not be available during service worker restart
+  console.debug('[PinBridge] sidePanel behavior setting bypassed:', e);
 }
 
 // Security (H-3): Allow content scripts to access chrome.storage.session
@@ -59,7 +59,9 @@ async function waitForAuth(timeoutMs = 5000) {
 function safeSendMessage(message) {
   try {
     chrome.runtime.sendMessage(message).catch(() => {});
-  } catch (e) {}
+  } catch (e) {
+    console.debug('[PinBridge] Message sending failed:', e);
+  }
 }
 
 // ─── Centralized State Manager ─────────────────────────────────
@@ -101,7 +103,7 @@ const stateManager = {
     }
     chrome.storage.local.set(storageData);
 
-    const isConnecting = socket && socket.active && !socket.connected;
+    const isConnecting = socket?.active && !socket?.connected;
 
     // Push to any open popup/sidepanel
     safeSendMessage({
@@ -263,61 +265,52 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     handleWebPairingSuccess(msg);
     return true;
   } else if (msg.type === 'refreshStatus') {
-    // FIX: Popup requests fresh live status.
-    // ALWAYS read from chrome.storage.local — it's the most reliable source because
-    // Firestore onSnapshot writes to it continuously. The in-memory stateManager
-    // may be stale if the SW restarted and no Firestore snapshot has arrived yet.
-    const hydrateAndPush = async () => {
-      // Always read the latest from storage
-      const stored = await chrome.storage.local.get(['lastSeen', 'batteryLevel', 'isCharging', 'serverStatus', 'pairedDeviceId']);
-      
-      // Update stateManager with latest storage values only if storage is newer
-      // than our current in-memory state. This prevents stale storage reads
-      // from overwriting fresh live data received by listeners.
-      if (stored.lastSeen && stored.lastSeen > stateManager.lastSeen) {
-        stateManager.lastSeen = stored.lastSeen;
-        if (stored.batteryLevel != null) {
-          stateManager.batteryLevel = stored.batteryLevel;
-          stateManager.isCharging = !!stored.isCharging;
-        } else {
-          stateManager.batteryLevel = null;
-          stateManager.isCharging = false;
-        }
-        if (stored.serverStatus) {
-          stateManager.serverStatus = stored.serverStatus;
-        }
-      }
-
-      const isSocketAlive = socket && (socket.connected || socket.active);
-      const listenersFullyDead = !unsubscribePairing && !isSocketAlive;
-      const isConnecting = (socket && socket.active && !socket.connected) || (listenersFullyDead && !isPairingNow && !!stored.pairedDeviceId);
-
-      // Push current state to popup, overriding serverStatus if we are currently establishing a connection
-      safeSendMessage({
-        type: 'statusUpdate',
-        lastSeen: stateManager.lastSeen,
-        serverStatus: isConnecting ? 'connecting' : stateManager.serverStatus,
-        batteryLevel: stateManager.batteryLevel,
-        isCharging: stateManager.isCharging
-      });
-
-      if (listenersFullyDead && !isPairingNow) {
-        const { pairedDeviceId } = await chrome.storage.local.get(['pairedDeviceId']);
-        if (pairedDeviceId) {
-          console.log('[PinBridge] refreshStatus: Presence listeners fully dead, restarting.');
-          startPresenceListeners(pairedDeviceId);
-        }
-      } else if (socket && socket.connected) {
-        // Socket is alive and connected — request fresh data if we haven't recently
-        const dataAge = Date.now() - stateManager.lastSeen;
-        if (dataAge > 30000 || stateManager.lastSeen === 0) {
-          socket.emit('request_presence');
-        }
-      }
-    };
-    hydrateAndPush().catch(e => console.warn('[PinBridge] refreshStatus error:', e));
+    handleRefreshStatus().catch(e => console.warn('[PinBridge] refreshStatus error:', e));
   }
 });
+
+async function handleRefreshStatus() {
+  const stored = await chrome.storage.local.get(['lastSeen', 'batteryLevel', 'isCharging', 'serverStatus', 'pairedDeviceId']);
+  
+  if (stored.lastSeen && stored.lastSeen > stateManager.lastSeen) {
+    stateManager.lastSeen = stored.lastSeen;
+    if (stored.batteryLevel != null) {
+      stateManager.batteryLevel = stored.batteryLevel;
+      stateManager.isCharging = !!stored.isCharging;
+    } else {
+      stateManager.batteryLevel = null;
+      stateManager.isCharging = false;
+    }
+    if (stored.serverStatus) {
+      stateManager.serverStatus = stored.serverStatus;
+    }
+  }
+
+  const isSocketAlive = socket && (socket.connected || socket.active);
+  const listenersFullyDead = !unsubscribePairing && !isSocketAlive;
+  const isConnecting = (socket?.active && !socket?.connected) || (listenersFullyDead && !isPairingNow && !!stored.pairedDeviceId);
+
+  safeSendMessage({
+    type: 'statusUpdate',
+    lastSeen: stateManager.lastSeen,
+    serverStatus: isConnecting ? 'connecting' : stateManager.serverStatus,
+    batteryLevel: stateManager.batteryLevel,
+    isCharging: stateManager.isCharging
+  });
+
+  if (listenersFullyDead && !isPairingNow) {
+    const { pairedDeviceId } = await chrome.storage.local.get(['pairedDeviceId']);
+    if (pairedDeviceId) {
+      console.log('[PinBridge] refreshStatus: Presence listeners fully dead, restarting.');
+      startPresenceListeners(pairedDeviceId);
+    }
+  } else if (socket?.connected) {
+    const dataAge = Date.now() - stateManager.lastSeen;
+    if (dataAge > 30000 || stateManager.lastSeen === 0) {
+      socket.emit('request_presence');
+    }
+  }
+}
 
 async function handleGoogleSignIn(sendResponse) {
   try {
@@ -649,7 +642,7 @@ function startPresenceListeners(deviceId) {
   // 2. Firestore pairings doc listener — status updates + unpair detection
   let isFirstPairingSnapshot = true;
 
-  unsubscribePairing = onSnapshot(doc(db, 'pairings', deviceId), snap => {
+  function onPairingSnapshot(snap) {
     const data = snap.data();
 
     // Unpair detection: document deleted
@@ -658,7 +651,7 @@ function startPresenceListeners(deviceId) {
         console.log('[PinBridge] Document missing but pairing is pending — ignoring.');
         return;
       }
-      if (snap.metadata && snap.metadata.fromCache) {
+      if (snap.metadata?.fromCache) {
         console.log('[PinBridge] Document missing from cache — ignoring offline deletion.');
         return;
       }
@@ -674,7 +667,7 @@ function startPresenceListeners(deviceId) {
         isFirstPairingSnapshot = false;
         return;
       }
-      if (snap.metadata && snap.metadata.fromCache) {
+      if (snap.metadata?.fromCache) {
         console.log('[PinBridge] paired:false read from cache — ignoring offline modification.');
         return;
       }
@@ -687,13 +680,18 @@ function startPresenceListeners(deviceId) {
     isFirstPairingSnapshot = false;
 
     // Status update: online/offline + battery
-    const lastSeen = data.lastOnline ? (data.lastOnline.toMillis ? data.lastOnline.toMillis() : data.lastOnline) : null;
+    let lastSeen = null;
+    if (data.lastOnline) {
+      lastSeen = typeof data.lastOnline.toMillis === 'function' ? data.lastOnline.toMillis() : data.lastOnline;
+    }
     const batteryLevel = data.batteryLevel != null ? data.batteryLevel : null;
     const isCharging = !!data.isCharging;
 
     console.log(`[PinBridge] Firestore status update: status=${data.status}, lastSeen: ${lastSeen}, battery: ${batteryLevel}%`);
     handlePresenceUpdate(lastSeen, batteryLevel, isCharging, data.status || null);
-  }, err => {
+  }
+
+  unsubscribePairing = onSnapshot(doc(db, 'pairings', deviceId), onPairingSnapshot, err => {
     if (err.code === 'permission-denied') {
       if (pairingPending || isFirstPairingSnapshot) {
         console.warn('[PinBridge] Permission denied during startup — scheduling presence restart in 3s.');

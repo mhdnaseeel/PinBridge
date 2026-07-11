@@ -5,7 +5,7 @@
  * @returns {Promise<string>} The decrypted OTP string.
  */
 export async function decryptOtp(data, b64Secret) {
-    if (!data || !data.iv || !data.otp || !b64Secret) {
+    if (!data?.iv || !data?.otp || !b64Secret) {
         throw new Error('Missing data or secret for decryption');
     }
 
