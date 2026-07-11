@@ -5,6 +5,9 @@
  */
 
 export const FIREBASE_CONFIG = {
+  // nosemgrep: generic.secrets.security.detected-generic-api-key
+  // Firebase API keys are public client-side identifiers, NOT secrets.
+  // Security is enforced by Firestore rules + Firebase App Check.
   apiKey: "AIzaSyBwBr0MOdVKCwuvoK3oOU6tg5LcS7uqZOE",
   authDomain: "pinbridge-61dd4.firebaseapp.com",
   projectId: "pinbridge-61dd4",

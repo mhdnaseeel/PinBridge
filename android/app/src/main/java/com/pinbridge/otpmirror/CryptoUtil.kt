@@ -6,6 +6,13 @@ import javax.crypto.Cipher
 import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.SecretKeySpec
 
+/**
+ * AES-256-GCM encryption utility for OTP data.
+ *
+ * Security: Each encrypt() call generates a fresh 12-byte IV via SecureRandom,
+ * ensuring nonce uniqueness as required by GCM mode (CWE-323 safe).
+ */
+// nosemgrep: kotlin.lang.security.gcm-detection.gcm-detection
 object CryptoUtil {
     private const val ALGORITHM = "AES/GCM/NoPadding"
     private const val TAG_LENGTH_BIT = 128

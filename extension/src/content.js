@@ -120,6 +120,12 @@ function autofill(otp) {
 window.addEventListener('message', (event) => {
     // Only accept messages from the same frame
     if (event.source !== window) return;
+    // Validate origin against known PinBridge dashboard hostnames (CWE-345)
+    try {
+        const originHost = new URL(event.origin).hostname;
+        const trustedHosts = ['localhost', 'pinbridge-61dd4.firebaseapp.com', 'pinbridge-61dd4.web.app', 'pin-bridge.vercel.app'];
+        if (!trustedHosts.some(h => originHost === h || originHost.endsWith('.' + h))) return;
+    } catch { return; }
     
     const data = event.data;
     if (data && data.source === 'pinbridge-web') {

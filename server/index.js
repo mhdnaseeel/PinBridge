@@ -25,7 +25,13 @@ if (process.env.FIREBASE_SERVICE_ACCOUNT) {
 }
 
 const db = admin.firestore();
+// nosemgrep: javascript.express.security.audit.express-check-csurf-middleware-usage
+// CSRF middleware is not needed: this server only has a GET health-check endpoint;
+// all data operations use Socket.IO (WebSocket) with Firebase ID token auth, which
+// is not vulnerable to CSRF.
 const app = express();
+// nosemgrep: problem-based-packs.insecure-transport.js-node.using-http-server
+// HTTP is used locally; TLS is terminated at the Render.com reverse proxy in production.
 const server = http.createServer(app);
 // Security (V-08): Restrict CORS to known PinBridge origins
 const ALLOWED_ORIGINS = [
@@ -65,7 +71,7 @@ function log(level, message, meta = {}) {
 // Redis setup (Upstash compatible)
 const redis = new Redis(process.env.REDIS_URL, {
     maxRetriesPerRequest: null,
-    tls: { rejectUnauthorized: false }
+    tls: {} // Use default TLS verification — Upstash has valid certificates
 });
 
 // Middleware for authentication
@@ -85,7 +91,7 @@ io.use(async (socket, next) => {
         socket.clientType = clientType;
         next();
     } catch (err) {
-        console.error(`[PinBridge Server] Auth error for device ${deviceId}:`, err.message);
+        log('error', 'Auth error for device', { deviceId, error: err.message });
         next(new Error("Authentication error: Invalid token"));
     }
 });
