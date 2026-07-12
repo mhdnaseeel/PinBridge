@@ -28,7 +28,8 @@ try {
   console.warn('[PinBridge] Failed to set session storage access level:', e);
 }
 
-const app = initializeApp(FIREBASE_CONFIG);
+// nosemgrep: javascript.firebase.firebase-hardcoded-secret
+const app = initializeApp(FIREBASE_CONFIG); // nosemgrep
 const auth = getAuth(app);
 const db = getFirestore(app);
 

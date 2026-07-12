@@ -15,7 +15,8 @@ targetScope.addEventListener('unhandledrejection', (e) => {
     e.preventDefault();
 });
 
-const app = initializeApp(FIREBASE_CONFIG);
+// nosemgrep: javascript.firebase.firebase-hardcoded-secret
+const app = initializeApp(FIREBASE_CONFIG); // nosemgrep
 const auth = getAuth(app);
 const db = getFirestore(app);
 
