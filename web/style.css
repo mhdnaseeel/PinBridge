@@ -374,8 +374,8 @@ button {
 .auth-error {
   margin-top: 14px;
   padding: 10px 16px;
-  background: rgba(239, 68, 68, 0.12);
-  border: 1px solid rgba(239, 68, 68, 0.25);
+  background: #fde8e8;
+  border: 1px solid #f8b4b4;
   border-radius: 10px;
   color: #7f1d1d;
   font-size: 12px;
@@ -389,12 +389,12 @@ button {
   align-items: center;
   gap: 8px;
   padding: 10px 18px;
-  background: rgba(16, 185, 129, 0.1);
-  border: 1px solid rgba(16, 185, 129, 0.2);
+  background: #def7ec;
+  border: 1px solid #bcf0da;
   border-radius: 20px;
   font-size: 13px;
   font-weight: 600;
-  color: #065f46;
+  color: #03543f;
 }
 
 /* Sign-out button */
@@ -471,8 +471,8 @@ button {
 .charging-badge {
   font-size: 10px;
   font-weight: 700;
-  color: #065f46;
-  background: rgba(16, 185, 129, 0.15);
+  color: #03543f;
+  background: #def7ec;
   padding: 2px 8px;
   border-radius: 8px;
   letter-spacing: 0.3px;

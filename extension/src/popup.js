@@ -11,6 +11,11 @@ targetScope.addEventListener('unhandledrejection', (e) => {
     e.preventDefault();
 });
 
+// Helper to force browser reflow (resets CSS animation) without raising lint/static-analysis warnings
+function forceReflow(el) {
+    return el?.offsetWidth;
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
     const statusBadge = document.getElementById('statusBadge');
     const otpView = document.getElementById('otpView');
@@ -333,10 +338,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // Helper to force browser reflow (resets CSS animation) without raising lint/static-analysis warnings
-    function forceReflow(el) {
-        return el?.offsetWidth;
-    }
 
     // ─── OTP Display ────────────────────────────────────────
     function updateOtpDisplay(otpData, animate = true) {
