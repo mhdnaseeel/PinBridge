@@ -92,6 +92,17 @@ function sanitizeBattery(level) {
   return Math.max(0, Math.min(100, Math.round(level)));
 }
 
+// Security: Validate and sanitize a device ID before writing to localStorage.
+// Returns the sanitized ID or null if the value is untrusted.
+const DEVICE_ID_REGEX = /^[a-zA-Z0-9_-]{10,128}$/;
+function sanitizeDeviceId(id) {
+  if (typeof id !== 'string' || !DEVICE_ID_REGEX.test(id)) {
+    console.warn('[PinBridge] Rejected invalid deviceId:', typeof id);
+    return null;
+  }
+  return id;
+}
+
 // DOM Elements
 const appDiv = document.getElementById('app');
 const offlineBanner = document.getElementById('offlineBanner');
@@ -110,17 +121,17 @@ function checkUrlParams() {
   
   if (d && s) {
     // Security: Validate parameter formats before processing/writing to storage (SonarCloud S6145 / CWE-20)
-    const DEVICE_ID_REGEX = /^[a-zA-Z0-9_-]{10,128}$/;
     const SECRET_REGEX = /^[a-zA-Z0-9+/=]{16,128}$/;
-    if (!DEVICE_ID_REGEX.test(d) || !SECRET_REGEX.test(s)) {
+    const safeDeviceId = sanitizeDeviceId(d);
+    if (!safeDeviceId || !SECRET_REGEX.test(s)) {
       console.warn('[PinBridge] Pairing aborted: Invalid deviceId or secret format in URL parameters');
       return false;
     }
     
     console.log('[PinBridge] Initializing pairing from URL parameters');
-    state.pairedDeviceId = d;
+    state.pairedDeviceId = safeDeviceId;
     state.secret = s; // In-memory only (V-01)
-    localStorage.setItem('pairedDeviceId', d);
+    localStorage.setItem('pairedDeviceId', safeDeviceId);
     // Security (V-01): Do NOT persist secret to localStorage
     window.history.replaceState({}, document.title, window.location.pathname);
     return true;
@@ -464,22 +475,59 @@ function deriveSidebarBattery() {
 }
 
 /** Screen 3: Signed in + device paired — full OTP dashboard */
+/**
+ * Derive time content string for the OTP section.
+ */
+function deriveTimeContent(isConnecting) {
+  if (state.latestOtp?.ts) {
+    return `Received at ${new Date(state.latestOtp.ts).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'})}`;
+  }
+  if (isConnecting) {
+    return 'Syncing securely...';
+  }
+  return 'Waiting for signal...';
+}
+
+/**
+ * Build the battery display element, or null if no battery data.
+ */
+function createBatteryDisplay(hasBattery, deviceOnline) {
+  if (!hasBattery) return null;
+
+  const batteryDisplay = el('div', { id: 'batteryDisplay', className: 'battery-display' + (!deviceOnline ? ' battery-display-offline' : '') });
+  if (deviceOnline) {
+    batteryDisplay.textContent = `🔋 ${state.batteryLevel}%`;
+    if (state.isCharging) {
+      const chargingBadge = el('span', { className: 'charging-badge' }, '⚡ Charging');
+      batteryDisplay.appendChild(document.createTextNode(' '));
+      batteryDisplay.appendChild(chargingBadge);
+    }
+  } else {
+    batteryDisplay.textContent = `🔋 ${state.batteryLevel}% `;
+    const lastKnownSpan = el('span', { className: 'last-known-battery-text' }, '(Last known)');
+    batteryDisplay.appendChild(lastKnownSpan);
+  }
+  return batteryDisplay;
+}
+
+/** Screen 3: Signed in + device paired — full OTP dashboard */
 function renderPaired() {
-  const isConnecting = !isDeviceOnline() && state.lastSeen === 0 && state.serverStatus !== 'offline';
+  const deviceOnline = isDeviceOnline();
+  const isConnecting = !deviceOnline && state.lastSeen === 0 && state.serverStatus !== 'offline';
   const otpContent = state.latestOtp?.otp || (isConnecting ? '000000' : '------');
   const otpClass = 'otp-value';
-  
-  const timeContent = state.latestOtp?.ts 
-    ? `Received at ${new Date(state.latestOtp.ts).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'})}` 
-    : (isConnecting ? 'Syncing securely...' : 'Waiting for signal...');
+  const timeContent = deriveTimeContent(isConnecting);
   const timeClass = 'otp-meta';
   
   const { statusLabel, dotClass, connDetail, statusColorClass, sidebarStatusColorClass } = deriveDeviceStatus();
+  const lastSeenStr = state.lastSeen > 0
+    ? new Date(state.lastSeen).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})
+    : '--';
   
   // Battery display strings
   const hasBattery = state.batteryLevel != null && state.batteryLevel >= 0;
   const sidebarBatteryStr = deriveSidebarBattery();
-  const sidebarBatteryColorClass = hasBattery && !isDeviceOnline() ? 'sidebar-battery-text battery-display-offline' : 'sidebar-battery-text';
+  const sidebarBatteryColorClass = hasBattery && !deviceOnline ? 'sidebar-battery-text battery-display-offline' : 'sidebar-battery-text';
   
   appDiv.innerHTML = ''; // Clear DOM safely
 
@@ -522,21 +570,7 @@ function renderPaired() {
 
   const signOutBtn = el('button', { id: 'signOutBtn', className: 'btn-signout btn-signout-margin' }, 'Sign Out');
 
-  const batteryDisplay = hasBattery ? el('div', { id: 'batteryDisplay', className: 'battery-display' + (!deviceOnline ? ' battery-display-offline' : '') }) : null;
-  if (batteryDisplay) {
-    if (deviceOnline) {
-      batteryDisplay.textContent = `🔋 ${state.batteryLevel}%`;
-      if (state.isCharging) {
-        const chargingBadge = el('span', { className: 'charging-badge' }, '⚡ Charging');
-        batteryDisplay.appendChild(document.createTextNode(' '));
-        batteryDisplay.appendChild(chargingBadge);
-      }
-    } else {
-      batteryDisplay.textContent = `🔋 ${state.batteryLevel}% `;
-      const lastKnownSpan = el('span', { className: 'last-known-battery-text' }, '(Last known)');
-      batteryDisplay.appendChild(lastKnownSpan);
-    }
-  }
+  const batteryDisplay = createBatteryDisplay(hasBattery, deviceOnline);
 
   appDiv.appendChild(
     el('div', { className: 'dashboard-layout' },
@@ -707,8 +741,8 @@ function renderPaired() {
         syncSignalBtn.style.borderColor = '#10b981';
         setTimeout(() => {
           syncSignalText.textContent = 'Sync Signal';
-          syncSignalBtn.style.background = '#3b82f6';
-          syncSignalBtn.style.borderColor = '#3b82f6';
+          syncSignalBtn.style.background = '#2563eb';
+          syncSignalBtn.style.borderColor = '#2563eb';
           syncSignalBtn.classList.remove('syncing-btn');
           syncSignalBtn.disabled = false;
         }, 2000);
@@ -759,59 +793,77 @@ function listenToCloudSync(uid) {
   });
 }
 
-async function handleCloudSyncChange(syncSnap, uid) {
-  if (syncSnap.exists()) {
-    const data = syncSnap.data();
-    const deviceId = data.deviceId;
-    const secret = data.secret;
+/**
+ * Clean up a stale cloud sync document from Firestore.
+ */
+async function cleanUpStaleCloudSync(uid) {
+  try {
+    await deleteDoc(doc(db, 'users', uid, 'mirroring', 'active'));
+    console.log('[PinBridge] Stale cloud sync document cleaned up.');
+  } catch (e) {
+    console.warn('[PinBridge] Failed to clean up stale cloud sync:', e);
+  }
+}
 
-    if (!deviceId || !secret) {
-      console.warn('[PinBridge] Cloud sync data incomplete.');
-      updateUI();
-      return;
-    }
+/**
+ * Validate cloud sync data against the Firestore pairing document and apply it.
+ */
+async function applyCloudSyncPairing(deviceId, secret, uid) {
+  const pairingSnap = await getDoc(doc(db, 'pairings', deviceId));
 
-    try {
-      const pairingSnap = await getDoc(doc(db, 'pairings', deviceId));
-      if (pairingSnap.exists() && pairingSnap.data()?.paired === true) {
-        console.log('[PinBridge] Cloud Sync active! Pairing validated.');
-        state.pairedDeviceId = deviceId;
-        state.secret = secret;
-        
-        window.postMessage({
-          source: 'pinbridge-web',
-          action: 'PAIRING_SUCCESS',
-          deviceId: deviceId,
-          secret: secret
-        }, window.location.origin);
+  if (pairingSnap.exists() && pairingSnap.data()?.paired === true) {
+    console.log('[PinBridge] Cloud Sync active! Pairing validated.');
+    state.pairedDeviceId = deviceId;
+    state.secret = secret;
 
-        startListeners();
-        updateUI();
-      } else {
-        console.warn('[PinBridge] Cloud sync data is stale (pairing doc missing or unpaired). Cleaning up.');
-        try {
-          await deleteDoc(doc(db, 'users', uid, 'mirroring', 'active'));
-          console.log('[PinBridge] Stale cloud sync document cleaned up.');
-        } catch (e) {
-          console.warn('[PinBridge] Failed to clean up stale cloud sync:', e);
-        }
-        if (state.pairedDeviceId) {
-          handleForcedUnpair();
-        } else {
-          updateUI();
-        }
-      }
-    } catch (e) {
-      console.warn('[PinBridge] Failed to validate pairing document:', e);
-      updateUI();
-    }
+    window.postMessage({
+      source: 'pinbridge-web',
+      action: 'PAIRING_SUCCESS',
+      deviceId: deviceId,
+      secret: secret
+    }, window.location.origin);
+
+    startListeners();
+    updateUI();
+    return;
+  }
+
+  console.warn('[PinBridge] Cloud sync data is stale (pairing doc missing or unpaired). Cleaning up.');
+  await cleanUpStaleCloudSync(uid);
+
+  if (state.pairedDeviceId) {
+    handleForcedUnpair();
   } else {
+    updateUI();
+  }
+}
+
+async function handleCloudSyncChange(syncSnap, uid) {
+  if (!syncSnap.exists()) {
     console.log('[PinBridge] No cloud sync found. Awaiting pairing.');
     if (state.pairedDeviceId) {
       handleForcedUnpair();
     } else {
       updateUI();
     }
+    return;
+  }
+
+  const data = syncSnap.data();
+  const deviceId = data.deviceId;
+  const secret = data.secret;
+
+  if (!deviceId || !secret) {
+    console.warn('[PinBridge] Cloud sync data incomplete.');
+    updateUI();
+    return;
+  }
+
+  try {
+    await applyCloudSyncPairing(deviceId, secret, uid);
+  } catch (e) {
+    console.warn('[PinBridge] Failed to validate pairing document:', e);
+    updateUI();
   }
 }
 
@@ -870,15 +922,15 @@ window.addEventListener('message', (e) => {
   ];
   if (!trustedOrigins.includes(e.origin)) return;
 
-  if (e.data && e.data.source === 'pinbridge-extension') {
+  if (e.data?.source === 'pinbridge-extension') {
     if (e.data.action === 'UNPAIR') {
       handleForcedUnpair();
     } else if (e.data.action === 'SYNC') {
-      // Security: Validate deviceId format before writing to local storage to prevent tainted data injection (SonarCloud S6145)
-      const DEVICE_ID_REGEX = /^[a-zA-Z0-9_-]{10,128}$/;
-      if (typeof e.data.deviceId === 'string' && DEVICE_ID_REGEX.test(e.data.deviceId)) {
-        localStorage.setItem('pairedDeviceId', e.data.deviceId);
-        state.pairedDeviceId = e.data.deviceId;
+      // Security: Sanitize deviceId before writing to localStorage to prevent storage poisoning (SonarCloud S6145)
+      const safeDeviceId = sanitizeDeviceId(e.data.deviceId);
+      if (safeDeviceId) {
+        localStorage.setItem('pairedDeviceId', safeDeviceId);
+        state.pairedDeviceId = safeDeviceId;
       }
       state.secret = e.data.secret; // In-memory only (V-01)
       window.dispatchEvent(new Event('storage'));
@@ -1052,12 +1104,12 @@ async function handleAuthStateChange(user) {
     if (pairingData) {
       pairedDeviceId = pairingData.pairedDeviceId;
       secret = pairingData.secret;
-      const DEVICE_ID_REGEX = /^[a-zA-Z0-9_-]{10,128}$/;
       const SECRET_REGEX = /^[a-zA-Z0-9+/=]{16,128}$/;
-      if (DEVICE_ID_REGEX.test(pairedDeviceId) && SECRET_REGEX.test(secret)) {
-        state.pairedDeviceId = pairedDeviceId;
+      const safeDeviceId = sanitizeDeviceId(pairedDeviceId);
+      if (safeDeviceId && SECRET_REGEX.test(secret)) {
+        state.pairedDeviceId = safeDeviceId;
         state.secret = secret;
-        localStorage.setItem('pairedDeviceId', pairedDeviceId);
+        localStorage.setItem('pairedDeviceId', safeDeviceId);
         startListeners();
       } else {
         console.warn('[PinBridge] Synchronized active pairing details fail format validation');

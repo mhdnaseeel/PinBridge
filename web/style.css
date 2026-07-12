@@ -266,13 +266,13 @@ button {
 }
 
 .btn-secondary {
-  background: #059669;
+  background: #047857;
   color: #fff;
   box-shadow: 0 4px 15px rgba(5, 150, 105, 0.2);
 }
 
 .btn-secondary:hover {
-  background: #047857;
+  background: #065f46;
   transform: translateY(-2px);
 }
 
@@ -377,7 +377,7 @@ button {
   background: rgba(239, 68, 68, 0.12);
   border: 1px solid rgba(239, 68, 68, 0.25);
   border-radius: 10px;
-  color: #b91c1c;
+  color: #7f1d1d;
   font-size: 12px;
   text-align: center;
   line-height: 1.5;
@@ -394,7 +394,7 @@ button {
   border-radius: 20px;
   font-size: 13px;
   font-weight: 600;
-  color: #047857;
+  color: #065f46;
 }
 
 /* Sign-out button */
@@ -471,7 +471,7 @@ button {
 .charging-badge {
   font-size: 10px;
   font-weight: 700;
-  color: #047857;
+  color: #065f46;
   background: rgba(16, 185, 129, 0.15);
   padding: 2px 8px;
   border-radius: 8px;
@@ -835,16 +835,16 @@ button {
 }
 .btn-signal {
   flex: 1;
-  background: #3b82f6;
-  border-color: #3b82f6;
+  background: #2563eb;
+  border-color: #2563eb;
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 .btn-signal-success {
-  background: #059669 !important;
-  border-color: #059669 !important;
+  background: #047857 !important;
+  border-color: #047857 !important;
 }
 .btn-signout-margin {
   margin-top: 0 !important;

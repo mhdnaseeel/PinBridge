@@ -269,22 +269,52 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   }
 });
 
-async function handleRefreshStatus() {
-  const stored = await chrome.storage.local.get(['lastSeen', 'batteryLevel', 'isCharging', 'serverStatus', 'pairedDeviceId']);
-  
-  if (stored.lastSeen && stored.lastSeen > stateManager.lastSeen) {
-    stateManager.lastSeen = stored.lastSeen;
-    if (stored.batteryLevel != null) {
-      stateManager.batteryLevel = stored.batteryLevel;
-      stateManager.isCharging = !!stored.isCharging;
-    } else {
-      stateManager.batteryLevel = null;
-      stateManager.isCharging = false;
+/**
+ * Synchronize stateManager fields from chrome.storage.local if newer data is available.
+ */
+function syncStateFromStorage(stored) {
+  if (!stored.lastSeen || stored.lastSeen <= stateManager.lastSeen) return;
+
+  stateManager.lastSeen = stored.lastSeen;
+
+  if (stored.batteryLevel != null) {
+    stateManager.batteryLevel = stored.batteryLevel;
+    stateManager.isCharging = !!stored.isCharging;
+  } else {
+    stateManager.batteryLevel = null;
+    stateManager.isCharging = false;
+  }
+
+  if (stored.serverStatus) {
+    stateManager.serverStatus = stored.serverStatus;
+  }
+}
+
+/**
+ * Restart dead listeners or request a presence refresh from the socket.
+ */
+async function reviveListenersIfNeeded(listenersFullyDead) {
+  if (listenersFullyDead && !isPairingNow) {
+    const { pairedDeviceId } = await chrome.storage.local.get(['pairedDeviceId']);
+    if (pairedDeviceId) {
+      console.log('[PinBridge] refreshStatus: Presence listeners fully dead, restarting.');
+      startPresenceListeners(pairedDeviceId);
     }
-    if (stored.serverStatus) {
-      stateManager.serverStatus = stored.serverStatus;
+    return;
+  }
+
+  if (socket?.connected) {
+    const dataAge = Date.now() - stateManager.lastSeen;
+    if (dataAge > 30000 || stateManager.lastSeen === 0) {
+      socket.emit('request_presence');
     }
   }
+}
+
+async function handleRefreshStatus() {
+  const stored = await chrome.storage.local.get(['lastSeen', 'batteryLevel', 'isCharging', 'serverStatus', 'pairedDeviceId']);
+
+  syncStateFromStorage(stored);
 
   const isSocketAlive = socket && (socket.connected || socket.active);
   const listenersFullyDead = !unsubscribePairing && !isSocketAlive;
@@ -298,18 +328,7 @@ async function handleRefreshStatus() {
     isCharging: stateManager.isCharging
   });
 
-  if (listenersFullyDead && !isPairingNow) {
-    const { pairedDeviceId } = await chrome.storage.local.get(['pairedDeviceId']);
-    if (pairedDeviceId) {
-      console.log('[PinBridge] refreshStatus: Presence listeners fully dead, restarting.');
-      startPresenceListeners(pairedDeviceId);
-    }
-  } else if (socket?.connected) {
-    const dataAge = Date.now() - stateManager.lastSeen;
-    if (dataAge > 30000 || stateManager.lastSeen === 0) {
-      socket.emit('request_presence');
-    }
-  }
+  await reviveListenersIfNeeded(listenersFullyDead);
 }
 
 async function handleGoogleSignIn(sendResponse) {

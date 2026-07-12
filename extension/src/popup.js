@@ -333,6 +333,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
+    // Helper to force browser reflow (resets CSS animation) without raising lint/static-analysis warnings
+    function forceReflow(el) {
+        return el?.offsetWidth;
+    }
+
     // ─── OTP Display ────────────────────────────────────────
     function updateOtpDisplay(otpData, animate = true) {
         if (!otpData?.otp) return;
@@ -340,7 +345,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         if (animate) {
             otpValue.style.animation = 'none';
-            otpValue.offsetWidth;
+            forceReflow(otpValue);
             otpValue.style.animation = 'fadeIn 0.5s ease-out';
         } else {
             otpValue.style.animation = 'none';
@@ -450,7 +455,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const resetFetchButton = () => {
         manualFetchBtn.innerText = 'Fetch Latest';
-        manualFetchBtn.style.background = '#059669';
+        manualFetchBtn.style.background = '#047857';
     };
 
     const onFetchSuccess = () => {
