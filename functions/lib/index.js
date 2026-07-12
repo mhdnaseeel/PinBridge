@@ -3,23 +3,18 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.pair = void 0;
 const https_1 = require("firebase-functions/v2/https");
 const admin = require("firebase-admin");
-const crypto = require("crypto");
+const crypto = require("node:crypto");
 admin.initializeApp();
 // Timing-safe constant-time comparison helper (CWE-208)
 function safeCompare(a, b) {
-    try {
-        const aBuf = Buffer.from(a, "utf8");
-        const bBuf = Buffer.from(b, "utf8");
-        if (aBuf.length !== bBuf.length) {
-            // Mitigate timing difference even if lengths differ
-            crypto.timingSafeEqual(aBuf, aBuf);
-            return false;
-        }
-        return crypto.timingSafeEqual(aBuf, bBuf);
-    }
-    catch (_a) {
+    const aBuf = Buffer.from(a, "utf8");
+    const bBuf = Buffer.from(b, "utf8");
+    if (aBuf.length !== bBuf.length) {
+        // Mitigate timing difference even if lengths differ
+        crypto.timingSafeEqual(aBuf, aBuf);
         return false;
     }
+    return crypto.timingSafeEqual(aBuf, bBuf);
 }
 exports.pair = (0, https_1.onCall)(async (request) => {
     // Security (H-4): Require at least anonymous authentication

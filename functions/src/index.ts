@@ -1,23 +1,19 @@
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
-import * as crypto from "crypto";
+import * as crypto from "node:crypto";
 
 admin.initializeApp();
 
 // Timing-safe constant-time comparison helper (CWE-208)
 function safeCompare(a: string, b: string): boolean {
-    try {
-        const aBuf = Buffer.from(a, "utf8");
-        const bBuf = Buffer.from(b, "utf8");
-        if (aBuf.length !== bBuf.length) {
-            // Mitigate timing difference even if lengths differ
-            crypto.timingSafeEqual(aBuf, aBuf);
-            return false;
-        }
-        return crypto.timingSafeEqual(aBuf, bBuf);
-    } catch {
+    const aBuf = Buffer.from(a, "utf8");
+    const bBuf = Buffer.from(b, "utf8");
+    if (aBuf.length !== bBuf.length) {
+        // Mitigate timing difference even if lengths differ
+        crypto.timingSafeEqual(aBuf, aBuf);
         return false;
     }
+    return crypto.timingSafeEqual(aBuf, bBuf);
 }
 
 export const pair = onCall(async (request) => {
