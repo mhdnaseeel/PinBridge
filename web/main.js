@@ -24,21 +24,17 @@ const SOCKET_SERVER_URL = "https://pinbridge-presence.onrender.com";
 let socket = null;
 
 const firebaseConfig = {
-  // nosemgrep: generic.secrets.security.detected-generic-api-key
-  // Firebase API keys are public client-side identifiers, NOT secrets.
-  // Security is enforced by Firestore rules + Firebase App Check.
-  apiKey: "AIzaSyBwBr0MOdVKCwuvoK3oOU6tg5LcS7uqZOE", // nosemgrep
-  authDomain: "pinbridge-61dd4.firebaseapp.com",
-  projectId: "pinbridge-61dd4",
-  storageBucket: "pinbridge-61dd4.firebasestorage.app",
-  messagingSenderId: "475556984962",
-  appId: "1:475556984962:web:87e42b8f4e3b0ce9a89c9b",
-  measurementId: "G-LEDS6BH99B"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "",
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || ""
 };
 
 // Initialize Firebase
-// nosemgrep: javascript.firebase.firebase-hardcoded-secret
-const app = initializeApp(firebaseConfig); // nosemgrep
+const app = initializeApp(firebaseConfig);
 
 // Initialize App Check (P0 - Security)
 // Security (C-3): Read reCAPTCHA key from environment variable.
