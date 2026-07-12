@@ -325,15 +325,22 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
         batteryIndicator.classList.remove('hidden');
+        batteryText.textContent = `${level}% `;
+        
         if (isOffline) {
-            batteryText.innerHTML = `${level}% <span style="color:#ef4444;font-size:11px;">(Last known)</span>`;
+            const span = document.createElement('span');
+            span.style.color = '#ef4444';
+            span.style.fontSize = '11px';
+            span.textContent = '(Last known)';
+            batteryText.appendChild(span);
             batteryText.style.color = '#ef4444';
         } else {
-            let html = `${level}%`;
             if (isCharging) {
-                html += ' <span class="charging-badge">⚡ Charging</span>';
+                const span = document.createElement('span');
+                span.className = 'charging-badge';
+                span.textContent = '⚡ Charging';
+                batteryText.appendChild(span);
             }
-            batteryText.innerHTML = html;
             batteryText.style.color = '';
         }
     }
@@ -377,10 +384,29 @@ document.addEventListener('DOMContentLoaded', async () => {
         }, 2000);
     }
 
+    function setSignInButtonState(state) {
+        if (!googleSignInBtn) return;
+        const defaultState = googleSignInBtn.querySelector('.signin-state-default');
+        const loadingState = googleSignInBtn.querySelector('.signin-state-loading');
+        const signingInState = googleSignInBtn.querySelector('.signin-state-signing-in');
+        
+        defaultState?.classList.add('hidden');
+        loadingState?.classList.add('hidden');
+        signingInState?.classList.add('hidden');
+        
+        if (state === 'default') {
+            defaultState?.classList.remove('hidden');
+        } else if (state === 'loading') {
+            loadingState?.classList.remove('hidden');
+        } else if (state === 'signing-in') {
+            signingInState?.classList.remove('hidden');
+        }
+    }
+
     if (googleSignInBtn) {
         googleSignInBtn.onclick = async () => {
             googleSignInBtn.disabled = true;
-            googleSignInBtn.textContent = 'Signing in...';
+            setSignInButtonState('signing-in');
             hideError();
 
             let hasResponded = false;
@@ -391,7 +417,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     hasResponded = true;
                     showError('Sign-in timed out. Please try again.');
                     googleSignInBtn.disabled = false;
-                    googleSignInBtn.innerHTML = '<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" alt="Google"> Sign in with Google';
+                    setSignInButtonState('default');
                 }
             }, 60000); // 60 seconds
 
@@ -407,7 +433,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
                     showUnpaired();
                 } else if (response?.status === 'pending') {
-                    googleSignInBtn.innerHTML = 'Waiting for sign-in...';
+                    setSignInButtonState('loading');
                     googleSignInBtn.style.background = '#6366f1';
                     emptyText.textContent = response.message || 'Please sign in...';
                     startAuthPolling();
@@ -415,7 +441,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const errMsg = response?.error || 'Sign-in failed';
                     showError(errMsg);
                     googleSignInBtn.disabled = false;
-                    googleSignInBtn.innerHTML = '<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" alt="Google"> Sign in with Google';
+                    setSignInButtonState('default');
                 }
             });
         };
@@ -431,14 +457,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     copyBtn.onclick = () => {
         navigator.clipboard.writeText(otpContent.textContent);
         copyBtn.classList.add('copied');
-        const originalText = copyBtn.innerHTML;
-        copyBtn.innerHTML = `
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-            Copied!
-        `;
+        
+        const defaultState = copyBtn.querySelector('.copy-state-default');
+        const successState = copyBtn.querySelector('.copy-state-success');
+        
+        defaultState?.classList.add('hidden');
+        successState?.classList.remove('hidden');
+        
         setTimeout(() => {
             copyBtn.classList.remove('copied');
-            copyBtn.innerHTML = originalText;
+            defaultState?.classList.remove('hidden');
+            successState?.classList.add('hidden');
         }, 2000);
     };
 
@@ -471,7 +500,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (syncSignalBtn) {
         syncSignalBtn.addEventListener('click', () => {
             syncSignalBtn.disabled = true;
-            syncSignalBtn.innerHTML = 'Syncing...';
+            
+            const defaultState = syncSignalBtn.querySelector('.sync-state-default');
+            const loadingState = syncSignalBtn.querySelector('.sync-state-loading');
+            
+            defaultState?.classList.add('hidden');
+            loadingState?.classList.remove('hidden');
+
             // Force reset local cache and show "Connecting..." immediately
             currentLastSeen = 0;
             currentBatteryLevel = null;
@@ -481,7 +516,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             chrome.runtime.sendMessage({ type: 'syncSignal' }, () => {
                 setTimeout(() => {
                     syncSignalBtn.disabled = false;
-                    syncSignalBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg> Sync Signal';
+                    defaultState?.classList.remove('hidden');
+                    loadingState?.classList.add('hidden');
                     updateConnectionStatus(); // Refresh status text in case it updated
                 }, 2000);
             });

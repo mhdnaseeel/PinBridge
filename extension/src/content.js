@@ -146,14 +146,13 @@ window.addEventListener('message', (event) => {
     if (event.source !== window) return;
     
     // Security: Strict origin verification to prevent arbitrary execution (SonarCloud S2819 / CWE-345)
-    const trustedOrigins = [
-        'http://localhost:3000',
-        'http://localhost:5173',
-        'https://pinbridge-61dd4.firebaseapp.com',
-        'https://pinbridge-61dd4.web.app',
-        'https://pin-bridge.vercel.app'
-    ];
-    if (!trustedOrigins.includes(event.origin)) return;
+    if (event.origin !== 'http://localhost:3000' && 
+        event.origin !== 'http://localhost:5173' && 
+        event.origin !== 'https://pinbridge-61dd4.firebaseapp.com' && 
+        event.origin !== 'https://pinbridge-61dd4.web.app' && 
+        event.origin !== 'https://pin-bridge.vercel.app') {
+        return;
+    }
     
     const data = event.data;
     if (data?.source === 'pinbridge-web') {

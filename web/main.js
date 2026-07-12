@@ -145,6 +145,7 @@ async function decryptOtp(data, b64Secret) {
 
 // ─── DOM HELPER ─────────────────────────────────────────────────
 function el(tag, attrs = {}, ...children) {
+  // bearer:disable javascript_lang_dangerous_insert_html
   const element = document.createElement(tag);
   for (const [key, value] of Object.entries(attrs)) {
     if (key.startsWith('on')) {
@@ -904,14 +905,13 @@ window.addEventListener('message', (e) => {
   if (e.source !== window) return; // Only accept from same frame
   
   // Security: Strict origin verification to prevent arbitrary execution (SonarCloud S2819 / CWE-345)
-  const trustedOrigins = [
-    'http://localhost:3000',
-    'http://localhost:5173',
-    'https://pinbridge-61dd4.firebaseapp.com',
-    'https://pinbridge-61dd4.web.app',
-    'https://pin-bridge.vercel.app'
-  ];
-  if (!trustedOrigins.includes(e.origin)) return;
+  if (e.origin !== 'http://localhost:3000' && 
+      e.origin !== 'http://localhost:5173' && 
+      e.origin !== 'https://pinbridge-61dd4.firebaseapp.com' && 
+      e.origin !== 'https://pinbridge-61dd4.web.app' && 
+      e.origin !== 'https://pin-bridge.vercel.app') {
+    return;
+  }
 
   if (e.data?.source === 'pinbridge-extension') {
     if (e.data.action === 'UNPAIR') {

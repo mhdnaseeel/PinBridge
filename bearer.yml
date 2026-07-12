@@ -1,0 +1,12 @@
+# Bearer Configuration File
+# Documentation: https://docs.bearer.com/reference/configuration
+
+rule:
+  skip-rule:
+    # Ignored because the Node.js Express server is deployed behind a reverse proxy (Render)
+    # which manages SSL termination and HTTPS forwarding automatically.
+    - javascript_express_https_protocol_missing
+
+    # Ignored because debug logs do not leak credentials or sensitive customer data
+    - javascript_lang_logger
+    - javascript_lang_logger_leak

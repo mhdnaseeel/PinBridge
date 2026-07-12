@@ -698,8 +698,14 @@
         
         <div class="action-group">
           <button id="copyBtn" class="btn-main">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-            Copy Code
+            <span class="copy-state-default" style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+              Copy Code
+            </span>
+            <span class="copy-state-success hidden" style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              Copied!
+            </span>
           </button>
           <div style="display: flex; gap: 10px;">
             <button id="manualFetchBtn" class="btn-fetch" style="flex: 1; padding: 11px 12px; font-size: 13px;">
@@ -707,8 +713,13 @@
               Fetch OTP
             </button>
             <button id="syncSignalBtn" class="btn-main" style="flex: 1; padding: 11px 12px; font-size: 13px; background: #3b82f6; box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
-              Sync Signal
+              <span class="sync-state-default" style="display: flex; align-items: center; justify-content: center; gap: 6px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                Sync Signal
+              </span>
+              <span class="sync-state-loading hidden">
+                Syncing...
+              </span>
             </button>
           </div>
           <div class="bottom-actions">
@@ -730,8 +741,16 @@
         <div class="action-group">
           <!-- Shown before sign-in -->
           <button id="googleSignInBtn" class="google-signin-btn">
-            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" alt="Google">
-            Sign in with Google
+            <span class="signin-state-default" style="display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%;">
+              <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" alt="Google">
+              Sign in with Google
+            </span>
+            <span class="signin-state-loading hidden">
+              Waiting for sign-in...
+            </span>
+            <span class="signin-state-signing-in hidden">
+              Signing in...
+            </span>
           </button>
           
           <!-- Shown after sign-in -->

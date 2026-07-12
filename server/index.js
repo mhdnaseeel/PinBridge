@@ -72,6 +72,7 @@ if (process.env.FIREBASE_SERVICE_ACCOUNT) {
 const db = admin.firestore();
 // nosemgrep
 const app = express();
+app.disable('x-powered-by');
 // nosemgrep
 const server = http.createServer(app);
 // Security (V-08): Restrict CORS to known PinBridge origins
