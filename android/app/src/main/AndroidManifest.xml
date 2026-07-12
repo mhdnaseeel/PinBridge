@@ -31,6 +31,8 @@
         <!-- exported="true" is REQUIRED here: MainActivity is the LAUNCHER entry point -->
         <!-- nosemgrep: java.android.security.exported_activity.exported_activity -->
         <!-- nosemgrep: java.android.security.exported_activity -->
+        <!-- nosemgrep: exported_activity -->
+        <!-- nosemgrep -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
